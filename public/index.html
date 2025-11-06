@@ -1,0 +1,93 @@
+  <!DOCTYPE html>
+  <html lang="es">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta name="theme-color" content="#000000" />
+      
+      <!-- Configuración de idioma para sugerencias de traducción -->
+      <meta http-equiv="content-language" content="es" />
+      <meta name="language" content="Spanish" />
+      
+      <link rel="icon" href="%PUBLIC_URL%/favicon.ico"/>
+      
+      <title>Turismo en San Antonio Palopó, Sololá | Guía de Atitlán, Hoteles y Ferias</title>
+      
+      <meta 
+        name="description"
+        content="Sumérgete en la cultura y belleza de San Antonio Palopó, a orillas del Lago Atitlán. Encuentra información de hoteles, ferias y toda la cultura local."
+      />
+      
+      <!-- Meta tags del sitio -->
+      <meta name="keywords" content="San Antonio Palopó, Sololá, Lago Atitlán, turismo Guatemala, hoteles, ferias, artesanía, cultura maya" />
+      <meta name="author" content="Municipalidad de San Antonio Palopó" />
+      <meta name="robots" content="index, follow" />
+      
+      <link rel="canonical" href="https://TURISMO-MUNICIPAL.web.app/" />
+
+      <!-- Open Graph / Facebook -->
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="Turismo San Antonio Palopó" />
+      <meta property="og:title" content="Turismo en San Antonio Palopó, Sololá | Guía de Atitlán" />
+      <meta property="og:description" content="Sumérgete en la cultura y belleza de San Antonio Palopó, a orillas del Lago Atitlán. Encuentra información de hoteles, ferias y toda la cultura local." />
+      <meta property="og:url" content="https://TURISMO-MUNICIPAL.web.app/" />
+      <meta property="og:image" content="https://turismo-municipal.web.app/logo192.png" />
+      <meta property="og:image:alt" content="Logo de Turismo San Antonio Palopó" />
+      <meta property="og:image:width" content="192" />
+      <meta property="og:image:height" content="192" />
+      <meta property="og:locale" content="es_GT" />
+
+      <!-- WhatsApp específico (usa las mismas que Open Graph) -->
+      <meta property="og:image:type" content="image/png" />
+      
+      <!-- Apple Touch Icon y PWA -->
+      <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+      <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+      
+      <!-- Preconnect para mejorar rendimiento -->
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link rel="preconnect" href="https://firebasestorage.googleapis.com">
+
+      <!-- Precargar fuentes críticas para reducir CLS -->
+      <link rel="preload" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+      <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@600;700&display=swap"></noscript>
+      
+      <!-- SOLUCIÓN: CSS Crítico In-line -->
+      <style>
+        *,:after,:before{box-sizing:border-box}body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto','Oxygen','Ubuntu','Cantarell','Fira Sans','Droid Sans','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background-color:#fff;color:#212529}.container{padding:2rem;max-width:100%}.container.no-padding-top{padding-top:0}.hamburger{display:flex!important;cursor:pointer;position:fixed!important;top:20px!important;left:20px!important;z-index:1001!important;width:50px!important;height:50px!important;background-color:rgba(255,255,255,.95)!important;backdrop-filter:blur(10px);border-radius:50%!important;flex-direction:column;justify-content:center;align-items:center;transition:all .3s ease-in-out;box-shadow:0 4px 12px rgba(0,0,0,.15)!important;border:1px solid rgba(0,0,0,.1)!important;padding:12px!important}.hamburger .bar{display:block;width:25px;height:3px;margin:3px auto;transition:all .3s ease-in-out;background-color:#333!important;border-radius:2px}.home-welcome-text{text-align:center;padding:0 0 0 0;margin-top:0}.home-welcome-text h1{margin-bottom:0}.home-header-carousel{position:relative;width:100%;aspect-ratio:16/9;max-height:80vh;overflow:hidden;border-radius:12px;margin-bottom:3rem;background-color:#f0f0f0}.header-slide-container{position:relative;width:100%;height:100%;background-color:#e0e0e0}.header-slide-image{width:100%;height:100%;object-fit:cover;object-position:center}.header-slide-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to top,rgba(0,0,0,.7),transparent 40%),linear-gradient(to right,rgba(0,0,0,.5),transparent 50%);display:flex;align-items:flex-end;justify-content:flex-start;padding:4rem}.header-slide-content{color:#fff}.header-slide-content h1{font-size:2.5rem;margin:0 0 .5rem 0;text-shadow:2px 2px 4px rgba(0,0,0,.5)}.header-slide-content p{font-size:1.2rem;margin:0 0 1.5rem 0;max-width:600px;text-shadow:1px 1px 2px rgba(0,0,0,.5)}.header-slide-button{display:inline-block;padding:.75rem 1.5rem;background-color:#007bff;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;transition:background-color .3s ease,transform .3s ease}.header-slide-button:hover{background-color:#0056b3;transform:translateY(-2px)}@media (max-width:768px){.container{padding:1rem .75rem}.hamburger{top:15px!important;left:15px!important;width:45px!important;height:45px!important}.home-header-carousel,.header-slide{aspect-ratio:16/9;min-height:300px}.header-slide-overlay{padding:1.5rem;background:linear-gradient(to top,rgba(0,0,0,.8),transparent 60%)}.header-slide-content h1{font-size:1.8rem}.header-slide-content p{font-size:1rem}}
+      </style>
+
+      <!-- Schema.org para mejor SEO -->
+      <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TouristDestination",
+        "name": "San Antonio Palopó",
+        "description": "Pueblo pintoresco a orillas del Lago Atitlán, famoso por su artesanía textil y cultura maya Kaqchikel",
+        "url": "https://TURISMO-MUNICIPAL.web.app/",
+        "image": "%PUBLIC_URL%/logo192.png",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "San Antonio Palopó",
+          "addressRegion": "Sololá",
+          "addressCountry": "GT"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": "14.6891",
+          "longitude": "-91.1479"
+        },
+        "touristType": [
+          "Cultural Tourism",
+          "Adventure Tourism",
+          "Nature Tourism"
+        ]
+      }
+      </script>
+    </head>
+    <body>
+      <noscript>Necesitas habilitar JavaScript para ejecutar esta aplicación.</noscript>
+      <div id="root"></div>
+    </body>
+  </html>

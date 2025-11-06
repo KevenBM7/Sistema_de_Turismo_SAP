@@ -1,0 +1,43 @@
+# Archivos de la configuración anterior que causaban problemas
+# (Incluye el punto . para la carpeta de caché oculta y la sintaxis correcta)
+.firebaserc
+/.firebase/ 
+/firebase/ 
+/firebase-debug.log
+firebase.json
+cors.json
+firestore.json # Si usas Firestore localmente
+
+# Archivos de dependencias y compilación (Archivos GRANDES)
+/node_modules
+/build
+/dist
+/out
+/coverage
+/.pnp
+.pnp.js
+/.cache
+
+# Archivos de secretos, credenciales y entorno (CRÍTICO)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+firebase-service-account.json
+
+# Archivos de reglas y configuración de Firebase (Si no quieres subir las reglas)
+# Nota: Si quieres rastrear las reglas, debes quitar estas líneas.
+firestore.rules
+storage.rules
+firestore.txt
+storage.txt
+resize-images-config.txt
+
+# Misceláneos / Logs / Archivos de SO
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+Sistema.txt
+iac
