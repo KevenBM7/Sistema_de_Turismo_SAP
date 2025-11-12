@@ -13,18 +13,7 @@
       - Navbar
       - Footer
       - Hamburger Menu
-      - Ad Banner
-      - Buttons
-      - Forms
-      - Modals
-      - Skeleton Loaders
-      - Pagination
-   5. PAGES
-      - Home
-      - Calendar/Events
-      - Site List & Detail
-      - Hamburger Menu
-      - Ad Banner
+      - Ad Banner /* MOVIDO AL INICIO DE COMPONENTES
       - Buttons
       - Forms
       - Modals
@@ -42,12 +31,7 @@
       - Comments Section
       - Routes Section
       - Event Scheduling
-   7. RESPONSIVE
-   ========================================================================== */
-
-/* ==========================================================================
-   -1. FONT IMPORTS
-   ========================================================================== */
+   7. RESPONSIVE */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@600;700&display=swap');
 
 
@@ -125,7 +109,7 @@ body {
 
 /* Container */
 .container {
-  padding: 0 2rem 2rem; /* SOLUCIÓN: Eliminado el padding-top para que el contenido empiece desde arriba */
+  padding: 0 1rem 2rem; /* SOLUCIÓN: Eliminado el padding-top para que el contenido empiece desde arriba */
   max-width: 100%;
 }
 
@@ -169,6 +153,31 @@ body:has(.map-page-container) .container {
 /* ==========================================================================
    4. COMPONENTS
    ========================================================================== */
+
+/* ---------- Ad Banner (INICIO DE COMPONENTES) ---------- */
+.ad-banner {
+  position: sticky;
+  top: 60px;
+  width: 100%;
+  z-index: 900;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-150%);
+  transition: transform 0.4s ease-in-out;
+  display: flex;
+  justify-content: center;
+}
+
+.ad-banner.visible {
+  transform: translateY(0);
+}
+
+.ad-banner img {
+  width: 100%;
+  max-width: 1200px;
+  height: auto;
+  display: block;
+}
 
 /* ---------- Navbar ---------- */
 .navbar-links {
@@ -350,60 +359,93 @@ body:has(.map-page-container) .container {
   transform: translateY(-9px) rotate(-45deg);
 }
 
-
 /* ---------- Footer ---------- */
 .footer-container {
-  background-color: #333d47;
+  background-color: #333d47; /* Gris oscuro elegante (Azul gubernamental oscuro) */
   color: #f8f9fa;
-  padding: 2rem 1rem;
-  margin-top: 3rem;
-  border-top: 3px solid #007bff;
+  padding: 1.5rem 1rem; /* Base: Compactado verticalmente */
+  margin-top: 2rem; 
+  border-top: 3px solid #1e88e5; 
 }
 
 .footer-content {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  text-align: center;
+  display: grid; /* Usamos grid para un control total del layout */
+  grid-template-columns: repeat(4, 1fr); /* 4 columnas por defecto */
+  gap: 1rem; /* Espacio reducido entre columnas */
+  text-align: left;
 }
 
 .footer-section {
-  flex: 1;
-  min-width: 250px;
+  padding: 0 0.2rem; /* Reducido a 0.2rem para compactar más */
+  margin-bottom: 0; /* Eliminado el margen inferior global */
 }
 
 .footer-section h4 {
-  margin-bottom: 0.5rem;
+  margin-top: 0; /* Elimina margen superior */
+  margin-bottom: 0.3rem; /* Margen inferior muy reducido para compactar el título */
+  font-size: 1.05rem; 
+  color: #f8f9fa; 
+  font-weight: 700;
+  border-bottom: 1px solid #5a6268; 
+  padding-bottom: 0.3rem;
 }
 
-/* ---------- Ad Banner ---------- */
-.ad-banner {
-  position: sticky;
-  top: 60px;
-  width: 100%;
-  z-index: 900;
-  background-color: #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  transform: translateY(-150%);
-  transition: transform 0.4s ease-in-out;
+.footer-section p {
+  margin: 0.1rem 0; /* Espacio mínimo entre líneas */
+  font-size: 0.85rem; 
+  color: #ccc;
+  line-height: 1.3; 
+}
+
+.footer-item {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 5px;
 }
 
-.ad-banner.visible {
-  transform: translateY(0);
+.footer-icon {
+  width: 14px;
+  height: 14px;
+  color: #a0d4ff;
+  flex-shrink: 0;
 }
 
-.ad-banner img {
-  width: 100%;
-  max-width: 1200px;
-  height: auto;
-  display: block;
+.footer-link {
+  color: #a0d4ff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
+
+.footer-link:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Ocultamos el crédito del desarrollador en el footer-content y usamos el espacio inferior */
+.footer-developer-credit {
+  background-color: #333d47; /* Asegurar el mismo color de fondo */
+  border-top: 1px solid #5a6268;
+  padding: 0.5rem 0.5rem; /* Padding reducido */
+  text-align: center;
+  /* HACK para móvil: ocultar en escritorio y mostrar solo el pie de página discreto */
+  display: none; 
+}
+
+
+
+
+.footer-last-update {
+  font-style: italic;
+  font-size: 0.75rem !important; /* Más pequeño para discreción */
+  color: #888 !important;
+  margin-top: 1rem !important;
+}
+/* ---------- Fin Footer (Estilos de Escritorio) ---------- */
 
 /* ---------- Buttons ---------- */
 .button-primary {
@@ -2206,8 +2248,7 @@ body:has(.map-page-container) .container {
 
 .admin-moderation-section {
   background-color: #fff3cd;
-  border: 1px solid #ffeeba;
-  color: #856404;
+  border-left: 4px solid #ffc107;
   padding: 1.5rem;
   border-radius: 8px;
   margin-bottom: 3rem;
@@ -3373,7 +3414,7 @@ body:has(.map-page-container) .container {
 
 @media (max-width: 768px) {
   .container {
-    padding: 1rem 0.75rem; /* Reducido el padding horizontal para aprovechar más la pantalla */
+    padding: 1rem 0.5rem; /* Reducido el padding horizontal para aprovechar más la pantalla */
   }
 
   /* Eliminamos las reglas de posicionamiento y tamaño de aquí, 
@@ -3469,21 +3510,71 @@ body:has(.map-page-container) .container {
     padding: 1rem;
   }
 
-  /* Footer más compacto */
+  /* Footer: Compactación y una sola columna */
+  .footer-content {
+    grid-template-columns: 1fr; /* Forzar 1 columna */
+    gap: 0; /* Eliminar el espacio entre filas/secciones */
+    max-width: 100%;
+    padding: 0 0.5rem; /* Padding lateral reducido */
+  }
+  
+ .footer-section {
+    padding: 0.75rem 0; /* Padding vertical, sin padding lateral */
+    margin-bottom: 0;
+    text-align: center;
+    border-bottom: 1px solid #5a6268;
+    min-width: unset;
+  }
+
+ .footer-section:first-child {
+    padding-top: 0;
+  }
+
+  .footer-section:last-of-type {
+    border-bottom: none; /* La última sección no necesita borde inferior */
+  }
+
+  .footer-section h4 {
+    text-align: center;
+    font-size: 1.1rem; 
+    padding-bottom: 0.3rem;
+  }
+  
+  .footer-item, .footer-link {
+    justify-content: center; 
+    text-align: center;
+  }
+  
+  .footer-section p {
+    margin: 0.1rem 0; /* Espacio interno mínimo */
+    font-size: 0.8rem; /* Tamaño más pequeño */
+  }
+  
+
+  
+  /* Mostrar Crédito Técnico como pie de página separado */
+  .footer-container > .footer-developer-credit {
+    display: block;
+    background-color: #333d47;
+    border-top: 1px solid #5a6268;
+    padding: 0.5rem;
+    text-align: center;
+  }
+
+  /* Mostrar el crédito técnico final (el div extra) */
+  .footer-container > .footer-developer-credit {
+    display: block; 
+    text-align: center;
+    padding-top: 0.5rem;
+    /* Los estilos de fuente ya se definieron para ser compactos */
+  }
+
+  /* Footer más compacto - Estilos heredados del footer-container (no deben sobreescribir) */
   .footer-container {
     padding: 1.5rem 1rem;
     margin-top: 2rem;
   }
 
-  .footer-content {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .footer-section p {
-    font-size: 0.9rem;
-    margin: 0.25rem 0;
-  }
 
   /* Perfil de Usuario */
   .profile-info {
@@ -4345,4 +4436,158 @@ body:has(.map-page-container) .container {
   .map-info-banner p {
     font-size: 0.8rem;
   }
+}
+
+/* --- Estilos para Páginas Legales (Términos y Privacidad) --- */
+
+.legal-page-container {
+    padding: 25px 15px; 
+    max-width: 900px; 
+    margin: 0 auto;
+    line-height: 1.65;
+    color: #333;
+    background-color: #ffffff; 
+    min-height: 80vh; 
+}
+
+.legal-page-container h1 {
+    color: #0d47a1; 
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    font-weight: 800;
+}
+
+.legal-page-container h2 {
+    color: #1e88e5; 
+    font-size: 1.6rem;
+    margin-top: 2rem;
+    border-bottom: 2px solid #e0e0e0; 
+    padding-bottom: 0.5rem;
+}
+
+.legal-page-container h3 {
+    color: #424242;
+    font-size: 1.25rem;
+    margin-top: 1.25rem;
+    font-weight: 700;
+}
+
+.legal-page-container p {
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+.legal-page-container ul, .legal-page-container ol {
+    margin-bottom: 1rem;
+    padding-left: 20px;
+}
+
+.legal-page-container li {
+    margin-bottom: 0.75rem;
+}
+
+.last-updated {
+    font-style: italic;
+    color: #777;
+    margin-bottom: 2rem;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 1rem;
+}
+
+.important-note {
+    background-color: #f8d7da; 
+    border-left: 5px solid #dc3545;
+    padding: 15px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    font-weight: 600;
+    color: #721c24;
+    border-radius: 4px;
+    text-align: left;
+}
+
+/* Ajuste para móvil de páginas legales */
+@media (max-width: 600px) {
+    .legal-page-container h1 {
+        font-size: 1.8rem;
+    }
+}
+
+/* --- Estilos para Páginas Legales (Términos y Privacidad) --- */
+
+.legal-page-container {
+    padding: 25px 15px; /* Padding para móvil */
+    max-width: 900px; /* Limitar el ancho para mejor lectura */
+    margin: 0 auto;
+    line-height: 1.65;
+    color: #333;
+    background-color: #ffffff; 
+    min-height: 80vh; 
+}
+
+.legal-page-container h1 {
+    color: #0d47a1; /* Azul gubernamental oscuro */
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    font-weight: 800;
+}
+
+.legal-page-container h2 {
+    color: #1e88e5; /* Azul medio */
+    font-size: 1.6rem;
+    margin-top: 2rem;
+    border-bottom: 2px solid #e0e0e0; /* Línea de separación sutil */
+    padding-bottom: 0.5rem;
+}
+
+.legal-page-container h3 {
+    color: #424242;
+    font-size: 1.25rem;
+    margin-top: 1.25rem;
+    font-weight: 700;
+}
+
+.legal-page-container p {
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+.legal-page-container ul, .legal-page-container ol {
+    margin-bottom: 1rem;
+    padding-left: 20px;
+}
+
+.legal-page-container li {
+    margin-bottom: 0.75rem;
+}
+
+.last-updated {
+    font-style: italic;
+    color: #777;
+    margin-bottom: 2rem;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 1rem;
+}
+
+.important-note {
+    background-color: #f8d7da; /* Rojo/Rosa suave para notas críticas */
+    border-left: 5px solid #dc3545;
+    padding: 15px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    font-weight: 600;
+    color: #721c24;
+    border-radius: 4px;
+    text-align: left;
+}
+
+/* Ajuste para móvil */
+@media (max-width: 600px) {
+    .legal-page-container h1 {
+        font-size: 1.8rem;
+    }
 }

@@ -8,6 +8,8 @@ import FloatingSearchButton from './components/FloatingSearchButton';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import LoggedInRoute from './components/LoggedInRoute';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 import './App.css';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -75,6 +77,8 @@ function AppContent() {
             <Route path="/categorias" element={<LazyPageWrapper><CategoriesPage /></LazyPageWrapper>} />
             <Route path="/categoria/:categoryName/:slug" element={<LazyPageWrapper><SiteDetailPage /></LazyPageWrapper>} />
             <Route path="/categoria/:categoryName" element={<LazyPageWrapper><CategoryPage /></LazyPageWrapper>} />
+            <Route path="/terminos" element={<LazyPageWrapper><TermsPage /></LazyPageWrapper>} />
+            <Route path="/privacidad" element={<LazyPageWrapper><PrivacyPage /></LazyPageWrapper>} />
             <Route path="/search" element={<LazyPageWrapper><SearchResults /></LazyPageWrapper>} />
             <Route path="/evento/:id" element={<LazyPageWrapper><EventDetailPage /></LazyPageWrapper>} />
             <Route path="/eventos" element={<LazyPageWrapper><CalendarPage /></LazyPageWrapper>} />
