@@ -2,8 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 function PrivacyPage() {
-  const legalContactEmail = "contacto.legal@municipalidadsap.gob.gt"; // Email para contacto legal
-  const lastUpdated = "11 de Noviembre de 2025"; // Fecha de referencia
+const lastUpdated = "11 de Noviembre de 2025"; // Fecha de referencia
 
   return (
     <div className="legal-page-container">
@@ -59,12 +58,6 @@ function PrivacyPage() {
 
         <h3>3.1. Menores de Edad</h3>
         <p>La aplicación **no realiza ningún proceso de verificación de edad** para el registro. Los usuarios que se registran a través de proveedores externos (como Google Authentication) están sujetos a las políticas de edad y términos de servicio de dichas plataformas. La Municipalidad de San Antonio Palopó no solicita ni recopila intencionalmente información personal de menores de edad.</p>
-      </section>
-
-      <section>
-        <h2>4. Contacto Legal</h2>
-        <p>Para cualquier pregunta o inquietud respecto a esta Política de Privacidad, por favor, contáctenos en:</p>
-        <p><strong>Email Legal:</strong> <a href={`mailto:${legalContactEmail}`}>{legalContactEmail}</a></p>
       </section>
     </div>
   );

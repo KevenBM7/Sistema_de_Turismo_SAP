@@ -1,52 +1,57 @@
 /* ==========================================================================
-   TABLE OF CONTENTS
    ==========================================================================
-   -1. FONT IMPORTS
-   0. VENDOR OVERRIDES
-      - NProgress
-   1. GLOBAL STYLES
-   2. UTILITIES
-   3. LAYOUT
-      - Container
-      - Grid Systems
-   4. COMPONENTS
-      - Navbar
-      - Footer
-      - Hamburger Menu
-      - Ad Banner /* MOVIDO AL INICIO DE COMPONENTES
-      - Buttons
-      - Forms
-      - Modals
-      - Skeleton Loaders
-      - Pagination
-   5. PAGES
-      - Home
-      - Calendar/Events
-      - Site List & Detail
-      - Profile
-      - Map
-      - Login
-      - Dashboard
-   6. FEATURES
-      - Comments Section
-      - Routes Section
-      - Event Scheduling
-   7. RESPONSIVE */
+   1.  IMPORTS Y ESTILOS GLOBALES
+       - @import de Fuentes
+       - Estilos base (body, *)
+
+   2.  SOBREESCRITURA DE VENDEDORES (VENDOR OVERRIDES)
+       - NProgress
+
+   3.  UTILIDADES (UTILITIES)
+       - Mensajes de error/éxito
+       - Badges de roles
+
+   4.  DISEÑO PRINCIPAL (LAYOUT)
+       - Contenedor principal
+       - Sistemas de Grid (Site List, Events Grid)
+
+   5.  COMPONENTES REUTILIZABLES
+       - Navbar y Menú Hamburguesa
+       - Footer
+       - Botones (todos los tipos)
+       - Formularios (estilos base)
+       - Modales (genéricos y de imagen)
+       - Toasts (notificaciones)
+       - Skeleton Loaders
+       - Filtros de Categoría
+
+   6.  PÁGINAS ESPECÍFICAS
+       - Home (Portada)
+       - Calendar / Events (Calendario y Eventos)
+       - Site List & Detail (Listado y Detalle de Sitios)
+       - Category Cards (Tarjetas de Categoría)
+       - Profile (Perfil de Usuario)
+       - Search (Búsqueda)
+       - Login / Register
+       - Dashboard (Panel de Administración)
+       - Admin Moderation (Moderación de Comentarios)
+       - Map (Página del Mapa)
+       - Legal Pages (Términos y Privacidad)
+
+   7.  CARACTERÍSTICAS (FEATURES)
+       - Sección de Comentarios
+       - Sección de Rutas (en formularios de admin)
+       - Constructor de Horarios (en formularios de admin)
+
+   8.  RESPONSIVE (MEDIA QUERIES GLOBALES)
+       - Ajustes generales para tabletas y móviles
+========================================================================== */
+
+/* ==========================================================================
+   1. IMPORTS Y ESTILOS GLOBALES
+   ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@600;700&display=swap');
 
-
-/* ==========================================================================
-   0. VENDOR OVERRIDES
-   ========================================================================== */
-
-/* --- NProgress --- */
-#nprogress .bar {
-  height: 3.2px !important; /* Aumenta el grosor de la barra de progreso */
-}
-
-/* ==========================================================================
-   1. GLOBAL STYLES
-   ========================================================================== */
 * {
   box-sizing: border-box;
 }
@@ -54,15 +59,22 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* ==========================================================================
-   2. UTILITIES
+   2. SOBREESCRITURA DE VENDEDORES
+   ========================================================================== */
+
+/* --- NProgress --- */
+#nprogress .bar {
+  height: 3.2px !important;
+}
+
+/* ==========================================================================
+   3. UTILIDADES
    ========================================================================== */
 .error-message {
   background-color: #f8d7da;
@@ -104,13 +116,13 @@ body {
 }
 
 /* ==========================================================================
-   3. LAYOUT
+   4. DISEÑO PRINCIPAL (LAYOUT)
    ========================================================================== */
 
 /* Container */
 .container {
-  padding: 0 1rem 2rem; /* SOLUCIÓN: Eliminado el padding-top para que el contenido empiece desde arriba */
   max-width: 100%;
+  padding: 0 1rem 2rem;
 }
 
 main.container {
@@ -151,12 +163,12 @@ body:has(.map-page-container) .container {
 }
 
 /* ==========================================================================
-   4. COMPONENTS
+   5. COMPONENTES REUTILIZABLES
    ========================================================================== */
 
-/* ---------- Ad Banner (INICIO DE COMPONENTES) ---------- */
-.ad-banner {
-  position: sticky;
+/* ---------- Navbar y Menú Hamburguesa ---------- */
+.navbar {
+  transition: transform 0.3s ease-in-out;
   top: 60px;
   width: 100%;
   z-index: 900;
@@ -168,18 +180,6 @@ body:has(.map-page-container) .container {
   justify-content: center;
 }
 
-.ad-banner.visible {
-  transform: translateY(0);
-}
-
-.ad-banner img {
-  width: 100%;
-  max-width: 1200px;
-  height: auto;
-  display: block;
-}
-
-/* ---------- Navbar ---------- */
 .navbar-links {
   position: fixed;
   left: -100%;
@@ -188,20 +188,14 @@ body:has(.map-page-container) .container {
   gap: 0;
   display: flex;
   flex-direction: column;
-  background-color: #02264a;
-  width: auto; /* SOLUCIÓN: El ancho se ajustará al contenido */
+  background-color: #02264a; /* Color de fondo del menú desplegable */
+  width: auto;
   max-width: 80%;
   text-align: left;
   transition: left 0.3s ease-in-out;
-  padding-top: 0; /* SOLUCIÓN: Eliminado el padding superior */
+  padding-top: 0;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.9);
   z-index: 1001;
-  box-sizing: border-box;
-}
-
-/* --- Estilos para ocultar la Navbar al hacer scroll --- */
-.navbar {
-  transition: transform 0.3s ease-in-out;
 }
 .navbar-hidden {
   transform: translateY(-100%);
@@ -246,7 +240,7 @@ body:has(.map-page-container) .container {
 .navbar-links a,
 .navbar-links .navbar-button {
   width: 100%;
-  padding: 0.7rem 1.5rem; /* interlineado y pading entre barra */
+  padding: 0.7rem 1.5rem;
   border-bottom: 0.5px solid #444;
   box-sizing: border-box;
   text-align: left;
@@ -292,13 +286,13 @@ body:has(.map-page-container) .container {
   border: 2px solid #ddd;
   border-radius: 8px;
 }
-/* ---------- Hamburger Menu ---------- */
+
 .hamburger {
   display: flex !important;
   cursor: pointer;
   position: fixed !important; 
-  top: 3px !important;
-  left: 3px !important;
+  top: 3px !important; /* Ajusta la posición vertical */
+  left: 3px !important; /* Ajusta la posición horizontal */
   z-index: 1001 !important;
   width: 45px !important;
   height: 45px !important;
@@ -307,12 +301,11 @@ body:has(.map-page-container) .container {
   justify-content: center;
   align-items: center;
   transition: all 0.3s ease-in-out;
-  border: 1px solid !important; /* color se define por tema */
+  border: 1px solid !important;
   padding: 12px !important;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* ---------- Barras del ícono ---------- */
 .hamburger .bar {
   display: block;
   width: 20px;
@@ -322,31 +315,28 @@ body:has(.map-page-container) .container {
   border-radius: 1px;
 }
 
-/* ---------- Tema claro ---------- */
 @media (prefers-color-scheme: light) {
   .hamburger {
-    background-color: white !important;  /* relleno coincidiendo con tema */
-    border-color: black !important;      /* borde contrastante */
+    background-color: white !important;
+    border-color: black !important;
   }
 
   .hamburger .bar {
-    background-color: black !important;  /* barras contrastantes */
+    background-color: black !important;
   }
 }
 
-/* ---------- Tema oscuro ---------- */
 @media (prefers-color-scheme: dark) {
   .hamburger {
-    background-color: black !important;  /* relleno coincidiendo con tema */
-    border-color: white !important;      /* borde contrastante */
+    background-color: black !important;
+    border-color: white !important;
   }
 
   .hamburger .bar {
-    background-color: white !important;  /* barras contrastantes */
+    background-color: white !important;
   }
 }
 
-/* ---------- Animación al abrir/cerrar ---------- */
 .hamburger.active .bar:nth-child(1) {
   transform: translateY(9px) rotate(45deg);
 }
@@ -361,54 +351,56 @@ body:has(.map-page-container) .container {
 
 /* ---------- Footer ---------- */
 .footer-container {
-  background-color: #333d47; /* Gris oscuro elegante (Azul gubernamental oscuro) */
+  background-color: #333d47;
   color: #f8f9fa;
-  padding: 1.5rem 1rem; /* Base: Compactado verticalmente */
-  margin-top: 2rem; 
-  border-top: 3px solid #1e88e5; 
+  padding: 2.5rem 0;
+  margin-top: 3rem;
+  border-top: 4px solid #1e88e5;
 }
 
 .footer-content {
   max-width: 1200px;
   margin: 0 auto;
-  display: grid; /* Usamos grid para un control total del layout */
-  grid-template-columns: repeat(4, 1fr); /* 4 columnas por defecto */
-  gap: 1rem; /* Espacio reducido entre columnas */
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2.5rem;
   text-align: left;
 }
 
 .footer-section {
-  padding: 0 0.2rem; /* Reducido a 0.2rem para compactar más */
-  margin-bottom: 0; /* Eliminado el margen inferior global */
+  padding: 0;
+  margin-bottom: 0;
 }
 
 .footer-section h4 {
-  margin-top: 0; /* Elimina margen superior */
-  margin-bottom: 0.3rem; /* Margen inferior muy reducido para compactar el título */
-  font-size: 1.05rem; 
-  color: #f8f9fa; 
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: #f8f9fa;
   font-weight: 700;
-  border-bottom: 1px solid #5a6268; 
-  padding-bottom: 0.3rem;
+  border-bottom: 2px solid #1e88e5;
+  padding-bottom: 0.5rem;
 }
 
 .footer-section p {
-  margin: 0.1rem 0; /* Espacio mínimo entre líneas */
-  font-size: 0.85rem; 
-  color: #ccc;
-  line-height: 1.3; 
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+  color: #e0e0e0;
+  line-height: 1.7;
 }
 
 .footer-item {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
+  margin: 0.6rem 0;
 }
 
 .footer-icon {
-  width: 14px;
-  height: 14px;
-  color: #a0d4ff;
+  width: 16px;
+  height: 16px;
+  color: #1e88e5;
   flex-shrink: 0;
 }
 
@@ -416,9 +408,9 @@ body:has(.map-page-container) .container {
   color: #a0d4ff;
   text-decoration: none;
   transition: color 0.2s ease;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .footer-link:hover {
@@ -426,27 +418,51 @@ body:has(.map-page-container) .container {
   text-decoration: underline;
 }
 
-/* Ocultamos el crédito del desarrollador en el footer-content y usamos el espacio inferior */
 .footer-developer-credit {
-  background-color: #333d47; /* Asegurar el mismo color de fondo */
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid #5a6268;
-  padding: 0.5rem 0.5rem; /* Padding reducido */
   text-align: center;
-  /* HACK para móvil: ocultar en escritorio y mostrar solo el pie de página discreto */
-  display: none; 
+  font-size: 0.85rem;
+  color: #999;
 }
 
-
-
+.footer-developer-credit p {
+  margin: 0;
+  color: #999;
+}
 
 .footer-last-update {
   font-style: italic;
-  font-size: 0.75rem !important; /* Más pequeño para discreción */
-  color: #888 !important;
+  font-size: 0.8rem !important;
+  color: #999 !important;
   margin-top: 1rem !important;
 }
-/* ---------- Fin Footer (Estilos de Escritorio) ---------- */
-
+/* Footer Responsivo */
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 0;
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+  .footer-section {
+    padding: 0.75rem 0;
+    margin-bottom: 0;
+    text-align: center;
+    border-bottom: 1px solid #5a6268;
+    min-width: unset;
+  }
+  .footer-section:last-of-type {
+    border-bottom: none;
+  }
+  .footer-section h4 {
+    text-align: center;
+  }
+  .footer-item, .footer-link {
+    justify-content: center;
+  }
+}
 /* ---------- Buttons ---------- */
 .button-primary {
   width: 100%;
@@ -527,7 +543,6 @@ body:has(.map-page-container) .container {
 }
 
 .cancel-button {
-  flex: 1;
   background-color: #6c757d;
   color: white;
   border: none;
@@ -547,7 +562,6 @@ body:has(.map-page-container) .container {
 }
 
 .submit-button {
-  /* flex: 2; */ /* Eliminado para que el tamaño sea automático */
   background-color: #007bff;
   color: white;
   border: none;
@@ -634,6 +648,24 @@ body:has(.map-page-container) .container {
   padding: 0;
 }
 
+/* ---------- Ad Banner ---------- */
+.ad-banner {
+  position: sticky;
+  top: 60px;
+  width: 100%;
+  z-index: 900;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-150%);
+  transition: transform 0.4s ease-in-out;
+  display: flex;
+  justify-content: center;
+}
+.ad-banner.visible {
+  transform: translateY(0);
+}
+
+/* ---------- Filtros de Categoría ---------- */
 .view-on-map-button {
   display: block;
   width: 100%;
@@ -647,7 +679,6 @@ body:has(.map-page-container) .container {
   font-weight: bold;
 }
 
-/* Category Filters */
 .category-filters,
 .event-filters {
   display: flex;
@@ -678,7 +709,7 @@ body:has(.map-page-container) .container {
   padding: 0.75rem 1.5rem;
   border: 2px solid #e0e0e0;
   font-weight: 600;
-  color: #495057; /* SOLUCIÓN: Color más oscuro para mejorar contraste */
+  color: #495057;
   border-radius: 25px;
   transition: all 0.3s ease;
 }
@@ -1103,10 +1134,10 @@ body:has(.map-page-container) .container {
 
 .home-header-carousel {
   width: 100%;
-  aspect-ratio: 16 / 9; /* SOLUCIÓN: Reservar espacio con una proporción panorámica */
-  max-height: 80vh; /* Límite para que no sea demasiado alto en pantallas verticales */
+  aspect-ratio: 16 / 9;
+  max-height: 80vh;
   overflow: hidden;
-  border-radius: 12px; /* Bordes un poco más redondeados */
+  border-radius: 12px;
   margin-bottom: 1rem; /* Reducimos el margen inferior para acercar la descripción */
   background-color: #f0f0f0;
 }
@@ -1120,7 +1151,7 @@ body:has(.map-page-container) .container {
 
 .header-slide {
   width: 100%;
-  height: 100%; /* El slide debe ocupar el 100% del contenedor padre */
+  height: 100%;
   aspect-ratio: 16 / 9; /* Asegura que el slide también mantenga la proporción */
   background-size: cover;
   background-position: center;
@@ -1129,14 +1160,14 @@ body:has(.map-page-container) .container {
 
 /* Contenedor para la imagen y descripción de la portada */
 .home-description-container {
-  max-width: 1300px; /* Ancho máximo para todo el bloque */
-  margin: 0 auto 2rem; /* Centrado y con margen inferior */
+  max-width: 1300px;
+  margin: 0 auto 2rem;
 }
 
 /* Estilo para el texto de descripción debajo del carrusel principal */
 .home-description-text {
   font-size: 1.25rem;
-  color: var(--text-color, #333); /* Usa la variable de color del tema, con un fallback */
+  color: var(--text-color, #333);
   text-align: justify;
   padding: 0 0rem; /* Padding horizontal para que no pegue a los bordes en móvil */
   margin: 0; /* Eliminamos márgenes para que se ajuste al contenedor padre */
@@ -1185,7 +1216,7 @@ body:has(.map-page-container) .container {
 }
 
 .event-slide {
-  height: 550px; /* Aumentamos aún más la altura para mayor visibilidad */
+  height: 550px;
   background-size: cover; /* Restaurado para que la imagen llene el contenedor */
   background-position: center;
   border-radius: 12px;
@@ -1382,7 +1413,6 @@ body:has(.map-page-container) .container {
 }
 
 .event-card-description {
-  color: #666;
   font-size: 0.95rem;
   line-height: 1.5;
   margin: 0;
@@ -1450,8 +1480,8 @@ body:has(.map-page-container) .container {
 }
 
 .image-modal-content {
-  max-width: 90vw;  /* Máximo 90% del ancho de la ventana */
-  max-height: 90vh; /* Máximo 90% de la altura de la ventana */
+  max-width: 90vw;
+  max-height: 90vh;
   object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -1470,7 +1500,7 @@ body:has(.map-page-container) .container {
   cursor: pointer;
   line-height: 1;
   padding: 0.5rem;
-  z-index: 2001; /* Asegura que esté por encima del carrusel */
+  z-index: 2001;
   transition: transform 0.2s;
 }
 
@@ -1492,10 +1522,9 @@ body:has(.map-page-container) .container {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
   background-color: #fff;
-  position: relative; /* Añadido para contener el botón de quitar */
-  display: flex; /* Convertido en contenedor flex */
+  position: relative;
+  display: flex;
   flex-direction: column;
-  /* --- Animación de entrada --- */
   opacity: 0;
   transform: translateY(20px);
   animation: fadeIn 0.5s ease-out forwards;
@@ -1512,7 +1541,7 @@ body:has(.map-page-container) .container {
 
 .site-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada en hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .site-image-container {
@@ -1525,11 +1554,10 @@ body:has(.map-page-container) .container {
 .site-image {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Asegura que la imagen cubra el contenedor sin deformarse */
-  transition: transform 0.3s ease; /* Mantenemos la transición suave */
+  object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
-/* SOLUCIÓN: Añadir efecto de zoom a la imagen al pasar el cursor sobre la tarjeta */
 .site-card:hover .site-image {
   transform: scale(1.05);
 }
@@ -1537,8 +1565,8 @@ body:has(.map-page-container) .container {
 .site-info {
   padding: 1rem;
   text-align: left;
-  display: flex; /* Convertido en contenedor flex */
-  flex-direction: column; /* Alinea los elementos verticalmente */
+  display: flex;
+  flex-direction: column;
   flex-grow: 1; /* Permite que esta sección crezca para llenar el espacio */
 }
 
@@ -1551,7 +1579,7 @@ body:has(.map-page-container) .container {
 .site-description {
   color: #666;
   font-size: 0.9rem;
-  display: -webkit-box; /* Permite truncar el texto */
+  display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -1561,7 +1589,7 @@ body:has(.map-page-container) .container {
 }
 
 .site-card-footer {
-  margin-top: auto; /* Empuja el footer hacia abajo */
+  margin-top: auto;
 }
 
 .remove-favorite-button {
@@ -1679,9 +1707,9 @@ body:has(.map-page-container) .container {
 }
 
 .site-detail-image {
-  width: 100%; /* La imagen ocupa todo el ancho del slide */
-  height: 100%; /* La imagen ocupa toda la altura del slide */
-  object-fit: cover; /* La imagen cubre el área sin deformarse */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   border-radius: 8px;
 }
 
@@ -1694,18 +1722,15 @@ body:has(.map-page-container) .container {
   overflow: hidden; /* Asegura que las imágenes no se salgan del borde redondeado */
 }
 
-/* FORZAR ALTURA EN CAPAS INTERNAS DE REACT-SLICK */
 .site-carousel .slick-list,
 .site-carousel .slick-track {
   height: 100%;
 }
 
-/* Asegurar que el slide ocupe toda la altura */
 .site-carousel .slick-slide {
   height: 100%;
 }
 
-/* Asegurar que el slide y la imagen llenen el contenedor del carrusel */
 .site-carousel .slick-slide > div {
   height: 100%;
   display: flex;
@@ -1720,7 +1745,6 @@ body:has(.map-page-container) .container {
   bottom: 15px;
 }
 
-  /* Estilos para el carrusel en las páginas de detalle (Sitios y Eventos) */
 .carousel-container {
   position: relative; /* Necesario para que las flechas se posicionen correctamente */
 }
@@ -1758,7 +1782,6 @@ body:has(.map-page-container) .container {
   white-space: pre-wrap;
 }
 
-/* --- Estilos para el editor Tiptap y su contenido --- */
 .tiptap-editor-container {
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -1770,8 +1793,8 @@ body:has(.map-page-container) .container {
   padding: 0.3rem; /* Padding interno de la barra */
   border-bottom: 1px solid #ccc;
   background-color: #f8f9fa;
-  width: fit-content; /* La barra solo ocupa el espacio de su contenido */
-  border-radius: 6px 6px 0 0; /* Bordes redondeados solo arriba */
+  width: fit-content;
+  border-radius: 6px 6px 0 0;
 }
 
 .editor-toolbar button {
@@ -1780,7 +1803,7 @@ body:has(.map-page-container) .container {
   padding: 0.25rem;
   border-radius: 4px;
   cursor: pointer;
-  width: 34px; /* Aumentada la altura y ancho */
+  width: 34px;
   height: 34px;
   display: flex;
   align-items: center;
@@ -1790,12 +1813,12 @@ body:has(.map-page-container) .container {
 }
 
 .editor-toolbar button:hover {
-  background-color: #e9ecef; /* Hover sutil */
+  background-color: #e9ecef;
 }
 
 .editor-toolbar button.is-active {
-  background-color: #e0e0e0; /* Color de fondo más sutil para el botón activo */
-  color: #000; /* Icono negro para indicar actividad */
+  background-color: #e0e0e0;
+  color: #000;
 }
 
 .toolbar-dropdown-container {
@@ -1851,7 +1874,6 @@ body:has(.map-page-container) .container {
   margin: 0;
 }
 
-/* Estilos para mostrar el contenido del editor */
 .ql-editor-display, .ProseMirror {
   font-size: 1.1rem;
   line-height: 1.6;
@@ -1862,16 +1884,12 @@ body:has(.map-page-container) .container {
 .ProseMirror p, .ProseMirror ul, .ProseMirror ol {
   margin-bottom: 1rem;
 }
-/* Estilos de alineación para el contenido renderizado */
 .ql-editor-display [style*="text-align: center"], .ProseMirror [style*="text-align: center"] { text-align: center; }
 .ql-editor-display [style*="text-align: right"], .ProseMirror [style*="text-align: right"] { text-align: right; }
 .ql-editor-display [style*="text-align: justify"], .ProseMirror [style*="text-align: justify"] { text-align: justify; }
 
 
 
-/* --- Fin estilos Tiptap --- */
-
-/* --- Contenedor principal de botones de acción --- */
 .site-actions-container {
   display: flex;
   justify-content: space-between; /* Separa los dos grupos */
@@ -1891,7 +1909,7 @@ body:has(.map-page-container) .container {
 .social-group-container {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* Alinea el contenido a la izquierda */
+  align-items: flex-start;
 }
 
 .social-group-title {
@@ -1905,13 +1923,13 @@ body:has(.map-page-container) .container {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.6rem 1rem; /* Padding reducido para botones más pequeños */
+  padding: 0.6rem 1rem;
   border-radius: 8px;
-  border: none; /* Asegura que no haya contorno */
+  border: none;
   text-decoration: none;
   color: white;
   font-weight: 600;
-  font-size: 0.9rem; /* Texto más pequeño */
+  font-size: 0.9rem;
   transition: transform 0.2s ease;
 }
 
@@ -1919,28 +1937,26 @@ body:has(.map-page-container) .container {
   transform: translateY(-2px);
 }
 
-/* --- Botones de redes sociales (solo icono) --- */
 .social-icon {
-  background: none !important; /* Sin fondo */
-  padding: 0.5rem; /* Espacio de clic */
-  border-radius: 50%; /* Borde redondeado para el hover */
-  color: #555; /* Color por defecto */
+  background: none !important;
+  padding: 0.5rem;
+  border-radius: 50%;
+  color: #555;
   transition: background-color 0.2s ease;
 }
 
 .social-icon:hover {
-  background-color: #f0f0f0 !important; /* Fondo sutil al pasar el mouse */
+  background-color: #f0f0f0 !important;
 }
 
-/* Colores de marca para cada red social */
 .whatsapp-button.social-icon { color: #25D366; }
 .facebook-button.social-icon { color: #1877F2; }
 
 .map-button { background-color: #17a2b8; }
-.share-button { background-color: #20c997; } /* Cambiado a un color verde azulado (teal) */
+.share-button { background-color: #20c997; }
 
 .action-button .action-icon {
-  width: 28px; /* Aumentado el tamaño del icono */
+  width: 28px;
   height: 28px;
   display: block; /* Soluciona la deformación del icono de Instagram */
 }
@@ -1995,7 +2011,7 @@ body:has(.map-page-container) .container {
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
 }
 
-/* ---------- Info Pages (History, About) ---------- */
+/* ---------- Páginas de Información (Historia, etc.) ---------- */
 .info-page-container {
   max-width: 800px;
   margin: 2rem auto;
@@ -2293,7 +2309,7 @@ body:has(.map-page-container) .container {
   cursor: pointer;
   z-index: 1001;
   transition: transform 0.2s ease, background-color 0.2s ease;
-  border: 1.1px solid rgba(0, 0, 0, 3) !important;
+  border: 1.1px solid rgba(0, 0, 0, 0.3) !important;
   backdrop-filter: blur(10px);
 }
 
@@ -2635,8 +2651,9 @@ body:has(.map-page-container) .container {
 }
 
 /* ==========================================================================
-   6. FEATURES
+   7. CARACTERÍSTICAS (FEATURES)
    ========================================================================== */
+
 .form-section {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
@@ -2776,7 +2793,6 @@ body:has(.map-page-container) .container {
   word-wrap: break-word;
 }
 
-/* --- SOLUCIÓN: Estilo para resaltar comentario --- */
 .comment-item.highlight-comment {
   background-color: #f8d7da; /* Color de fondo rojo claro para alerta */
   border-radius: 8px;
@@ -2811,7 +2827,7 @@ body:has(.map-page-container) .container {
   color: #6c757d;
   cursor: pointer;
   padding: 0.25rem;
-  margin-left: 0.5rem;
+  margin-left: 0.5rem; /* Espacio entre nombre y botón */
   font-size: 1.2rem; /* Hacer el ícono más grande */
   transition: color 0.2s;
 }
@@ -3417,13 +3433,9 @@ body:has(.map-page-container) .container {
     padding: 1rem 0.5rem; /* Reducido el padding horizontal para aprovechar más la pantalla */
   }
 
-  /* Eliminamos las reglas de posicionamiento y tamaño de aquí, 
-     para que use las de la clase principal y se comporte igual que el buscador */
   .hamburger {}
 
-  /* Home */
   .home-header-carousel, .header-slide {
-    /* SOLUCIÓN: Usar aspect-ratio también en móvil pero con min-height */
     aspect-ratio: 16 / 9;
     min-height: 300px; /* Evita que sea demasiado pequeño en pantallas muy anchas */
   }
@@ -3441,7 +3453,6 @@ body:has(.map-page-container) .container {
     font-size: 1.4rem;
   }
 
-  /* Calendar */
   .calendar-page-container {
     padding: 1rem;
   }
@@ -3463,7 +3474,6 @@ body:has(.map-page-container) .container {
     width: 100%;
   }
 
-  /* Dashboard */
   .dashboard-menu {
     grid-template-columns: 1fr;
   }
@@ -3472,7 +3482,6 @@ body:has(.map-page-container) .container {
     padding: 1rem;
   }
 
-  /* Forms */
   .add-site-container {
     padding: 1rem;
   }
@@ -3481,7 +3490,6 @@ body:has(.map-page-container) .container {
     height: 400px !important;
   }
 
-  /* Map */
   .map-page-container h1 {
     font-size: 1.1rem;
     padding: 0.4rem 0rem;
@@ -3491,8 +3499,7 @@ body:has(.map-page-container) .container {
   .map-info-banner {
     top: 70px;
     font-size: 0.85rem;
-    padding: 0.5rem .5rem; /* Restaurado para ser más compacto */
-    /* Se eliminan las reglas que lo hacían más grande en móvil */
+    padding: 0.5rem .5rem;
   }
 
   .map-info-banner-close {
@@ -3505,76 +3512,9 @@ body:has(.map-page-container) .container {
     top: 90px;
   }
 
-  /* Contenedores de página específicos */
   .site-detail-container, .profile-container {
     padding: 1rem;
   }
-
-  /* Footer: Compactación y una sola columna */
-  .footer-content {
-    grid-template-columns: 1fr; /* Forzar 1 columna */
-    gap: 0; /* Eliminar el espacio entre filas/secciones */
-    max-width: 100%;
-    padding: 0 0.5rem; /* Padding lateral reducido */
-  }
-  
- .footer-section {
-    padding: 0.75rem 0; /* Padding vertical, sin padding lateral */
-    margin-bottom: 0;
-    text-align: center;
-    border-bottom: 1px solid #5a6268;
-    min-width: unset;
-  }
-
- .footer-section:first-child {
-    padding-top: 0;
-  }
-
-  .footer-section:last-of-type {
-    border-bottom: none; /* La última sección no necesita borde inferior */
-  }
-
-  .footer-section h4 {
-    text-align: center;
-    font-size: 1.1rem; 
-    padding-bottom: 0.3rem;
-  }
-  
-  .footer-item, .footer-link {
-    justify-content: center; 
-    text-align: center;
-  }
-  
-  .footer-section p {
-    margin: 0.1rem 0; /* Espacio interno mínimo */
-    font-size: 0.8rem; /* Tamaño más pequeño */
-  }
-  
-
-  
-  /* Mostrar Crédito Técnico como pie de página separado */
-  .footer-container > .footer-developer-credit {
-    display: block;
-    background-color: #333d47;
-    border-top: 1px solid #5a6268;
-    padding: 0.5rem;
-    text-align: center;
-  }
-
-  /* Mostrar el crédito técnico final (el div extra) */
-  .footer-container > .footer-developer-credit {
-    display: block; 
-    text-align: center;
-    padding-top: 0.5rem;
-    /* Los estilos de fuente ya se definieron para ser compactos */
-  }
-
-  /* Footer más compacto - Estilos heredados del footer-container (no deben sobreescribir) */
-  .footer-container {
-    padding: 1.5rem 1rem;
-    margin-top: 2rem;
-  }
-
 
   /* Perfil de Usuario */
   .profile-info {
@@ -3586,7 +3526,6 @@ body:has(.map-page-container) .container {
     text-align: center;
   }
 
-  /* Schedules */
   .activity-fields {
     grid-template-columns: 1fr;
   }
@@ -3595,7 +3534,6 @@ body:has(.map-page-container) .container {
     margin-top: 0.5rem;
   }
 
-  /* Ocultar flechas del modal en móvil, se usa swipe */
   .image-modal-slider-container .slick-prev,
   .image-modal-slider-container .slick-next {
     display: none !important;
@@ -3611,7 +3549,6 @@ body:has(.map-page-container) .container {
     font-size: 1.4rem;
   }
 }
-/* ---------- Login Page ---------- */
 .login-container {
   display: flex;
   justify-content: center;
@@ -3731,7 +3668,6 @@ body:has(.map-page-container) .container {
   text-decoration: underline;
 }
 
-/* ---------- Map Page ---------- */
 .map-page-container {
   min-height: 100vh;
   position: relative;
@@ -3766,12 +3702,12 @@ body:has(.map-page-container) .container {
   left: 50%;
   transform: translateX(-50%);
   z-index: 999;
-  background-color: rgba(240, 248, 255, 0.95);
+  background-color: rgba(240, 248, 255, 0.95); /* Fondo azulado claro */
   backdrop-filter: blur(10px);
-  border-radius: 6px; /* REDUCIDO: Era 20px */
-  padding: 0.4rem 0.8rem; /* REDUCIDO: Era 0.6rem 1.5rem */
-  border: 1px solid rgba(23, 162, 184, 0.2); /* MÁS SUTIL */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* REDUCIDO */
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(23, 162, 184, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3784,8 +3720,8 @@ body:has(.map-page-container) .container {
 .map-info-banner p {
   margin: 0;
   color: #555;
-  font-size: 0.85rem; /* REDUCIDO: Para más compacto */
-  font-weight: 500; /* AÑADIDO: Para mejor legibilidad */
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 .map-info-banner strong {
@@ -3811,9 +3747,9 @@ body:has(.map-page-container) .container {
   background: none;
   border: none;
   color: #888;
-  font-size: 1.2rem; /* REDUCIDO: Era 1.5rem */
+  font-size: 1.2rem;
   line-height: 1;
-  padding: 0 0.2rem; /* REDUCIDO: Era 0.5rem */
+  padding: 0 0.2rem;
   cursor: pointer;
   flex-shrink: 0;
   z-index: 1001;
@@ -3830,7 +3766,6 @@ body:has(.map-page-container) .container {
   z-index: 1;
 }
 
-/* --- CONTENEDOR UNIFICADO SIMPLE --- */
 .navigation-controls-unified {
   display: flex;
   flex-direction: column;
@@ -3839,7 +3774,6 @@ body:has(.map-page-container) .container {
   padding: 0;
 }
 
-/* --- TODOS LOS BOTONES IDÉNTICOS --- */
 .control-button {
   background-color: #fff !important;
   border: 2px solid rgba(0,0,0,0.2) !important;
@@ -3861,14 +3795,12 @@ body:has(.map-page-container) .container {
   pointer-events: auto !important;
 }
 
-/* Estados activos */
 .control-button.active {
   background-color: #007bff !important;
   border-color: #0056b3 !important;
   color: white !important;
 }
 
-/* Hover */
 .control-button:hover {
   background-color: #f0f0f0 !important;
   transform: scale(1.05) !important;
@@ -3878,7 +3810,6 @@ body:has(.map-page-container) .container {
   transform: scale(1.05) !important;
 }
 
-/* Posicionamiento centrado verticalmente EN EL MEDIO de la pantalla */
 .leaflet-top.leaflet-right {
   top: 50% !important;
   right: 5px !important;
@@ -3909,21 +3840,21 @@ body:has(.map-page-container) .container {
 
 .help-text {
   font-size: 9px !important;
-  color: #000 !important; /* NEGRO para máxima visibilidad */
+  color: #000 !important;
   cursor: pointer !important;
   text-align: center !important;
   display: block !important;
   padding: 1px !important;
   user-select: none !important;
   font-weight: bold !important;
-  background-color: rgba(255, 255, 255, 0.8) !important; /* FONDO BLANCO */
+  background-color: rgba(255, 255, 255, 0.8) !important;
   border-radius: 2px !important;
 }
 
 .help-tooltip {
   position: absolute;
   top: -10px;
-  right: 45px; /* CAMBIADO: Ahora aparece a la izquierda del botón */
+  right: 45px;
   background-color: rgba(0, 0, 0, 0.9);
   color: white;
   padding: 8px 10px;
@@ -3943,11 +3874,11 @@ body:has(.map-page-container) .container {
 .help-tooltip::before {
   content: '';
   position: absolute;
-  right: -5px; /* CAMBIADO: Flecha ahora apunta hacia la derecha */
+  right: -5px;
   top: 50%;
   transform: translateY(-50%);
   border: 5px solid transparent;
-  border-left-color: rgba(0, 0, 0, 0.9); /* CAMBIADO: Flecha hacia la izquierda */
+  border-left-color: rgba(0, 0, 0, 0.9);
 }
 
 .help-tooltip strong {
@@ -3964,19 +3895,16 @@ body:has(.map-page-container) .container {
   opacity: 1;
 }
 
-/* --- Marcador del usuario SIMPLE --- */
 .user-location-simple-icon {
   background: transparent !important;
   border: none !important;
 }
 
-/* --- Marcador manual (punto B) --- */
 .manual-marker-icon {
   background: transparent !important;
   border: none !important;
 }
 
-/* Optimización básica para el mapa */
 .leaflet-container {
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -3986,7 +3914,6 @@ body:has(.map-page-container) .container {
 .custom-leaflet-div-icon {
   background: transparent;
   border: none;
-  /* Optimización de rendimiento */
   will-change: transform;
 }
 
@@ -4022,7 +3949,6 @@ body:has(.map-page-container) .container {
   }
 }
 
-/* --- RUTAS ALTERNATIVAS --- */
 .alternative-routes-panel {
   margin-bottom: 60px !important;
   margin-right: 10px !important;
@@ -4072,12 +3998,10 @@ body:has(.map-page-container) .container {
   box-shadow: 0 2px 4px rgba(0, 86, 179, 0.3);
 }
 
-/* Ocultar panel de control por defecto de Leaflet Routing Machine */
 .leaflet-routing-container {
   display: none !important;
 }
 
-/* --- ATRIBUCIONES LEAFLET --- */
 .leaflet-control-attribution {
   margin-bottom: 20px !important;
   margin-right: 5px !important;
@@ -4087,7 +4011,7 @@ body:has(.map-page-container) .container {
   max-width: 90% !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  white-space: nowrap !important; /* NUEVO: Una sola línea */
+  white-space: nowrap !important;
 }
 
 .leaflet-control-layers {
@@ -4095,7 +4019,6 @@ body:has(.map-page-container) .container {
   margin-right: 10px !important;
 }
 
-/* Leaflet Controls Positioning */
 .leaflet-top.leaflet-right {
   top: 50%;
   right: 2px; /* PEGADO al borde derecho */
@@ -4126,7 +4049,6 @@ body:has(.map-page-container) .container {
   cursor: pointer;
 }
 
-/* Custom Popup Styles MEJORADOS */
 .custom-popup h4 {
   margin: 0 0 0.1px 0;
   color: #333;
@@ -4272,49 +4194,6 @@ body:has(.map-page-container) .container {
   line-height: 1.5;
 }
 
-/* AJUSTES ESPECÍFICOS PARA MÓVILES */
-@media (max-width: 768px) {
-  .follow-me-button {
-    width: 55px;
-    height: 55px;
-    font-size: 26px;
-  }
-
-  .alternative-routes-panel {
-    margin-bottom: 30px !important;
-    margin-right: 5px !important;
-  }
-
-  .alternative-routes-control {
-    min-width: 160px;
-    font-size: 11px;
-  }
-
-  .leaflet-control-attribution {
-    font-size: 8px !important;
-    margin-bottom: 5px !important;
-    padding: 2px 4px !important;
-  }
-
-  .custom-popup {
-    min-width: 150px;
-  }
-
-  .popup-route-button,
-  .popup-link {
-    font-size: 0.85em;
-    padding: 8px 10px;
-    display: block;
-    width: 100%;
-    text-align: center;
-    margin: 5px 0;
-  }
-}
-
-/* ==========================================================================
-   Admin Moderation List (NUEVO)
-   ========================================================================== */
-
 .simple-list-container {
   background-color: #fff;
   border: 1px solid #995858;
@@ -4326,11 +4205,11 @@ body:has(.map-page-container) .container {
 .simple-list-header,
 .simple-list-item {
   display: grid;
-  grid-template-columns: 3fr 80px 1.5fr 1.5fr 1.6fr;
+  grid-template-columns: 3fr 80px 1.5fr 1.5fr 1.8fr;
   gap: 1rem;
   align-items: center;
-  padding: 0.5rem 0.8rem;
-  border-bottom: 1px solid #995858;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
   transition: background-color 0.2s ease;
 }
 
@@ -4364,7 +4243,7 @@ body:has(.map-page-container) .container {
 
 .comment-text-cell {
   font-style: italic;
-  font-size: 14px;
+  font-size: 0.9rem;
   color: #333;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -4372,7 +4251,7 @@ body:has(.map-page-container) .container {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: normal;
-  line-height: 1.2;
+  line-height: 1.4;
 }
 
 .report-count-cell {
@@ -4388,8 +4267,8 @@ body:has(.map-page-container) .container {
 .simple-list-item span:nth-child(3),
 .simple-list-item span:nth-child(4) {
   text-align: center;
-  font-weight: 400;
-  color: #373b3f;
+  font-weight: 500;
+  color: #343a40;
 }
 
 .moderation-actions-simple {
@@ -4399,7 +4278,7 @@ body:has(.map-page-container) .container {
 }
 
 .moderation-actions-simple button {
-  padding: 0.2rem 0.2rem;
+  padding: 0.4rem 0.8rem;
   font-size: 0.8rem;
   border-radius: 4px;
   border: 0.5px solid #ccc;
@@ -4417,7 +4296,6 @@ body:has(.map-page-container) .container {
   min-width: 750px;
 }
 
-/* Para pantallas MUY pequeñas */
 @media (max-width: 480px) {
   .leaflet-control-attribution {
     font-size: 7px !important;
@@ -4437,8 +4315,6 @@ body:has(.map-page-container) .container {
     font-size: 0.8rem;
   }
 }
-
-/* --- Estilos para Páginas Legales (Términos y Privacidad) --- */
 
 .legal-page-container {
     padding: 25px 15px; 
@@ -4508,84 +4384,6 @@ body:has(.map-page-container) .container {
     text-align: left;
 }
 
-/* Ajuste para móvil de páginas legales */
-@media (max-width: 600px) {
-    .legal-page-container h1 {
-        font-size: 1.8rem;
-    }
-}
-
-/* --- Estilos para Páginas Legales (Términos y Privacidad) --- */
-
-.legal-page-container {
-    padding: 25px 15px; /* Padding para móvil */
-    max-width: 900px; /* Limitar el ancho para mejor lectura */
-    margin: 0 auto;
-    line-height: 1.65;
-    color: #333;
-    background-color: #ffffff; 
-    min-height: 80vh; 
-}
-
-.legal-page-container h1 {
-    color: #0d47a1; /* Azul gubernamental oscuro */
-    font-size: 2.2rem;
-    margin-bottom: 0.5rem;
-    text-align: center;
-    font-weight: 800;
-}
-
-.legal-page-container h2 {
-    color: #1e88e5; /* Azul medio */
-    font-size: 1.6rem;
-    margin-top: 2rem;
-    border-bottom: 2px solid #e0e0e0; /* Línea de separación sutil */
-    padding-bottom: 0.5rem;
-}
-
-.legal-page-container h3 {
-    color: #424242;
-    font-size: 1.25rem;
-    margin-top: 1.25rem;
-    font-weight: 700;
-}
-
-.legal-page-container p {
-    margin-bottom: 1rem;
-    text-align: justify;
-}
-
-.legal-page-container ul, .legal-page-container ol {
-    margin-bottom: 1rem;
-    padding-left: 20px;
-}
-
-.legal-page-container li {
-    margin-bottom: 0.75rem;
-}
-
-.last-updated {
-    font-style: italic;
-    color: #777;
-    margin-bottom: 2rem;
-    text-align: center;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 1rem;
-}
-
-.important-note {
-    background-color: #f8d7da; /* Rojo/Rosa suave para notas críticas */
-    border-left: 5px solid #dc3545;
-    padding: 15px;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    font-weight: 600;
-    color: #721c24;
-    border-radius: 4px;
-    text-align: left;
-}
-
-/* Ajuste para móvil */
 @media (max-width: 600px) {
     .legal-page-container h1 {
         font-size: 1.8rem;

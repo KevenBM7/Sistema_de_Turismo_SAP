@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 
 function TermsPage() {
   const lastUpdated = "11 de Noviembre de 2025"; // Fecha de referencia
-  const legalContactEmail = "contacto.legal@municipalidadsap.gob.gt"; // Email para contacto legal
 
   return (
     <div className="legal-page-container">
@@ -59,11 +58,6 @@ function TermsPage() {
       <section>
         <h2>4. Propiedad Intelectual</h2>
         <p>La Municipalidad de San Antonio Palopó posee los derechos sobre el código, diseño y contenidos originales de la App. Cualquier uso no autorizado está prohibido.</p>
-      </section>
-
-      <section>
-        <h2>5. Legislación y Contacto</h2>
-        <p>Estos Términos se rigen por las leyes de la República de Guatemala. Para consultas o reportes de infracciones, contáctenos en <a href={`mailto:${legalContactEmail}`}>{legalContactEmail}</a>.</p>
       </section>
     </div>
   );
