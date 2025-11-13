@@ -1,0 +1,221 @@
+/* ---------- Profile Page ---------- */
+.profile-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.profile-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: left;
+  margin-bottom: 3rem;
+}
+
+.profile-card h2 {
+  text-align: center;
+  margin-top: 0;
+}
+
+.profile-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.profile-photo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-photo {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.profile-photo-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.profile-photo-actions button {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.profile-info p {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.name-display-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.edit-name-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.name-edit-form {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.name-edit-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.name-edit-form button {
+  margin-right: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.name-edit-form button[type="submit"] {
+  background-color: #007bff;
+  color: white;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.logout-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.delete-account-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.favorites-section {
+  text-align: left;
+}
+
+.favorites-section h3 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.user-reviews-section {
+  margin-top: 3rem;
+  text-align: left;
+}
+
+.user-reviews-section h3 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.user-reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.user-review-item.compact {
+  background-color: #f8f9fa;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  transition: box-shadow 0.2s ease;
+}
+
+.user-review-item.compact:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.4rem;
+}
+
+.review-site-name {
+  font-weight: 600;
+  color: #0056b3;
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.review-site-name:hover {
+  text-decoration: underline;
+}
+
+.review-date {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.review-text {
+  font-style: italic;
+  color: #495057;
+  margin: 0 !important;
+  font-size: 0.9rem !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 1rem;
+  }
+  .profile-info {
+    flex-direction: column;
+    align-items: center;
+  }
+  .profile-info > div:last-child {
+    text-align: center;
+  }
+}

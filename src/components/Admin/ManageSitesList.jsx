@@ -3,6 +3,8 @@ import { collection, query, onSnapshot, orderBy, deleteDoc, doc, getDocs, where 
 import { db, storage } from '../../services/firebase';
 import { ref, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Link } from 'react-router-dom';
+import '../AdminForms.css';
+import '../Buttons.css';
 
 function ManageSitesList({ onEditSite }) {
   const [sites, setSites] = useState([]);

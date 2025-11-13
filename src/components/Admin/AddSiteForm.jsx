@@ -10,6 +10,10 @@ import RichTextEditor from './RichTextEditor'; // Importamos el nuevo editor
 import toast from 'react-hot-toast';
 import slugify from 'slugify'; // Importamos la librería para generar slugs
 import { db, storage } from '../../services/firebase';
+import '../AdminForms.css';
+import '../Forms.css';
+import '../Buttons.css';
+
 
 // --- CORRECCIÓN PARA ICONOS DE LEAFLET ---
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -45,6 +49,7 @@ function AddSiteForm({ siteToEdit }) {
   const [imagePreviews, setImagePreviews] = useState([]);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  
 
   useEffect(() => {
     if (isEditMode && siteToEdit) {

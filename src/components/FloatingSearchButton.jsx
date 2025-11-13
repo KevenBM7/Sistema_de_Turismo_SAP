@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import SearchOverlay from './SearchOverlay';
+import './FloatingSearchButton.css';
 
 function FloatingSearchButton() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

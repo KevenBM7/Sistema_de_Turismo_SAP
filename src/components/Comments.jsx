@@ -4,6 +4,8 @@ import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import './Comments.css';
+import './Buttons.css';
 
 const Star = ({ filled, onClick }) => (
   <span onClick={onClick} style={{ cursor: 'pointer', color: filled ? '#ffc107' : '#e4e5e9', fontSize: '2rem' }} onKeyDown={(e) => e.key === 'Enter' && onClick()} role="button" tabIndex={0}>

@@ -4,6 +4,8 @@ import { db } from '../../services/firebase';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import '../AdminForms.css';
+import '../Buttons.css';
 
 function AdminModeration() {
   const [reportedComments, setReportedComments] = useState([]);

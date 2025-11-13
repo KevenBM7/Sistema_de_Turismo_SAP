@@ -10,6 +10,7 @@ import Comments from '../components/Comments';
 import SiteDetailSkeleton from '../components/SiteDetailSkeleton'; // Importar el skeleton
 import { useAuth } from '../context/AuthContext';
 import { Map, Share2, Edit, Heart } from 'lucide-react';
+import './SiteDetailPage.css';
 
 function SiteDetailPage() {
   const { categoryName, slug, id } = useParams(); // Ahora también obtenemos el 'id'

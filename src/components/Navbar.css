@@ -1,0 +1,171 @@
+/* --- Estilos del Navbar --- */
+.navbar {
+  transition: transform 0.3s ease-in-out;
+  top: 60px;
+  width: 100%;
+  z-index: 900;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-150%);
+  transition: transform 0.4s ease-in-out;
+  display: flex;
+  justify-content: center;
+}
+
+.navbar-links {
+  position: fixed;
+  left: -100%;
+  top: 0;
+  height: 100vh;
+  gap: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: #02264a;
+  width: auto;
+  max-width: 80%;
+  text-align: left;
+  transition: left 0.3s ease-in-out;
+  padding-top: 0;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.9);
+  z-index: 1001;
+}
+
+.navbar-hidden {
+  transform: translateY(-100%);
+}
+
+.navbar-logo-container {
+  padding: 0.5rem 0rem;
+  text-align: center;
+  margin-bottom: 0.2rem;
+}
+
+.navbar-logo {
+  height: 110px;
+  width: auto;
+  transition: transform 0.2s ease;
+}
+.navbar-logo:hover {
+  transform: scale(1.05);
+}
+.navbar-links.active {
+  left: 0;
+}
+
+.navbar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.navbar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.navbar-links a,
+.navbar-links .navbar-button {
+  width: 100%;
+  padding: 0.7rem 1.5rem;
+  border-bottom: 0.5px solid #444;
+  box-sizing: border-box;
+  text-align: left;
+  color: #ddd;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.navbar-links a.active {
+  background-color: #007bff;
+  border-bottom-color: #007bff;
+  color: white;
+}
+
+.navbar-links .navbar-button {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.navbar-links a:hover,
+.navbar-links .navbar-button:hover {
+  background-color: #6b747d;
+}
+
+/* Anular específicamente el hover para el contenedor del logo y cualquier enlace dentro */
+.navbar-logo-container:hover,
+.navbar-logo-container a:hover {
+  background-color: transparent !important;
+}
+
+/* --- Estilos del Hamburguer --- */
+.hamburger {
+  display: flex !important;
+  cursor: pointer;
+  position: fixed !important; 
+  top: 3px !important;
+  left: 3px !important;
+  z-index: 1001 !important;
+  width: 45px !important;
+  height: 45px !important;
+  border-radius: 50% !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease-in-out;
+  border: 1px solid !important;
+  padding: 12px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+.hamburger .bar {
+  display: block;
+  width: 20px;
+  height: 3.1px;
+  margin: 3.1px auto;
+  transition: all 0.3s ease-in-out;
+  border-radius: 1px;
+}
+
+@media (prefers-color-scheme: light) {
+  .hamburger {
+    background-color: white !important;
+    border-color: black !important;
+  }
+
+  .hamburger .bar {
+    background-color: black !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .hamburger {
+    background-color: black !important;
+    border-color: white !important;
+  }
+
+  .hamburger .bar {
+    background-color: white !important;
+  }
+}
+
+.hamburger.active .bar:nth-child(1) {
+  transform: translateY(9px) rotate(45deg);
+}
+
+.hamburger.active .bar:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.active .bar:nth-child(3) {
+  transform: translateY(-9px) rotate(-45deg);
+}

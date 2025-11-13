@@ -1,0 +1,22 @@
+/* --- Category Group Skeleton --- */
+.category-group-skeleton {
+  margin-bottom: 1.5rem;
+  animation: pulse-bg 1.5s infinite alternate;
+}
+
+.skeleton-group-title {
+  width: 30%;
+  height: 24px;
+  background-color: #e0e0e0;
+  margin: 0 auto 1rem auto;
+  border-radius: 4px;
+}
+
+.skeleton-buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.skeleton-cat-button { width: 120px; height: 36px; background-color: #e0e0e0; border-radius: 20px; }
+.skeleton-cat-button.short { width: 90px; }

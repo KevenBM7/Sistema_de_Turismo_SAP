@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, orderBy, doc, deleteDoc, collectionGroup, where } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { useAuth } from '../../context/AuthContext';
-import { useLocation } from 'react-router-dom';
-import { db, storage } from '../../services/firebase'; // Asegúrate de que toast esté importado
+// Cambio importante: Importar 'Link' desde 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'; 
+import { db, storage } from '../../services/firebase'; 
 import toast from 'react-hot-toast';
 import AddSiteForm from '../../components/Admin/AddSiteForm';
 import AddEventForm from '../../components/Admin/AddEventForm';
 import ManageHomePage from '../../components/Admin/ManageHomePage';
-import AdminModeration from '../../components/Admin/AdminModeration'; // Importar el panel de moderación
+import AdminModeration from '../../components/Admin/AdminModeration';
+import '../Admin.css';
+import '../../components/Buttons.css';
 
 function Dashboard() {
   const { currentUser } = useAuth();
@@ -16,9 +19,9 @@ function Dashboard() {
   
   const [sites, setSites] = useState([]);
   // Estados para controlar qué vista mostrar
-  const [activeView, setActiveView] = useState('menu'); // 'menu', 'home', 'addSite', 'editSite', 'manageSites', 'manageEvents', 'manageComments'
+  const [activeView, setActiveView] = useState('menu'); 
   const [siteToEdit, setSiteToEdit] = useState(null);
-  const [reportedCommentsCount, setReportedCommentsCount] = useState(0); // Estado para la notificación
+  const [reportedCommentsCount, setReportedCommentsCount] = useState(0); 
 
   // Detectar si venimos de "Editar sitio" desde ManageSitesList
   useEffect(() => {
@@ -41,7 +44,7 @@ function Dashboard() {
     }
   }, [activeView]);
 
-  // SOLUCIÓN: Cargar el número de comentarios reportados para la notificación
+  // Cargar el número de comentarios reportados para la notificación
   useEffect(() => {
     const q = query(collectionGroup(db, 'comments'), where('reports', '>=', 1));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -145,7 +148,7 @@ function Dashboard() {
           </button>
 
           <button 
-            className="dashboard-menu-button add-button" // Puedes crear un color específico si quieres
+            className="dashboard-menu-button add-button" 
             onClick={() => setActiveView('manageEvents')}
           >
             <span className="button-icon">🗓️</span>
@@ -153,12 +156,10 @@ function Dashboard() {
             <span className="button-description">Añade o elimina ferias, festivales y actividades.</span>
           </button>
 
-          {/* --- SOLUCIÓN: Nueva tarjeta para moderación de comentarios --- */}
           <button 
-            className="dashboard-menu-button manage-button" // Puedes crear un color específico si quieres
+            className="dashboard-menu-button manage-button" 
             onClick={() => setActiveView('manageComments')}
           >
-            {/* --- SOLUCIÓN: Notificación de alerta --- */}
             {reportedCommentsCount > 0 && (
               <span className="notification-badge">{reportedCommentsCount}</span>
             )}
@@ -241,7 +242,13 @@ function Dashboard() {
                   <span className="manage-site-category">{site.category}</span>
                 </div>
                 <div className="manage-site-actions">
-                  <a href={`/categoria/${encodeURIComponent(site.parentCategory)}/${site.slug}`} target="_blank" rel="noopener noreferrer" className="view-button">Ver</a>
+                  {/* El enlace 'Ver' ahora usa el componente Link */}
+                  <Link 
+                    to={`/categoria/${encodeURIComponent(site.parentCategory)}/${site.slug}`} 
+                    className="view-button"
+                  >
+                    Ver
+                  </Link>
                   <button 
                     onClick={() => handleEditSite(site)} 
                     className="edit-button"
@@ -278,7 +285,7 @@ function Dashboard() {
     );
   }
 
-  // --- SOLUCIÓN: Vista para gestionar comentarios ---
+  // Vista para gestionar comentarios
   if (activeView === 'manageComments') {
     return (
       <div className="dashboard-container">
@@ -294,7 +301,7 @@ function Dashboard() {
     );
   }
 
-  return null; // Retorno por defecto si ninguna vista coincide
+  return null; 
 }
 
 export default Dashboard;

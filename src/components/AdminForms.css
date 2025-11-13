@@ -1,0 +1,559 @@
+/* src/components/AdminForms.css */
+
+/* ------------------------------------------------------------------
+   1. Estructura de Formularios de Administración
+   ------------------------------------------------------------------ */
+.add-site-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.add-site-container h3 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.add-site-form {
+  width: 100%;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* ------------------------------------------------------------------
+   2. Elementos Reutilizados
+   ------------------------------------------------------------------ */
+
+/* Edit/Notice Styles */
+.edit-notice {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.edit-notice p {
+  margin: 0;
+  color: #856404;
+  font-weight: 600;
+}
+
+/* Map/Coordinates/Image Uploads Layout */
+.coordinates-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.map-instructions {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.location-picker-map {
+  height: 600px !important;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #ddd;
+  margin-top: 0.5rem;
+  z-index: 0;
+}
+
+.image-preview-container {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.image-preview {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.image-preview-wrapper {
+  position: relative;
+}
+
+.delete-image-button {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 24px;
+  text-align: center;
+  padding: 0;
+}
+
+/* ------------------------------------------------------------------
+   3. Listas de Gestión (Manage Sites/Moderation)
+   ------------------------------------------------------------------ */
+.manage-sites-container {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-top: 2rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+.manage-sites-container h3 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.manage-sites-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.manage-site-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.manage-site-item:last-child {
+  border-bottom: none;
+}
+
+.manage-site-thumbnail {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 1rem;
+}
+
+.manage-site-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.manage-site-name {
+  font-weight: bold;
+}
+
+.manage-site-category {
+  font-size: 0.8rem;
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  margin-top: 0.25rem;
+  align-self: flex-start;
+}
+
+.manage-site-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Admin Moderation List (Simple List) */
+.simple-list-container {
+  background-color: #fff;
+  border: 1px solid #ddd; /* Corregido a un borde más neutral */
+  padding: 0;
+  margin: 0;
+  overflow-x: auto;
+}
+
+.simple-list-header,
+.simple-list-item {
+  display: grid;
+  grid-template-columns: 3fr 80px 1.5fr 1.5fr 1.8fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s ease;
+}
+
+.simple-list-header {
+  font-weight: bold;
+  color: #333;
+  background-color: #f8f9fa;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  text-align: center;
+  margin: 0;
+}
+
+.simple-list-header span:first-child {
+  text-align: left;
+}
+
+.simple-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comment-text-cell {
+  font-style: italic;
+  font-size: 0.9rem;
+  color: #333;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.report-count-cell {
+  font-weight: bold;
+  text-align: center;
+  background-color: #ffe0e6;
+  color: #c9184a;
+  border-radius: 12px;
+  padding: 0.2rem 0;
+  border: 1px solid #ffb3c1;
+}
+
+.simple-list-item span:nth-child(3),
+.simple-list-item span:nth-child(4) {
+  text-align: center;
+  font-weight: 500;
+  color: #343a40;
+}
+
+.moderation-actions-simple {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.moderation-actions-simple button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  border: 0.5px solid #ccc;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+}
+
+.action-view { background-color: #17a2b8; color: white; border-color: #17a2b8; }
+.action-dismiss { background-color: #6c757d; color: white; border-color: #6c757d; }
+.action-delete { background-color: #dc3545; color: white; border-color: #dc3545; }
+.action-suspend { background-color: #ffc107; color: #212529; border-color: #ffc107; }
+
+.simple-list-header, .simple-list {
+  min-width: 750px;
+}
+
+/* ------------------------------------------------------------------
+   4. Rutas y Programación de Eventos
+   ------------------------------------------------------------------ */
+
+/* Rutas Section */
+.routes-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.routes-section h4 {
+  margin-top: 0;
+  color: #333;
+}
+
+.section-description {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.existing-routes {
+  margin-bottom: 1.5rem;
+}
+
+.routes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+
+.route-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.route-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.route-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.route-description {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.route-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-route-notice {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 0.9rem;
+}
+
+.add-route-form {
+  padding-top: 1rem;
+  border-top: 1px solid #ddd;
+}
+
+.add-route-form h5 {
+  margin: 1rem 0 0.5rem 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.route-form-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Event Scheduling */
+.schedule-section {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 2rem;
+}
+
+.schedule-section h5 {
+  margin: 0;
+}
+
+.toggle-schedule-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.toggle-schedule-button:hover {
+  background-color: #5a6268;
+}
+
+.schedule-builder {
+  margin-top: 1.5rem;
+}
+
+.day-container {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.day-header h6 {
+  margin: 0;
+  font-size: 1rem;
+  color: #495057;
+  font-weight: 600;
+}
+
+.activities-list {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #fafbfc;
+  border-radius: 6px;
+  border: 1px dashed #dee2e6;
+}
+
+.activities-list label {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.activity-item {
+  margin-bottom: 0.6rem;
+}
+
+.activity-fields {
+  display: grid;
+  grid-template-columns: 100px 2fr 3fr 30px;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.activity-fields input {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.activity-fields input:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.remove-activity-button {
+  background-color: transparent;
+  color: #dc3545;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.remove-activity-button:hover {
+  background-color: #dc354520;
+}
+
+.add-activity-button {
+  background-color: transparent;
+  color: #28a745;
+  border: 1px dashed #28a745;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  transition: all 0.2s;
+}
+
+.add-activity-button:hover {
+  background-color: #28a74510;
+}
+
+.add-day-button {
+  background-color: white;
+  color: #007bff;
+  border: 2px dashed #007bff;
+  padding: 0.6rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  width: 100%;
+  margin-top: 0.5rem;
+  transition: all 0.2s;
+}
+
+.add-day-button:hover {
+  background-color: #007bff;
+  color: white;
+  border-style: solid;
+}
+
+/* ------------------------------------------------------------------
+   5. Responsive
+   ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+  .add-site-container {
+    padding: 1rem;
+  }
+  .location-picker-map {
+    height: 400px !important;
+  }
+  .coordinates-group {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+/* src/components/AdminForms.css - AÑADIR ESTE BLOQUE AL FINAL */
+
+/* Responsive Media Queries ESPECÍFICAS DE ADMIN */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+  .add-site-container {
+    padding: 1rem;
+  }
+  .location-picker-map {
+    height: 400px !important;
+  }
+  .coordinates-group {
+    flex-direction: column;
+    gap: 0;
+  }
+}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import './InfoPage.css';
 
 function PrivacyPage() {
 const lastUpdated = "11 de Noviembre de 2025"; // Fecha de referencia

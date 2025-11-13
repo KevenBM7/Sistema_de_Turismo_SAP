@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, where, limit as firestoreLimit } from 'firebase/firestore';
 import { db, storage } from '../services/firebase';
 import { ref, getDownloadURL } from 'firebase/storage';
-import SiteCard from './SiteCard'; // CORRECCIÓN: Importación corregida
+import SiteCard from './SiteCard';
+import './SiteList.css';
 
 function SiteCardSkeleton() {
   return (

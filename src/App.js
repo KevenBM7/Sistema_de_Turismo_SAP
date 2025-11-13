@@ -10,12 +10,13 @@ import AdminRoute from './components/AdminRoute';
 import LoggedInRoute from './components/LoggedInRoute';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
-import './App.css';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { Toaster } from 'react-hot-toast';
 import { usePageLoader } from './hooks/usePageLoader';
 import LazyPageWrapper from './components/LazyPageWrapper.jsx';
+import './styles/Layout.css'; 
+import './styles/Utilities.css'; 
 
 // --- Code Splitting: Carga diferida de componentes de página ---
 const Home = lazy(() => import('./pages/Home'));

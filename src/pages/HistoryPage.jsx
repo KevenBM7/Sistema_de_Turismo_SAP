@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import './InfoPage.css'
 
 function HistoryPage() {
   useEffect(() => {

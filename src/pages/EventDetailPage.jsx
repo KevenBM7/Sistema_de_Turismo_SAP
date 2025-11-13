@@ -5,6 +5,7 @@ import { db } from '../services/firebase';
 import Slider from 'react-slick';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import './EventDetailPage.css';
 
 function EventDetailPage() {
   const { id } = useParams();

@@ -1,4 +1,5 @@
 import React from 'react';
+import './EventCarouselSkeleton.css';
 
 function EventCarouselSkeleton() {
   return (

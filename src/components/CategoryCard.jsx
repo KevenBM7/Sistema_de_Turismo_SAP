@@ -3,6 +3,7 @@ import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db, storage } from '../services/firebase';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { Link } from 'react-router-dom';
+import './CategoryCard.css';
 
 function CategoryCard({ categoryName }) {
   const [imageUrl, setImageUrl] = useState("https://placehold.co/ /EEE/31343C");

@@ -1,0 +1,13 @@
+/* --- Event Carousel Skeleton --- */
+.event-carousel-skeleton {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  animation: pulse-bg 1.5s infinite alternate;
+}
+
+.event-carousel-skeleton .skeleton-slide {
+  height: 550px;
+  border-radius: 12px;
+  background-color: #e0e0e0;
+}

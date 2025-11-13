@@ -1,0 +1,83 @@
+/* Event Schedule Section */
+.event-schedule-section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #eee;
+}
+
+.event-schedule-section h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.schedule-day-container {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.schedule-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #007bff;
+}
+
+.schedule-day-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #343a40;
+}
+
+.schedule-day-date {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.schedule-activities-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.schedule-activity-item {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.schedule-activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-time {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #007bff;
+  flex-shrink: 0;
+  width: 80px;
+}
+
+.activity-details {
+  flex-grow: 1;
+}
+
+.activity-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.activity-description {
+  font-size: 0.95rem;
+  color: #666;
+  margin-top: 0.25rem;
+}

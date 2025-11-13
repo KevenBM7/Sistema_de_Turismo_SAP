@@ -3,6 +3,9 @@ import { useAuth } from '../context/AuthContext';
 import SiteList from '../components/SiteList';
 import UserReviews from '../components/UserReviews';
 import toast, { Toaster } from 'react-hot-toast';
+import './Profile.css';
+import '../components/Forms.css';
+import '../components/Buttons.css';
 function Profile() {
   const { currentUser, logout, updateProfilePicture, deleteProfilePicture, deleteUserAccount, updateDisplayName, toggleFavorite } = useAuth();
   const [error, setError] = useState('');

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import DOMPurify from 'dompurify';
+import './SiteList.css';
 
 // Función para limpiar y obtener texto plano de la descripción HTML
 const getPlainText = (html) => {

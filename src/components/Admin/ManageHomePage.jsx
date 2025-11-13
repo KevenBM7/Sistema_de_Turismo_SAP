@@ -4,6 +4,9 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { db, storage } from '../../services/firebase';
 import imageCompression from 'browser-image-compression';
 import toast from 'react-hot-toast';
+import '../AdminForms.css';
+import '../Forms.css';
+import '../Buttons.css';
 
 function ManageHomePage() {
   const [welcomeText, setWelcomeText] = useState('');

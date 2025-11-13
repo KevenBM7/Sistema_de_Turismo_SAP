@@ -6,6 +6,9 @@ import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
+import '../AdminForms.css';
+import '../Forms.css';
+import '../Buttons.css';
 
 function AddEventForm() {
   const [events, setEvents] = useState([]);

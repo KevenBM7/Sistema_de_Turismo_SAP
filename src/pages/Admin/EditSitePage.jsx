@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import AddSiteForm from '../../components/Admin/AddSiteForm';
+import '../../components/Buttons.css';
 
 function EditSitePage() {
   const { id } = useParams();

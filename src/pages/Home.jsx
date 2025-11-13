@@ -9,6 +9,10 @@ import EventCarouselSkeleton from '../components/EventCarouselSkeleton';
 import CategoryGroupSkeleton from '../components/CategoryGroupSkeleton';
 import { Link } from 'react-router-dom';
 import Slider from 'react-slick';
+import '../pages/Home.css';
+import '../components/CategoryCard.css';
+import '../styles/Utilities.css';
+import '../styles/Layout.css';
 
 // Función para barajar un array (algoritmo de Fisher-Yates)
 const shuffleArray = (array) => {

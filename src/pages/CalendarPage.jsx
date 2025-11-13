@@ -6,6 +6,7 @@ import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import es from 'date-fns/locale/es';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import './CalendarPage.css';
 
 // --- Configuración del Calendario ---
 const locales = {

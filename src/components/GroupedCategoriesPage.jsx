@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import CategoryCard from '../components/CategoryCard';
+import './CategoryCard.css';
 
 // Mapeo de los nombres de backend a los títulos que se mostrarán
 const parentCategoryTitles = {

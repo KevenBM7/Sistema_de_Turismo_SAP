@@ -1,0 +1,114 @@
+/* --- Dashboard Page --- */
+.dashboard-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.dashboard-header {
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h2 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.dashboard-header p {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.dashboard-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.dashboard-menu-button {
+  background-color: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: relative; /* Para la insignia de notificación */
+}
+
+.dashboard-menu-button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  border-color: #007bff;
+}
+
+.dashboard-menu-button .button-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-menu-button .button-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-menu-button .button-description {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.dashboard-menu-button.home-button:hover {
+  border-color: #ffc107;
+}
+
+.dashboard-menu-button.home-button .button-icon {
+  color: #ffc107;
+}
+
+.dashboard-menu-button.add-button:hover {
+  border-color: #28a745;
+}
+
+.dashboard-menu-button.add-button .button-icon {
+  color: #28a745;
+}
+
+.dashboard-menu-button.manage-button:hover {
+  border-color: #17a2b8;
+}
+
+.dashboard-menu-button.manage-button .button-icon {
+  color: #17a2b8;
+}
+
+/* Insignia de notificación para comentarios reportados */
+.notification-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-menu {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-container {
+    padding: 1rem;
+  }
+}

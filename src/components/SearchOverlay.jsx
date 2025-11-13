@@ -1,5 +1,6 @@
 import React from 'react';
 import SearchBar from './SearchBar';
+import './FloatingSearchButton.css';
 
 function SearchOverlay({ isActive, onClose }) {
   if (!isActive) {

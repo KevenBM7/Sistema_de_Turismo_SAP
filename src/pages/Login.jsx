@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { sendEmailVerification } from 'firebase/auth';
+import './Login.css';
+import '../components/Forms.css';
+import '../components/Buttons.css';
 
 function Login() {
   const [isLoginView, setIsLoginView] = useState(true);

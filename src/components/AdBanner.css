@@ -1,0 +1,16 @@
+/* ---------- Ad Banner ---------- */
+.ad-banner {
+  position: sticky;
+  top: 60px;
+  width: 100%;
+  z-index: 900;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-150%);
+  transition: transform 0.4s ease-in-out;
+  display: flex;
+  justify-content: center;
+}
+.ad-banner.visible {
+  transform: translateY(0);
+}
