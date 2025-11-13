@@ -7,8 +7,6 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
 import '../AdminForms.css';
-import '../Forms.css';
-import '../Buttons.css';
 
 function AddEventForm() {
   const [events, setEvents] = useState([]);
@@ -156,13 +154,25 @@ function AddEventForm() {
     try {
       let finalImageUrls = [...existingImageUrls.filter(url => !imagesToDelete.includes(url))];
 
-      // Subir nuevas imágenes
+      // Subir nuevas imágenes (OPTIMIZADO)
       if (imageFiles.length > 0) {
         const uploadPromises = imageFiles.map(async (file) => {
-          const imageOptions = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true };
+          // Opciones de compresión: 1.5MB max, 1920px, WebP, 80% calidad
+          const imageOptions = { 
+            maxSizeMB: 1.5, 
+            maxWidthOrHeight: 1920, 
+            useWebWorker: true,
+            fileType: 'image/webp', // Forzar a WebP
+            initialQuality: 0.8 // 80% calidad para preservar el texto del anuncio
+          };
+          
           const compressedFile = await imageCompression(file, imageOptions);
-          const storageRef = ref(storage, `events/${Date.now()}_${file.name}`);
-          await uploadBytesResumable(storageRef, compressedFile);
+          
+          // Asegurar nombre de archivo .webp
+          const fileName = compressedFile.name.replace(/\.[^/.]+$/, "") + '.webp';
+          const storageRef = ref(storage, `events/${Date.now()}_${fileName}`);
+          
+          await uploadBytesResumable(storageRef, compressedFile, { contentType: 'image/webp' });
           return getDownloadURL(storageRef);
         });
         const newUrls = await Promise.all(uploadPromises);
@@ -177,9 +187,7 @@ function AddEventForm() {
             const imageRef = ref(storage, url);
             return deleteObject(imageRef);
           } catch (error) {
-            // Si la URL no es de Firebase Storage, puede que no se pueda crear la referencia.
-            // Esto es un fallback para evitar que la app crashee.
-            console.warn(`No se pudo crear referencia para borrar: ${url}`, error);
+            console.warn(`Error al crear referencia para borrar imagen de evento: ${url}`, error);
             return Promise.resolve(); // Continuar sin fallar
           }
         });
@@ -211,7 +219,6 @@ function AddEventForm() {
       }
 
       if (editingEvent) {
-        // En modo edición, esperamos un poco para que el toast se vea y luego limpiamos.
         setTimeout(() => {
           resetForm();
         }, 1500);

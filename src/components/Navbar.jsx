@@ -39,7 +39,13 @@ function Navbar() {
       <nav className={`navbar-links ${isOpen ? 'active' : ''}`} aria-hidden={!isOpen}>
         <div className="navbar-logo-container">
           <Link to="/" onClick={closeMenu}>
-            <img src="/LogoTurismo.png" alt="Logo Turismo" className="navbar-logo" />
+            <img 
+              src="/LogoTurismo.png" 
+              alt="Logo Turismo" 
+              className="navbar-logo" 
+              width="110"  // CLS FIX
+              height="110" // CLS FIX
+            />
           </Link>
         </div>
         <NavLink to="/" onClick={closeMenu} tabIndex={isOpen ? 0 : -1} end>Inicio</NavLink>

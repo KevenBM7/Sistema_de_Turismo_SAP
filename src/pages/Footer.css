@@ -79,13 +79,13 @@
 
 .footer-developer-credit p {
   margin: 0;
-  color: #999;
+  color: #c0c0c0;
 }
 
 .footer-last-update {
   font-style: italic;
   font-size: 0.8rem !important;
-  color: #999 !important;
+  color: #c0c0c0 !important;
   margin-top: 1rem !important;
 }
 

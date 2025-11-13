@@ -4,9 +4,7 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { db, storage } from '../../services/firebase';
 import imageCompression from 'browser-image-compression';
 import toast from 'react-hot-toast';
-import '../AdminForms.css';
-import '../Forms.css';
-import '../Buttons.css';
+import '../AdminForms.css'; // Asegurando el CSS de Admin
 
 function ManageHomePage() {
   const [welcomeText, setWelcomeText] = useState('');
@@ -72,15 +70,24 @@ function ManageHomePage() {
       // 3. Subir nuevas imágenes si las hay
       if (imageFiles.length > 0) {
         const uploadPromises = imageFiles.map(async (file) => {
+          // Opciones de compresión para banners de Home: WebP, 1600px, 80% calidad
           const options = {
             maxSizeMB: 1,
-            maxWidthOrHeight: 1920,
+            maxWidthOrHeight: 1600, 
             useWebWorker: true,
+            fileType: 'image/webp',
+            initialQuality: 0.8,
           };
+          
           const compressedFile = await imageCompression(file, options);
-          const imageRef = ref(storage, `settings/homePage_banner_${Date.now()}_${file.name}`);
-          const snapshot = await uploadBytes(imageRef, compressedFile);
-          return snapshot.ref.fullPath; // Devolver la ruta, no la URL
+          
+          // Crear un nombre de archivo que refleje WebP
+          const fileName = compressedFile.name.replace(/\.[^/.]+$/, "") + '.webp';
+          const imagePath = `settings/homePage_banner_${Date.now()}_${fileName}`;
+
+          const imageRef = ref(storage, imagePath);
+          const snapshot = await uploadBytes(imageRef, compressedFile, { contentType: 'image/webp' });
+          return snapshot.ref.fullPath; // Devolver la ruta
         });
         const newPaths = await Promise.all(uploadPromises);
         finalImagePaths.push(...newPaths);
@@ -114,6 +121,7 @@ function ManageHomePage() {
 
     useEffect(() => {
       if (path) {
+        // Intentar obtener la URL de descarga para la vista previa
         getDownloadURL(ref(storage, path))
           .then(setUrl)
           .catch(() => setUrl('https://placehold.co/150x100?text=Error'));
@@ -180,7 +188,7 @@ function ManageHomePage() {
             onChange={handleImageChange}
             multiple
           />
-          <p className="map-instructions">Puedes eliminar imágenes existentes y/o subir nuevas (máximo 3 en total).</p>
+          <p className="map-instructions">Puedes eliminar imágenes existentes y/o subir nuevas (máximo 3 en total). Se recomienda un tamaño panorámico.</p>
         </div>
         <button type="submit" disabled={saving}>
           {saving ? 'Guardando...' : 'Guardar Cambios en Portada'}

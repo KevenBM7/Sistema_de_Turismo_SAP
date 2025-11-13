@@ -37,7 +37,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build:react": "react-scripts build",
-    "build": "npm run build:react && purgecss --config ./purgecss.config.js",
+    "build": "react-scripts build && purgecss --config ./purgecss.config.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -49,8 +49,8 @@
   },
   "browserslist": {
     "production": [
-      ">0.2%",
-      "not dead",
+      "defaults",
+      "not IE 11",
       "not op_mini all"
     ],
     "development": [

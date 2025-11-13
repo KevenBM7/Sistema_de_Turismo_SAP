@@ -310,7 +310,8 @@ function Home() {
           {displayOrder.map(parentCat => (
             groupedCategories[parentCat] && (
               <div key={parentCat} className="category-group">
-                <h4 className="category-group-title">{parentCategoryTitles[parentCat] || parentCat}</h4>
+                {/* CAMBIO: Usar h3 para la jerarquía correcta (H1 -> H2 -> H3) */}
+                <h3 className="category-group-title">{parentCategoryTitles[parentCat] || parentCat}</h3>
                 <div className="category-filters">
                   {groupedCategories[parentCat].map(subCat => (
                     <Link key={subCat} to={`/categoria/${encodeURIComponent(subCat)}`} className="category-button">

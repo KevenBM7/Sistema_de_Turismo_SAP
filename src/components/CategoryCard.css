@@ -17,9 +17,9 @@
 /* --- Category Buttons (used in Home.jsx) --- */
 .category-button {
   padding: 0.5rem 1.25rem;
-  border: 1px solid #007bff;
+  border: 1px solid #0056b3; /* Oscurecido para mejor contraste */
   background-color: #fff;
-  color: #007bff;
+  color: #0056b3;            /* Oscurecido para mejor contraste */
   border-radius: 20px;
   text-decoration: none;
   transition: all 0.2s;
