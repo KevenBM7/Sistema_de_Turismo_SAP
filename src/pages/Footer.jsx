@@ -19,10 +19,12 @@ function Footer() {
             <MapPin size={16} className="footer-icon" /> 
             <strong>Oficina de Turismo Municipal</strong>
           </p>
-          <p className="footer-item">Barrio Central, San Antonio Palopó, Sololá</p>
+          <p className="footer-item">Barrio Centro, San Antonio Palopó, Sololá</p>
+          {/*
           <p className="footer-item">
             <Phone size={16} className="footer-icon" /> Tel: [Número de Turismo]
           </p>  
+          */}
           <p className="footer-item">
             <Mail size={16} className="footer-icon" /> 
             <a href="mailto:sapturismo24@gmail.com" className="footer-link">
@@ -43,7 +45,7 @@ function Footer() {
             </a>
           </p>
           <p>
-            <a href="https://www.facebook.com/paginaoficialSAP" target="_blank" rel="noopener noreferrer" className="footer-link">
+            <a href="https://www.facebook.com/share/1BUvguNB3P/" target="_blank" rel="noopener noreferrer" className="footer-link">
               <Facebook size={16} className="footer-icon" /> Facebook
             </a>
           </p>
@@ -96,11 +98,27 @@ function Footer() {
       </div>
 
       {/* Barra inferior de copyright */}
-      <div className="footer-developer-credit">
-        <p style={{ margin: 0, fontSize: '0.85rem', color: '#999' }}>
-          Sistema de Gestión Turística - Municipalidad de San Antonio Palopó, Sololá
-        </p>
-      </div>
+<div className="footer-developer-credit">
+  <p style={{ 
+    margin: 0, 
+    fontSize: '.85rem', 
+    color: '#999',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '10px'
+  }}>
+    <img 
+      src="/logosap.png" 
+      alt="Logo Turismo" 
+      className="foter-logo" 
+      width="59"
+      height="60"
+      style={{ padding: '5px' }}
+    />
+    <span>Sistema de Gestión Turística Municipalidad de San Antonio Palopó</span>
+  </p>
+</div>
     </footer>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, Circle } from 'react-leaflet';
 import { collection, query, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -72,15 +72,17 @@ const manualMarkerIcon = new L.DivIcon({
 
 // Marcador de usuario SIMPLE - solo círculo azul
 const UserMarker = ({ position }) => {
+  // position ahora es un objeto: { lat, lng, accuracy }
+  
   const markerIcon = React.useMemo(() => {
     return new L.DivIcon({
       className: 'user-location-simple-icon',
       html: `<div style="
-        width: 16px; 
-        height: 16px; 
-        background-color: #1a73e8; 
-        border: 3px solid white; 
-        border-radius: 50%; 
+        width: 16px;
+        height: 16px;
+        background-color: #1a73e8;
+        border: 3px solid white;
+        border-radius: 50%;
         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       "></div>`,
       iconSize: [16, 16],
@@ -89,17 +91,35 @@ const UserMarker = ({ position }) => {
   }, []);
 
   return (
-    <Marker 
-      position={position} 
-      icon={markerIcon} 
-      zIndexOffset={1000}
-    >
-      <Popup>
-        <div>
-          <strong>Tu ubicación</strong>
-        </div>
-      </Popup>
-    </Marker>
+    <>
+      {/* El Círculo de Precisión (UX Profesional) */}
+      <Circle
+        center={[position.lat, position.lng]}
+        radius={position.accuracy} // El radio de error del GPS
+        pathOptions={{
+            color: '#1a73e8',
+            fillColor: '#1a73e8',
+            fillOpacity: 0.1,
+            weight: 1, // Borde fino
+            interactive: false // No se puede hacer clic en el círculo
+        }}
+      />
+
+      {/* El Marcador (Punto Azul) */}
+      <Marker 
+        position={[position.lat, position.lng]} 
+        icon={markerIcon} 
+        zIndexOffset={1000}
+      >
+        <Popup>
+          <div>
+            <strong>Tu ubicación</strong>
+            <br />
+            <small>Precisión: {position.accuracy.toFixed(0)} metros</small>
+          </div>
+        </Popup>
+      </Marker>
+    </>
   );
 };
 
@@ -162,7 +182,7 @@ const MapController = React.forwardRef(({ center, isFollowing, initialSelectedSi
     
     // PRIORIDAD 2: Solo seguir ubicación si está activado
     if (isFollowing && center) {
-      map.panTo(center, { animate: true, duration: 0.3 });
+      map.panTo(center, { animate: true, duration: 1 });
     }
   }, [center, isFollowing, map, initialSelectedSite, hasActiveRoute]);
 
@@ -278,6 +298,9 @@ function MapPage() {
   const [mapLayer, setMapLayer] = useState('satellite'); // NUEVO: Control de capas
   
   const lastPositionTime = React.useRef(0);
+  // NUEVO ESTADO: Contador para notificaciones de mala señal (Anti-spam)
+  const badSignalCounterRef = React.useRef(0);
+  
   const routeToastShownRef = React.useRef(false);
   
   // Flags para evitar repetición de toasts
@@ -335,6 +358,7 @@ function MapPage() {
       (position) => {
         // La ubicación es exitosa, se obtiene una posición real
         geolocationWatchErrorToastRef.current = false; // Resetear error
+        badSignalCounterRef.current = 0; // CORRECCIÓN: Resetear contador de mala señal
         userDeniedToastShown = false; // Resetear denegación si cambia de opinión
 
         const now = Date.now();
@@ -350,11 +374,16 @@ function MapPage() {
           return;
         }
         
-        const newLocation = [latitude, longitude];
+        // CORRECCIÓN: Guardar la ubicación como un objeto, no un array.
+        const newLocation = {
+          lat: latitude,
+          lng: longitude,
+          accuracy: position.coords.accuracy,
+        };
 
         // Filtro de distancia mínima para evitar movimientos menores
         if (userLocation) {
-          const oldPos = L.latLng(userLocation[0], userLocation[1]);
+          const oldPos = L.latLng(userLocation.lat, userLocation.lng);
           const newPos = L.latLng(latitude, longitude);
           const distance = oldPos.distanceTo(newPos);
           
@@ -387,22 +416,30 @@ function MapPage() {
           3: 'Tiempo de espera agotado.'
         };
         
-        // El código 1 es permiso denegado. Solo mostrar una vez
+        // CÓDIGO 1: Permiso denegado. Mostrar una vez.
         if (error.code === 1 && !userDeniedToastShown) {
             toast.error(errorMessages[error.code], { duration: 4000 });
             userDeniedToastShown = true;
-        } 
-        // Mostrar otros errores de seguimiento solo si no son timeouts y no se han mostrado
-        else if (error.code !== 3 && !geolocationWatchErrorToastRef.current) { 
+        }
+        // CÓDIGO 3: Timeout. Manejar con contador para evitar spam.
+        else if (error.code === 3) {
+            badSignalCounterRef.current += 1;
+            // Solo notificar después de 3 fallos seguidos
+            if (badSignalCounterRef.current === 3) {
+                toast('Buscando señal GPS... Puede tardar un momento.', { icon: '🛰️', duration: 4000 });
+            }
+        }
+        // OTROS ERRORES: Mostrar una vez.
+        else if (!geolocationWatchErrorToastRef.current) { 
             toast.error(errorMessages[error.code] || 'Error al obtener la ubicación.', { duration: 4000 });
             geolocationWatchErrorToastRef.current = true;
         }
-        console.error('Error watchPosition:', error);
       },
       {
-        enableHighAccuracy: true, // ALTA PRECISIÓN para mejor fijación
-        timeout: 20000,           // Más tiempo para que el GPS se fije
-        maximumAge: 0             // Pide la posición más fresca en cada intervalo
+        // --- OPCIONES OPTIMIZADAS ---
+        enableHighAccuracy: true, // Prioriza GPS
+        timeout: 5000,           // Error si no hay respuesta en 5s
+        maximumAge: 0             // Forzar la posición más reciente (no usar caché)
       }
     );
 
@@ -411,7 +448,7 @@ function MapPage() {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, [userLocation, routingDestination, SAN_ANTONIO_PALOPO]); // <-- Dependencia agregada
+  }, [routingDestination]); // CORRECCIÓN: Eliminar userLocation y SAN_ANTONIO_PALOPO de las dependencias.
 
 
   // Función para centrar el mapa en San Antonio Palopó
@@ -439,9 +476,15 @@ function MapPage() {
   };
 
   // Condición para saber si tenemos una ubicación real (no la de San Antonio)
-  const isRealLocationAvailable = userLocation && !(userLocation[0] === SAN_ANTONIO_PALOPO[0] && userLocation[1] === SAN_ANTONIO_PALOPO[1]);
+  const isRealLocationAvailable = userLocation && !(userLocation.lat === SAN_ANTONIO_PALOPO[0] && userLocation.lng === SAN_ANTONIO_PALOPO[1]);
   
   // NUEVO: Manejar clic en el mapa para marcar punto B
+  // SOLUCIÓN: Memorizar el valor del centro para evitar re-renders innecesarios.
+  const memoizedCenter = React.useMemo(() => {
+    return userLocation ? [userLocation.lat, userLocation.lng] : null;
+  }, [userLocation?.lat, userLocation?.lng]); // Depender de los valores primitivos
+
+
   const handleMapClick = (e) => {
     if (!isRealLocationAvailable) {
         toast.error('Ubicación real no disponible. Activa la geolocalización y espera a que se fije.', { duration: 4000 });
@@ -567,7 +610,7 @@ function MapPage() {
         {/* CORRECCIÓN: Usar MapController (que ahora usa forwardRef) */}
         <MapController 
           ref={mapRef} // Aquí se adjunta la referencia
-          center={userLocation} 
+          center={memoizedCenter} // <-- SOLUCIÓN: Usar el valor memorizado
           isFollowing={isFollowing} 
           initialSelectedSite={initialSelectedSite}
           hasActiveRoute={routes.length > 0} 
@@ -656,7 +699,7 @@ function MapPage() {
         </div>
 
         <RoutingMachine 
-          start={isRealLocationAvailable ? userLocation : null} // Solo trazar ruta si la ubicación es real
+          start={isRealLocationAvailable ? [userLocation.lat, userLocation.lng] : null} // <-- CAMBIO AQUÍ
           end={routingDestination ? [routingDestination.lat, routingDestination.lng] : null} 
           onRoutesFound={handleRoutesFound}
           key="routing-machine" 

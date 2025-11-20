@@ -15,6 +15,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { Toaster } from 'react-hot-toast';
 import { usePageLoader } from './hooks/usePageLoader';
 import LazyPageWrapper from './components/LazyPageWrapper.jsx';
+import ScrollToTop from './components/ScrollToTop.jsx';
 import './styles/Layout.css'; 
 import './styles/Utilities.css'; 
 

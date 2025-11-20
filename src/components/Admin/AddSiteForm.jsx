@@ -11,8 +11,6 @@ import toast from 'react-hot-toast';
 import slugify from 'slugify'; // Importamos la librería para generar slugs
 import { db, storage } from '../../services/firebase';
 import '../AdminForms.css';
-import '../Forms.css';
-import '../Buttons.css';
 
 
 // --- CORRECCIÓN PARA ICONOS DE LEAFLET ---
@@ -50,6 +48,15 @@ function AddSiteForm({ siteToEdit }) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   
+  // --- SOLUCIÓN: Cargar categorías desde Firestore ---
+  useEffect(() => {
+    const q = query(collection(db, 'categories'), orderBy('name'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsubscribe();
+  }, []);
+
 
   useEffect(() => {
     if (isEditMode && siteToEdit) {

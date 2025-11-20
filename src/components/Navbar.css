@@ -12,6 +12,11 @@
   justify-content: center;
 }
 
+.navbar-hidden {
+  transform: translateY(-100%);
+}
+
+/* --- Contenedor del Menú Lateral --- */
 .navbar-links {
   position: fixed;
   left: -100%;
@@ -28,30 +33,89 @@
   padding-top: 0;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.9);
   z-index: 1001;
+  
+  /* Mantenemos el scroll por si hay muchos items */
+  overflow-y: auto;
 }
 
-.navbar-hidden {
-  transform: translateY(-100%);
+.navbar-links.active {
+  left: 0;
 }
 
+/* Estilo para barra de scroll (Opcional, para que se vea mejor) */
+.navbar-links::-webkit-scrollbar {
+  width: 5px;
+}
+.navbar-links::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 1px;
+}
+
+/* --- Logo --- */
 .navbar-logo-container {
-  padding: 0.5rem 0rem;
   text-align: center;
-  margin-bottom: 0.2rem;
+  flex-shrink: 0;
 }
 
 .navbar-logo {
-  height: 110px;
+  height: 105px;
   width: auto;
   transition: transform 0.2s ease;
 }
 .navbar-logo:hover {
   transform: scale(1.05);
 }
-.navbar-links.active {
-  left: 0;
+
+/* --- Enlaces y Botones (Items del menú) --- */
+.navbar-links a,
+.navbar-links .navbar-button {
+  width: 100%;
+  display: block;
+  
+  /* --- AJUSTE DE ALTURA Y LÍNEAS --- */
+  /* 1. Padding uniforme para que todos tengan la misma altura */
+  padding: 12px 1.5rem; 
+  
+  /* 2. Línea divisoria sutil y uniforme */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15); 
+  
+  box-sizing: border-box;
+  text-align: left;
+  color: #ddd;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1.2; /* Asegura consistencia en el texto */
+  cursor: pointer;
+  font-family: inherit;
+  background: none;
+  border-top: none;     /* Asegura que no haya bordes extraños arriba */
+  border-left: none;
+  border-right: none;
 }
 
+/* Estado Activo */
+.navbar-links a.active {
+  background-color: #007bff;
+  color: white;
+  /* Cambiamos el color del borde para que se fusione o resalte según prefieras */
+  border-bottom-color: #0056b3; 
+}
+
+/* Estado Hover */
+.navbar-links a:hover,
+.navbar-links .navbar-button:hover {
+  background-color: #6b747d;
+}
+
+/* Anular hover del logo */
+.navbar-logo-container:hover,
+.navbar-logo-container a:hover {
+  background-color: transparent !important;
+}
+
+/* --- Overlay --- */
 .navbar-overlay {
   position: fixed;
   top: 0;
@@ -70,44 +134,7 @@
   visibility: visible;
 }
 
-.navbar-links a,
-.navbar-links .navbar-button {
-  width: 100%;
-  padding: 0.7rem 1.5rem;
-  border-bottom: 0.5px solid #444;
-  box-sizing: border-box;
-  text-align: left;
-  color: #ddd;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.navbar-links a.active {
-  background-color: #007bff;
-  border-bottom-color: #007bff;
-  color: white;
-}
-
-.navbar-links .navbar-button {
-  background: none;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.navbar-links a:hover,
-.navbar-links .navbar-button:hover {
-  background-color: #6b747d;
-}
-
-/* Anular específicamente el hover para el contenedor del logo y cualquier enlace dentro */
-.navbar-logo-container:hover,
-.navbar-logo-container a:hover {
-  background-color: transparent !important;
-}
-
-/* --- Estilos del Hamburguer --- */
+/* --- Hamburguesa --- */
 .hamburger {
   display: flex !important;
   cursor: pointer;
@@ -123,8 +150,8 @@
   align-items: center;
   transition: all 0.3s ease-in-out;
   border: 1px solid !important;
-  padding: 12px !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important;
+  padding: 10px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
 }
 
 .hamburger .bar {
@@ -141,7 +168,6 @@
     background-color: white !important;
     border-color: black !important;
   }
-
   .hamburger .bar {
     background-color: black !important;
   }
@@ -152,7 +178,6 @@
     background-color: black !important;
     border-color: white !important;
   }
-
   .hamburger .bar {
     background-color: white !important;
   }

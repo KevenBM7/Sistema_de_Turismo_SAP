@@ -1,5 +1,27 @@
-/* src/components/AdminForms.css */
 
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #555;
+}
+
+.form-group input[type="text"],
+.form-group input[type="tel"],
+.form-group input[type="url"],
+.form-group input[type="file"],
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
 /* ------------------------------------------------------------------
    1. Estructura de Formularios de Administración
    ------------------------------------------------------------------ */
@@ -117,6 +139,27 @@
   padding: 0;
 }
 
+/* --- SOLUCIÓN: Estilos para el editor de texto enriquecido --- */
+.tiptap-editor-container {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+.ProseMirror {
+  padding: 0.75rem;
+  min-height: 150px;
+  outline: none;
+}
+
+/* Placeholder para el editor de texto */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
 /* ------------------------------------------------------------------
    3. Listas de Gestión (Manage Sites/Moderation)
    ------------------------------------------------------------------ */

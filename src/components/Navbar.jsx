@@ -11,7 +11,7 @@ function Navbar() {
   const handleLogout = async () => {
     closeMenu(); // Cierra el menú al hacer logout
     try {
-      await logout(); // Esta función ya está en tu AuthContext
+      await logout(); // Esta función está en AuthContext
       navigate('/');
     } catch (error) {
       console.error("Fallo al cerrar sesión:", error);
@@ -43,8 +43,8 @@ function Navbar() {
               src="/LogoTurismo.png" 
               alt="Logo Turismo" 
               className="navbar-logo" 
-              width="110"  // CLS FIX
-              height="110" // CLS FIX
+              width="105"  // CLS FIX
+              height="105" // CLS FIX
             />
           </Link>
         </div>
@@ -63,6 +63,8 @@ function Navbar() {
         ) : (
           <Link to="/login" className="navbar-button" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Iniciar Sesión</Link>
         )}
+        <NavLink to="/privacidad" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Política de Privacidad</NavLink>
+        <NavLink to="/terminos" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Términos y Condiciones</NavLink>
       </nav>
     </>
   );
