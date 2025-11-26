@@ -311,20 +311,27 @@ function AddSiteForm({ siteToEdit }) {
       if (imageFiles.length > 0) {
         imagePreviews.forEach(url => URL.revokeObjectURL(url));
 
+        // Generar slugs base para el nombre del archivo
+        const catSlug = slugify(finalCategory, { lower: true, strict: true });
+        const siteSlug = slugify(name, { lower: true, strict: true });
+
         const imageProcessingPromises = imageFiles.map(async (file, index) => {
           try {
             if (!file || !file.name) {
               throw new Error(`Archivo inválido en posición ${index}`);
             }
 
-            const timestamp = Date.now();
-            const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-            const fileName = `${timestamp}_${index}_${sanitizedName}`;
+            // --- CAMBIO CLAVE: NOMBRE DE ARCHIVO SEO OPTIMIZADO ---
+            // Formato: san-antonio-palopo-categoria-nombre-sitio-indice.webp
+            // El 'index' (0, 1, 2) diferencia las imágenes subidas al mismo tiempo.
+            const fileName = `san-antonio-palopo-${catSlug}-${siteSlug}-${index}.webp`;
 
             const mainImageOptions = {
               maxSizeMB: 2,
               maxWidthOrHeight: 1600,
               useWebWorker: true,
+              fileType: 'image/webp', // Forzar conversión a WebP
+              initialQuality: 0.8,
             };
 
             const compressedMain = await imageCompression(file, mainImageOptions);
@@ -333,6 +340,7 @@ function AddSiteForm({ siteToEdit }) {
               throw new Error(`No se pudo comprimir la imagen: ${fileName}`);
             }
 
+            // Guardar en carpeta 'sites/originals/' con el nuevo nombre
             const originalPath = `sites/originals/${fileName}`;
             const uploadedPath = await uploadFile(compressedMain, originalPath);
 
@@ -391,7 +399,7 @@ function AddSiteForm({ siteToEdit }) {
 
         toast.promise(updatePromise, { loading: 'Actualizando sitio...', success: '¡Sitio actualizado con éxito!', error: 'No se pudo actualizar el sitio.' });
         await updatePromise;
-        // Borrar imágenes antiguas
+        
         if (imagesToDelete.length > 0) {
           deleteImagesFromStorage(imagesToDelete).catch(err => 
             console.error("Error al eliminar imágenes antiguas:", err)
@@ -425,7 +433,6 @@ function AddSiteForm({ siteToEdit }) {
       }
 
       if (isEditMode) {
-        // Navegar al panel de administración después de mostrar el toast
         navigate('/admin', { state: { view: 'manageSites' } });
       } else {
         // En modo creación, solo reseteamos el formulario
@@ -439,7 +446,6 @@ function AddSiteForm({ siteToEdit }) {
       console.error("Error detallado:", err);
       toast.error(`Error al guardar el sitio: ${err.message}`);
     } finally {
-      // CORRECCIÓN: Asegurarse de que el estado de 'uploading' siempre se reinicie.
       setUploading(false);
     }
   };

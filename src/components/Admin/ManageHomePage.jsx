@@ -5,6 +5,7 @@ import { db, storage } from '../../services/firebase';
 import imageCompression from 'browser-image-compression';
 import toast from 'react-hot-toast';
 import '../AdminForms.css'; // Asegurando el CSS de Admin
+import { downloadSitemap } from '../../utils/generateSitemap';
 
 function ManageHomePage() {
   const [welcomeText, setWelcomeText] = useState('');
@@ -195,6 +196,12 @@ function ManageHomePage() {
           {saving ? 'Guardando...' : 'Guardar Cambios en Portada'}
         </button>
       </form>
+
+      <div className="form-section" style={{ marginTop: '2rem', borderTop: '1px solid #ddd', paddingTop: '2rem' }}>
+        <h4>Herramientas SEO</h4>
+        <p>Genera el archivo `sitemap.xml` para los motores de búsqueda. Después de descargarlo, súbelo a la carpeta `/public` de tu proyecto y despliega los cambios.</p>
+        <button type="button" onClick={downloadSitemap}>Generar Sitemap</button>
+      </div>
     </div>
   );
 }

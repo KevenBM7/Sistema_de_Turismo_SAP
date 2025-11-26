@@ -14,6 +14,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { Toaster } from 'react-hot-toast';
 import { usePageLoader } from './hooks/usePageLoader';
+import { usePageTracking } from './hooks/usePageTracking';
 import LazyPageWrapper from './components/LazyPageWrapper.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
 import './styles/Layout.css'; 
@@ -46,6 +47,7 @@ function PageLoader() {
 
 // Componente interno para poder usar el hook useLocation
 function AppContent() {
+  usePageTracking(); // Hook para rastrear visitas de página
   const location = useLocation();
   const hideFooter = location.pathname === '/mapa';
   const showSearchButton = location.pathname === '/';

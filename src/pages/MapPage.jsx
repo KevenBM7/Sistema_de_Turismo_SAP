@@ -31,7 +31,7 @@ const parentCategoryColors = {
 const getIconForCategory = (parentCategory) => {
   const color = parentCategoryColors[parentCategory] || parentCategoryColors.default;
   const markerHtml = `
-    <svg viewBox="0 0 24 24" width="28" height="28" fill="${color}" stroke="white" stroke-width="1" style="pointer-events: auto;">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="${color}" stroke="white" stroke-width="1" style="pointer-events: none;">
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
     </svg>`;
 
@@ -47,7 +47,7 @@ const getIconForCategory = (parentCategory) => {
 const highlightedIcon = new L.DivIcon({
   className: 'highlighted-marker-icon',
   html: `
-    <svg viewBox="0 0 24 24" width="36" height="36" fill="#17a2b8" stroke="white" stroke-width="1.5">
+    <svg viewBox="0 0 24 24" width="36" height="36" fill="#17a2b8" stroke="white" stroke-width="1.5" style="pointer-events: none;">
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
     </svg>
     <div class="highlight-pulse"></div>
@@ -57,11 +57,10 @@ const highlightedIcon = new L.DivIcon({
   popupAnchor: [0, -36]
 });
 
-// NUEVO: Icono para punto marcado manualmente
 const manualMarkerIcon = new L.DivIcon({
   className: 'manual-marker-icon',
   html: `
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="#dc3545" stroke="white" stroke-width="2">
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="#dc3545" stroke="white" stroke-width="2" style="pointer-events: none;">
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
     </svg>
   `,
@@ -70,10 +69,7 @@ const manualMarkerIcon = new L.DivIcon({
   popupAnchor: [0, -30]
 });
 
-// Marcador de usuario SIMPLE - solo círculo azul
 const UserMarker = ({ position }) => {
-  // position ahora es un objeto: { lat, lng, accuracy }
-  
   const markerIcon = React.useMemo(() => {
     return new L.DivIcon({
       className: 'user-location-simple-icon',
@@ -84,6 +80,7 @@ const UserMarker = ({ position }) => {
         border: 3px solid white;
         border-radius: 50%;
         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        pointer-events: none;
       "></div>`,
       iconSize: [16, 16],
       iconAnchor: [8, 8],
@@ -92,24 +89,27 @@ const UserMarker = ({ position }) => {
 
   return (
     <>
-      {/* El Círculo de Precisión (UX Profesional) */}
       <Circle
         center={[position.lat, position.lng]}
-        radius={position.accuracy} // El radio de error del GPS
+        radius={position.accuracy}
         pathOptions={{
             color: '#1a73e8',
             fillColor: '#1a73e8',
             fillOpacity: 0.1,
-            weight: 1, // Borde fino
-            interactive: false // No se puede hacer clic en el círculo
+            weight: 1,
+            interactive: false
         }}
       />
 
-      {/* El Marcador (Punto Azul) */}
       <Marker 
         position={[position.lat, position.lng]} 
         icon={markerIcon} 
         zIndexOffset={1000}
+        eventHandlers={{
+          click: (e) => {
+            L.DomEvent.stopPropagation(e);
+          }
+        }}
       >
         <Popup>
           <div>
@@ -123,45 +123,50 @@ const UserMarker = ({ position }) => {
   );
 };
 
-// NUEVO: Componente para manejar eventos de clic del mapa
+// SOLUCIÓN CRÍTICA: MapClickHandler corregido completamente
 const MapClickHandler = ({ onMapClick, markingMode }) => {
+  const mapRef = React.useRef(null);
+  
   useMapEvents({
     click: (e) => {
-      // VERIFICACIÓN MEJORADA:
-      // Si el objetivo original del evento tiene la clase leaflet-popup-close-button o está dentro de un popup, ignorar.
-      const target = e.originalEvent.target;
-      const isMarkerClick = target.closest && (target.closest('.leaflet-marker-icon') || target.closest('.custom-leaflet-div-icon'));
-      
-      if (e.originalEvent.defaultPrevented || isMarkerClick) {
-        return;
+      // CRÍTICO: Solo procesar si markingMode está activo
+      if (!markingMode) {
+        return; // Deja pasar el evento normalmente
       }
 
-      if (markingMode) {
+      // Verificar si el clic fue en el tile del mapa (no en un marcador)
+      const target = e.originalEvent.target;
+      
+      // Si el clic fue en un tile del mapa (leaflet-tile-pane), procesar
+      const isMapTile = target.classList.contains('leaflet-tile') || 
+                        target.closest('.leaflet-tile-pane');
+      
+      if (isMapTile) {
+        // Detener la propagación solo si vamos a procesar el clic
+        L.DomEvent.stopPropagation(e);
         onMapClick(e);
       }
+      // Si no es un tile del mapa, no hacer nada y dejar que el evento continúe
     },
   });
+  
   return null;
 };
 
-// MapController SIMPLE - maneja el centrado del mapa
 const MapController = React.forwardRef(({ center, isFollowing, initialSelectedSite, hasActiveRoute, defaultCenter }, mapRef) => {
   const map = useMap();
   
-  // CORRECCIÓN: Usar React.useImperativeHandle para exponer la función
   React.useImperativeHandle(mapRef, () => ({
       centerMapToDefault: () => {
-          map.setView(defaultCenter, 13); // Centrar en el zoom por defecto
+          map.setView(defaultCenter, 13);
       }
-  }), [map, defaultCenter]); // Dependencia agregada: defaultCenter y map
+  }), [map, defaultCenter]);
 
   useEffect(() => {
-    // Si hay ruta activa, NO hacer NADA - navegación completamente libre
     if (hasActiveRoute) {
       return;
     }
     
-    // PRIORIDAD 1: Si hay sitio inicial, centrar en él (solo una vez)
     if (initialSelectedSite) {
       const lat = initialSelectedSite.latitude || initialSelectedSite.lat;
       const lng = initialSelectedSite.longitude || initialSelectedSite.lng;
@@ -172,7 +177,6 @@ const MapController = React.forwardRef(({ center, isFollowing, initialSelectedSi
       }
     }
     
-    // PRIORIDAD 2: Solo seguir ubicación si está activado
     if (isFollowing && center) {
       map.panTo(center, { animate: true, duration: 1 });
     }
@@ -181,11 +185,10 @@ const MapController = React.forwardRef(({ center, isFollowing, initialSelectedSi
   return null;
 });
 
-
 const RoutingMachine = ({ start, end, onRoutesFound }) => {
   const map = useMap();
   const routingControlRef = React.useRef(null);
-  const hasAutoFittedRef = React.useRef(false); // NUEVO: Control para fitBounds automático
+  const hasAutoFittedRef = React.useRef(false);
 
   useEffect(() => {
     if (!map) return;
@@ -196,7 +199,7 @@ const RoutingMachine = ({ start, end, onRoutesFound }) => {
       show: false,
       addWaypoints: false,
       createMarker: () => null,
-      fitSelectedRoutes: false, // IMPORTANTE: Desactivar fitBounds automático
+      fitSelectedRoutes: false,
       
       router: L.Routing.osrmv1({
         serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
@@ -223,7 +226,6 @@ const RoutingMachine = ({ start, end, onRoutesFound }) => {
     .on('routesfound', function(e) {
       onRoutesFound(e.routes);
       
-      // NUEVO: Centrar en la ruta solo la primera vez
       if (e.routes.length > 0 && !hasAutoFittedRef.current) {
         const route = e.routes[0];
         const bounds = L.latLngBounds(route.coordinates);
@@ -249,14 +251,14 @@ const RoutingMachine = ({ start, end, onRoutesFound }) => {
   useEffect(() => {
     if (routingControlRef.current) {
       if (start && end) {
-        hasAutoFittedRef.current = false; // RESETEAR: Permitir autofit para nueva ruta
+        hasAutoFittedRef.current = false;
         routingControlRef.current.setWaypoints([
           L.latLng(start[0], start[1]),
           L.latLng(end[0], end[1])
         ]);
       } else {
         routingControlRef.current.setWaypoints([]);
-        hasAutoFittedRef.current = false; // RESETEAR al limpiar ruta
+        hasAutoFittedRef.current = false;
         onRoutesFound([]);
       }
     }
@@ -264,13 +266,11 @@ const RoutingMachine = ({ start, end, onRoutesFound }) => {
 
   return null;
 };
-
 function MapPage() {
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // Referencia para MapController
   const mapRef = React.useRef(null); 
 
   const location = useLocation();
@@ -280,33 +280,30 @@ function MapPage() {
   const [userLocation, setUserLocation] = useState(null);
   
   const [routingDestination, setRoutingDestination] = useState(null);
-  const [manualDestination, setManualDestination] = useState(null); // NUEVO: Punto marcado manualmente
+  const [manualDestination, setManualDestination] = useState(null);
 
   const [routes, setRoutes] = useState([]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   
   const [isFollowing, setIsFollowing] = useState(false); 
-  const [markingMode, setMarkingMode] = useState(false); // NUEVO: Modo de marcado manual
-  const [mapLayer, setMapLayer] = useState('satellite'); // NUEVO: Control de capas
+  const [markingMode, setMarkingMode] = useState(false);
+  const [mapLayer, setMapLayer] = useState('satellite');
   
   const lastPositionTime = React.useRef(0);
-  // NUEVO ESTADO: Contador para notificaciones de mala señal (Anti-spam)
   const badSignalCounterRef = React.useRef(0);
   
   const routeToastShownRef = React.useRef(false);
+  const arrivedToastShownRef = React.useRef(false);
   
-  // Flags para evitar repetición de toasts
   const geolocationWatchErrorToastRef = React.useRef(false);
   
-  // Centro inicial en San Antonio Palopó
   const SAN_ANTONIO_PALOPO = [14.7004, -91.1355]; 
   const defaultInitialCenter = SAN_ANTONIO_PALOPO; 
   
   const initialCenter = initialSelectedSite && (initialSelectedSite.latitude || initialSelectedSite.lat) && (initialSelectedSite.longitude || initialSelectedSite.lng) ? 
     [initialSelectedSite.latitude || initialSelectedSite.lat, initialSelectedSite.longitude || initialSelectedSite.lng] : defaultInitialCenter;
-  const mapZoom = initialSelectedSite && (initialSelectedSite.latitude || initialSelectedSite.lat) && (initialSelectedSite.longitude || initialSelectedSite.longitude) ? 14 : 13; 
-
-  // EFFECT 1: Carga de sitios de Firebase (se mantiene intacto)
+  const mapZoom = initialSelectedSite && (initialSelectedSite.latitude || initialSelectedSite.lat) && (initialSelectedSite.longitude || initialSelectedSite.longitude) ? 14 : 13;
+  
   useEffect(() => {
     const q = query(collection(db, 'sites'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -328,34 +325,26 @@ function MapPage() {
     return () => unsubscribe();
   }, []);
 
-  // Función de validación de coordenadas (se mantiene tu lógica de Guatemala)
   const isInsideGuatemala = (lat, lng) => {
-    // Guatemala: Lat 13.5-17.5, Lng -92.5 a -88.0
     return lat >= 13.5 && lat <= 17.5 && lng >= -92.5 && lng <= -88.0;
   };
   
-  // EFFECT 2: SEGUIMIENTO DE UBICACIÓN (watchPosition) - En segundo plano
-  // CORRECCIÓN: Se añade SAN_ANTONIO_PALOPO al array de dependencias
   useEffect(() => {
     if (!navigator.geolocation) {
       console.error('La geolocalización no es soportada por tu navegador.');
       return;
     }
     
-    // Alerta de permiso denegado una única vez
     let userDeniedToastShown = false; 
 
-    // Inicio de seguimiento de ubicación con ALTA PRECISIÓN en segundo plano
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
-        // La ubicación es exitosa, se obtiene una posición real
-        geolocationWatchErrorToastRef.current = false; // Resetear error
-        badSignalCounterRef.current = 0; // CORRECCIÓN: Resetear contador de mala señal
-        userDeniedToastShown = false; // Resetear denegación si cambia de opinión
+        geolocationWatchErrorToastRef.current = false;
+        badSignalCounterRef.current = 0;
+        userDeniedToastShown = false;
 
         const now = Date.now();
         
-        // FILTRO DE TIEMPO: Actualizar ubicación cada 3 segundos
         if (now - lastPositionTime.current < 3000) return; 
         lastPositionTime.current = now;
 
@@ -366,38 +355,34 @@ function MapPage() {
           return;
         }
         
-        // CORRECCIÓN: Guardar la ubicación como un objeto, no un array.
         const newLocation = {
           lat: latitude,
           lng: longitude,
           accuracy: position.coords.accuracy,
         };
 
-        // Filtro de distancia mínima para evitar movimientos menores
         if (userLocation) {
           const oldPos = L.latLng(userLocation.lat, userLocation.lng);
           const newPos = L.latLng(latitude, longitude);
           const distance = oldPos.distanceTo(newPos);
           
-          // Solo actualizar si hay un desplazamiento real de al menos 10 metros
           if (distance < 10) {
             return;
           }
         }
 
-        // GUARDAR la ubicación real del usuario
         setUserLocation(newLocation);
 
-        // Verificar llegada a destino (se mantiene la funcionalidad)
-        if (routingDestination) {
+        if (routingDestination && !arrivedToastShownRef.current) {
           const destination = L.latLng(routingDestination.lat, routingDestination.lng);
           const user = L.latLng(latitude, longitude);
           const distance = user.distanceTo(destination);
 
-          if (distance < 50) {
+          if (distance < 20) {
             toast.success(`¡Has llegado a tu destino!`, {
               duration: 5000,
             });
+            arrivedToastShownRef.current = true;
           }
         }
       },
@@ -408,30 +393,25 @@ function MapPage() {
           3: 'Tiempo de espera agotado.'
         };
         
-        // CÓDIGO 1: Permiso denegado. Mostrar una vez.
         if (error.code === 1 && !userDeniedToastShown) {
             toast.error(errorMessages[error.code], { duration: 4000 });
             userDeniedToastShown = true;
         }
-        // CÓDIGO 3: Timeout. Manejar con contador para evitar spam.
         else if (error.code === 3) {
             badSignalCounterRef.current += 1;
-            // Solo notificar después de 3 fallos seguidos
             if (badSignalCounterRef.current === 3) {
                 toast('Buscando señal GPS... Puede tardar un momento.', { icon: '🛰️', duration: 4000 });
             }
         }
-        // OTROS ERRORES: Mostrar una vez.
         else if (!geolocationWatchErrorToastRef.current) { 
             toast.error(errorMessages[error.code] || 'Error al obtener la ubicación.', { duration: 4000 });
             geolocationWatchErrorToastRef.current = true;
         }
       },
       {
-        // --- OPCIONES OPTIMIZADAS ---
-        enableHighAccuracy: true, // Prioriza GPS
-        timeout: 5000,           // Error si no hay respuesta en 5s
-        maximumAge: 0             // Forzar la posición más reciente (no usar caché)
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
       }
     );
 
@@ -440,42 +420,35 @@ function MapPage() {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, [routingDestination]); // CORRECCIÓN: Eliminar userLocation y SAN_ANTONIO_PALOPO de las dependencias.
+  }, [routingDestination, userLocation]);
 
-
-  // Función para centrar el mapa en San Antonio Palopó
   const handleCenterMapToDefault = (e) => {
       e.stopPropagation();
       if (mapRef.current) {
           mapRef.current.centerMapToDefault();
-          setIsFollowing(false); // Desactivar el seguimiento al regresar a la vista inicial
+          setIsFollowing(false);
       }
   };
 
-
   const handleClearSelection = () => {
     setRoutingDestination(null);
-    setManualDestination(null); // Limpiar también punto manual
+    setManualDestination(null);
     setRoutes([]);
     routeToastShownRef.current = false;
+    arrivedToastShownRef.current = false;
     setSelectedRouteIndex(0);
     navigate('/mapa', { replace: true, state: {} });
   };
 
-  // NUEVO: Función para limpiar solo el sitio inicial
   const handleClearSiteView = () => {
     navigate('/mapa', { replace: true, state: {} });
   };
 
-  // Condición para saber si tenemos una ubicación real (no la de San Antonio)
   const isRealLocationAvailable = userLocation && !(userLocation.lat === SAN_ANTONIO_PALOPO[0] && userLocation.lng === SAN_ANTONIO_PALOPO[1]);
   
-  // NUEVO: Manejar clic en el mapa para marcar punto B
-  // SOLUCIÓN: Memorizar el valor del centro para evitar re-renders innecesarios.
   const memoizedCenter = React.useMemo(() => {
     return userLocation ? [userLocation.lat, userLocation.lng] : null;
-  }, [userLocation?.lat, userLocation?.lng]); // Depender de los valores primitivos
-
+  }, [userLocation?.lat, userLocation?.lng]);
 
   const handleMapClick = (e) => {
     if (!isRealLocationAvailable) {
@@ -490,14 +463,14 @@ function MapPage() {
       name: `Punto seleccionado (${lat.toFixed(4)}, ${lng.toFixed(4)})`
     };
     
-    // Marcar el punto y calcular ruta inmediatamente
     setManualDestination(newDestination);
     setRoutingDestination(newDestination);
     setRoutes([]);
     setSelectedRouteIndex(0);
     routeToastShownRef.current = false;
-    setIsFollowing(false); // IMPORTANTE: Desactivar seguimiento al marcar punto manual
-    setMarkingMode(false); // NUEVO: Desactivar modo marcado después de marcar
+    arrivedToastShownRef.current = false;
+    setIsFollowing(false);
+    setMarkingMode(false);
   };
 
   const handleSetRouting = (site) => {
@@ -506,7 +479,6 @@ function MapPage() {
       return;
     }
     
-    // Cerrar todos los popups inmediatamente
     setTimeout(() => {
       const popups = document.querySelectorAll('.leaflet-popup');
       popups.forEach(popup => popup.remove());
@@ -516,12 +488,12 @@ function MapPage() {
     setRoutes([]);
     setSelectedRouteIndex(0);
     routeToastShownRef.current = false;
-    setIsFollowing(false); // IMPORTANTE: Desactivar seguimiento al calcular ruta
+    arrivedToastShownRef.current = false;
+    setIsFollowing(false);
   };
 
   const handleRoutesFound = React.useCallback((foundRoutes) => {
     setRoutes(foundRoutes);
-    // ELIMINADO: toast de "¡Ruta calculada!" para ahorrar espacio en móvil
     if (foundRoutes.length > 0 && !routeToastShownRef.current) {
       routeToastShownRef.current = true;
     }
@@ -540,7 +512,6 @@ function MapPage() {
     return title;
   };
 
-  // Condición de carga
   if (loading) return <p>Cargando mapa...</p>;
   if (error) return <p className="error-message">{error}</p>;
 
@@ -548,7 +519,6 @@ function MapPage() {
     <div className="map-page-container">
       <h1>Sitios Turísticos</h1>
 
-      {/* NUEVO: Banner para sitio inicial sin ruta */}
       {initialSelectedSite && !routingDestination && !manualDestination && (
         <div className="map-info-banner">
           <p>Viendo sitio</p>
@@ -564,7 +534,6 @@ function MapPage() {
         </div>
       )}
 
-      {/* Banner para rutas */}
       {(routingDestination || manualDestination) && (
         <div className="map-info-banner">
           <p>
@@ -575,7 +544,7 @@ function MapPage() {
           </p>
           <button 
             onClick={(e) => {
-              e.stopPropagation(); // EVITAR propagación al mapa
+              e.stopPropagation();
               handleClearSelection();
             }} 
             className="map-info-banner-close"
@@ -591,30 +560,26 @@ function MapPage() {
         className="map-view" 
         zoomControl={false}
         whenCreated={mapInstance => {
-          // Solo desactivar seguimiento en drag si NO hay rutas activas
           mapInstance.on('dragstart', () => {
-            if (routes.length === 0) { // Solo si no hay rutas
+            if (routes.length === 0) {
               setIsFollowing(false);
             }
           });
         }}
       >
-        {/* CORRECCIÓN: Usar MapController (que ahora usa forwardRef) */}
         <MapController 
-          ref={mapRef} // Aquí se adjunta la referencia
-          center={memoizedCenter} // <-- SOLUCIÓN: Usar el valor memorizado
+          ref={mapRef}
+          center={memoizedCenter}
           isFollowing={isFollowing} 
           initialSelectedSite={initialSelectedSite}
           hasActiveRoute={routes.length > 0} 
-          defaultCenter={defaultInitialCenter} // Pasar el centro por defecto
+          defaultCenter={defaultInitialCenter}
         />
 
-        {/* NUEVO: Manejador de clics del mapa */}
         <MapClickHandler onMapClick={handleMapClick} markingMode={markingMode} />
 
         <div className="leaflet-top leaflet-right">
           <div className="navigation-controls-unified">
-            {/* 1. Botón de capas simplificado */}
             <button 
               onClick={(e) => {
                 e.stopPropagation();
@@ -630,13 +595,11 @@ function MapPage() {
               </svg>
             </button>
             
-            {/* 2. Botón UBICACIÓN (Seguimiento) */}
             <button 
               onClick={(e) => {
                 e.stopPropagation();
                 if (isRealLocationAvailable) {
                   setIsFollowing(!isFollowing);
-                  // Centrar el mapa si se activa el seguimiento
                   if (!isFollowing && mapRef.current) {
                       mapRef.current.centerMapToDefault(); 
                   }
@@ -646,24 +609,22 @@ function MapPage() {
               }} 
               className={`control-button ${isFollowing && isRealLocationAvailable ? 'active' : ''}`}
               title="Seguir mi ubicación"
-              disabled={!isRealLocationAvailable} // Desactivar si la ubicación del usuario no es la real
+              disabled={!isRealLocationAvailable}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
               </svg>
             </button>
 
-            {/* 3. Botón CENTRAR EN SAN ANTONIO */}
             <button
                 onClick={handleCenterMapToDefault}
                 className="control-button"
                 title="Centrar en San Antonio Palopó"
-                style={{ fontSize: '1.2em', fontWeight: 'bold' }} // Estilo simple
+                style={{ fontSize: '1.2em', fontWeight: 'bold' }}
             >
                 SAP
             </button>
             
-            {/* 4. Botón A→B con tooltip */}
             <div className="marking-mode-container">
               <button 
                 onClick={(e) => {
@@ -672,7 +633,7 @@ function MapPage() {
                 }} 
                 className={`control-button ${markingMode ? 'active' : ''}`}
                 title={markingMode ? "Clic en el mapa para marcar destino" : "Activar marcado manual"}
-                disabled={!isRealLocationAvailable} // Desactivar si la ubicación no es la real
+                disabled={!isRealLocationAvailable}
               >
                 A→B
               </button>
@@ -691,7 +652,7 @@ function MapPage() {
         </div>
 
         <RoutingMachine 
-          start={isRealLocationAvailable ? [userLocation.lat, userLocation.lng] : null} // <-- CAMBIO AQUÍ
+          start={isRealLocationAvailable ? [userLocation.lat, userLocation.lng] : null}
           end={routingDestination ? [routingDestination.lat, routingDestination.lng] : null} 
           onRoutesFound={handleRoutesFound}
           key="routing-machine" 
@@ -710,7 +671,6 @@ function MapPage() {
           </div>
         )}
 
-        {/* CAPAS CONDICIONALES - Sin duplicados */}
         {mapLayer === 'satellite' ? (
           <>
             <TileLayer
@@ -730,18 +690,21 @@ function MapPage() {
           />
         )}
 
-        {/* El marcador del usuario solo se muestra si la ubicación es real */}
         {isRealLocationAvailable && (
           <UserMarker 
             position={userLocation} 
           />
         )}
 
-        {/* Marcador para punto seleccionado manualmente */}
         {manualDestination && (
           <Marker 
             position={[manualDestination.lat, manualDestination.lng]} 
             icon={manualMarkerIcon}
+            eventHandlers={{
+              click: (e) => {
+                L.DomEvent.stopPropagation(e);
+              }
+            }}
           >
             <Popup>
               <div className="custom-popup">
@@ -751,7 +714,7 @@ function MapPage() {
                 </p>
                 <button 
                   onClick={(e) => {
-                    e.stopPropagation(); // EVITAR propagación al mapa
+                    e.stopPropagation();
                     handleClearSelection();
                   }} 
                   className="popup-route-button"
@@ -771,16 +734,12 @@ function MapPage() {
             icon={initialSelectedSite && (initialSelectedSite.id === site.id || 
                   (initialSelectedSite.lat === site.latitude && initialSelectedSite.lng === site.longitude)) ?
               highlightedIcon : getIconForCategory(site.parentCategory)}
-            
-            // --- NUEVO: ESTO SOLUCIONA EL PROBLEMA DEL POPUP ---
             eventHandlers={{
               click: (e) => {
-                // Detiene la propagación para que el mapa no reciba el clic y cierre el popup
-                e.originalEvent.stopPropagation();
-                e.target.openPopup(); 
+                // Detener propagación para evitar que MapClickHandler lo capture
+                L.DomEvent.stopPropagation(e);
               }
             }}
-            // ---------------------------------------------------
           >
             <Popup>
               <div className="custom-popup">
@@ -788,24 +747,22 @@ function MapPage() {
                 <p style={{ margin: '4px 0', fontSize: '0.9em', color: '#666' }}>{site.category}</p>
                 
                 <button 
-                  onClick={(e) => {
-                    e.stopPropagation(); // Importante mantener esto
-                    handleSetRouting(site);
-                  }} 
-                  className="popup-route-button"
-                  disabled={!isRealLocationAvailable}
-                  title={!isRealLocationAvailable ? "Activa tu ubicación para usar esta función" : "Calcular ruta desde tu ubicación"}
-                >
-                  Cómo llegar
-                </button>
-                <Link to={`/categoria/${site.category}/${site.slug}`} className="popup-link">Ver detalles</Link>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
-    </div>
-  );
+                  onClick={(e) => {e.stopPropagation();
+                handleSetRouting(site);
+              }} 
+              className="popup-route-button"
+              disabled={!isRealLocationAvailable}
+              title={!isRealLocationAvailable ? "Activa tu ubicación para usar esta función" : "Calcular ruta desde tu ubicación"}
+            >
+              Cómo llegar
+            </button>
+            <Link to={`/categoria/${site.category}/${site.slug}`} className="popup-link">Ver detalles</Link>
+          </div>
+        </Popup>
+      </Marker>
+    ))}
+  </MapContainer>
+</div>
+);
 }
-
 export default MapPage;

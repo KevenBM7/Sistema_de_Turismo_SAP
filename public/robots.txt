@@ -1,3 +1,27 @@
-# https://www.robotstxt.org/robotstxt.html
+# robots.txt para turismosanantoniopalopo.com
+
 User-agent: *
-Disallow:
+Allow: /
+
+# Bloquear páginas administrativas (si las tienes)
+Disallow: /admin/
+Disallow: /login/
+Disallow: /registro/
+
+# Bloquear archivos privados
+Disallow: /api/
+Disallow: /*.json$
+
+# Sitemap
+Sitemap: https://turismosanantoniopalopo.com/sitemap.xml
+
+# Rastreadores específicos
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+# Crawl-delay para bots agresivos
+User-agent: *
+Crawl-delay: 1

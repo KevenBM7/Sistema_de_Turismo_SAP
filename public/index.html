@@ -4,10 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <base href="%PUBLIC_URL%/" />
     
     <meta http-equiv="content-language" content="es" />
     <meta name="language" content="Spanish" />
+    
+    <!-- Verificación de Google Search Console - REEMPLAZA con tu código cuando lo obtengas -->
+    <!-- <meta name="google-site-verification" content="TU_CODIGO_AQUI" /> -->
     
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico"/>
     
@@ -16,45 +18,59 @@
     <meta name="description"
       content="Sumérgete en la cultura y belleza de San Antonio Palopó, a orillas del Lago Atitlán. Encuentra información de hoteles, ferias y toda la cultura local."
     />
-    <meta name="keywords" content="San Antonio Palopó, Sololá, Lago Atitlán, turismo Guatemala, hoteles, ferias, artesanía, cultura maya" />
+    <meta name="keywords" content="San Antonio Palopó, Sololá, Lago Atitlán, turismo Guatemala, hoteles, ferias, artesanía, cultura maya, qué hacer en Atitlán, tours Atitlán, pueblos del lago Atitlán" />
     <meta name="author" content="Municipalidad de San Antonio Palopó" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://turismosanantoniopalopo.com/" />
 
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Turismo San Antonio Palopó" />
     <meta property="og:title" content="Turismo en San Antonio Palopó, Sololá | Guía de Atitlán" />
     <meta property="og:description" content="Sumérgete en la cultura y belleza de San Antonio Palopó, a orillas del Lago Atitlán. Encuentra información de hoteles, ferias y toda la cultura local." />
     <meta property="og:url" content="https://turismosanantoniopalopo.com/" />
-    <meta property="og:image" content="https://turismosanantoniopalopo.com/logo192.png" />
-    <meta property="og:image:alt" content="Logo de Turismo San Antonio Palopó" />
-    <meta property="og:image:width" content="192" />
-    <meta property="og:image:height" content="192" />
+    <meta property="og:image" content="https://turismosanantoniopalopo.com/og-image.jpg" />
+    <meta property="og:image:alt" content="Vista panorámica de San Antonio Palopó y Lago Atitlán" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="es_GT" />
-    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:type" content="image/jpeg" />
     
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Turismo en San Antonio Palopó | Lago Atitlán" />
+    <meta name="twitter:description" content="Descubre la belleza y cultura de San Antonio Palopó, a orillas del Lago Atitlán" />
+    <meta name="twitter:image" content="https://turismosanantoniopalopo.com/og-image.jpg" />
+    <meta name="twitter:image:alt" content="San Antonio Palopó, Lago Atitlán" />
+    
+    <!-- PWA -->
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     
+    <!-- Preconnect para optimizar carga -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://firebasestorage.googleapis.com">
     <link rel="preconnect" href="https://firestore.googleapis.com">
     <link rel="preconnect" href="https://www.googleapis.com">
-    <link rel="preconnect" href="https://turismosanantoniopalopo.com"> 
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;700&family=Montserrat:wght@600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;700&family=Montserrat:wght@600;700&display=swap"></noscript>
+    
+    <!-- DNS Prefetch para mejorar velocidad -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com">
+    
+    <!-- Fuentes con optimización -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@600;700&display=swap"></noscript>
     
     <style>
-      /* Estilos mínimos para evitar CLS antes de que cargue el CSS modular */
+      /* Estilos críticos para evitar CLS */
       *,:after,:before{box-sizing:border-box}
       body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto','Oxygen','Ubuntu','Cantarell','Fira Sans','Droid Sans','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background-color:#fff;color:#212529}
       
       .container{padding:2rem;max-width:100%}.container.no-padding-top{padding-top:0}
       main.container { min-height: 80vh; }
-      .footer-container { min-height: 250px; } /* CLS FIX: Reserva espacio para el footer */
+      .footer-container { min-height: 250px; }
       
-      /* Estilos de Hamburger para evitar CLS y asegurar clic inmediato */
       .hamburger{display:flex!important;cursor:pointer;position:fixed!important;top:20px!important;left:20px!important;z-index:1001!important;width:50px!important;height:50px!important;background-color:rgba(255,255,255,.95)!important;backdrop-filter:blur(10px);border-radius:50%!important;flex-direction:column;justify-content:center;align-items:center;transition:all .3s ease-in-out;box-shadow:0 4px 12px rgba(0,0,0,.15)!important;border:1px solid rgba(0,0,0,.1)!important;padding:12px!important}
       .hamburger .bar{display:block;width:25px;height:3px;margin:3px auto;transition:all .3s ease-in-out;background-color:#333!important;border-radius:2px}
       
@@ -64,6 +80,7 @@
       }
     </style>
 
+    <!-- JSON-LD: Destino Turístico -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -71,7 +88,7 @@
       "name": "San Antonio Palopó",
       "description": "Pueblo pintoresco a orillas del Lago Atitlán, famoso por su artesanía textil y cultura maya Kaqchikel",
       "url": "https://turismosanantoniopalopo.com/",
-      "image": "%PUBLIC_URL%/logo192.png",
+      "image": "https://turismosanantoniopalopo.com/og-image.jpg",
       "address": {
         "@type": "PostalAddress",
         "addressLocality": "San Antonio Palopó",
@@ -87,7 +104,58 @@
         "Cultural Tourism",
         "Adventure Tourism",
         "Nature Tourism"
+      ],
+      "knowsAbout": [
+        "Lago Atitlán",
+        "Artesanía Maya",
+        "Textiles tradicionales",
+        "Cultura Kaqchikel"
       ]
+    }
+    </script>
+    
+    <!-- JSON-LD: Organización -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Turismo San Antonio Palopó",
+      "url": "https://turismosanantoniopalopo.com",
+      "logo": "https://turismosanantoniopalopo.com/logo512.png",
+      "sameAs": [
+        "https://www.facebook.com/share/1BUvguNB3P/",
+        "https://www.tiktok.com/@munisanantoniopalopo?is_from_webapp=1&sender_device=pc"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Service",
+        "areaServed": "GT",
+        "availableLanguage": ["Spanish", "Kaqchikel"]
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: Breadcrumb -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Guatemala",
+        "item": "https://turismosanantoniopalopo.com"
+      },{
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Sololá",
+        "item": "https://turismosanantoniopalopo.com"
+      },{
+        "@type": "ListItem",
+        "position": 3,
+        "name": "San Antonio Palopó",
+        "item": "https://turismosanantoniopalopo.com"
+      }]
     }
     </script>
   </head>

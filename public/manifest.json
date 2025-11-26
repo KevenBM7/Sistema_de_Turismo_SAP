@@ -1,6 +1,7 @@
 {
-  "short_name": "Turismo en San Antonio Palopó",
-  "name": "Turismo App SAP",
+  "short_name": "SAP Turismo",
+  "name": "Turismo San Antonio Palopó",
+  "description": "Guía turística de San Antonio Palopó, Lago Atitlán - Hoteles, Restaurantes, Sitios Turísticos y Lugares de Interés",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,16 +11,24 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#0d6efd",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "categories": ["travel", "tourism", "lifestyle"],
+  "lang": "es",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false
 }

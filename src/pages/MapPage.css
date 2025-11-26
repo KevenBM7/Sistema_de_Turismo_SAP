@@ -26,6 +26,7 @@
   white-space: nowrap;
   width: auto;
   display: inline-block;
+  pointer-events: none;
 }
 
 .map-info-banner {
@@ -222,51 +223,6 @@
   opacity: 1;
 }
 
-/* --- Estilos de Marcador y Popups (Específicos de Leaflet) --- */
-.user-location-simple-icon {
-  background: transparent !important;
-  border: none !important;
-}
-
-.manual-marker-icon {
-  background: transparent !important;
-  border: none !important;
-}
-
-.custom-leaflet-div-icon {
-  background: transparent;
-  border: none;
-  will-change: transform;
-}
-
-.highlighted-marker-icon {
-  position: relative;
-}
-
-.highlight-pulse {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
-  background-color: rgba(23, 162, 184, 0.5);
-  border-radius: 50%;
-  animation: pulse-animation 1.5s infinite;
-  z-index: -1;
-}
-
-@keyframes pulse-animation {
-  0% {
-    transform: translate(-50%, -50%) scale(0.5);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(2);
-    opacity: 0;
-  }
-}
-
 .alternative-routes-panel {
   margin-bottom: 60px !important;
   margin-right: 10px !important;
@@ -333,6 +289,16 @@
   font-weight: 600;
 }
 
+.custom-popup h5 {
+  font-size: 1rem;
+}
+
+.custom-popup h6 {
+  margin: 0 0 0.1px 0;
+  color: #333;
+  font-size: 0.2rem;
+}
+
 .custom-popup p {
   font-size: 0.85em;
   margin: 2px 0;
@@ -350,6 +316,7 @@
   margin: 5px 5px 5px 0;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 500;
+  width: 100%;
 }
 
 .popup-route-button:hover:not(:disabled) {
@@ -375,6 +342,8 @@
   font-size: 0.9em;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 500;
+  width: 100%;
+  text-align: center;
 }
 
 .popup-link:hover {
@@ -394,7 +363,6 @@
   margin: 12px;
   line-height: 1.5;
 }
-
 /* Responsive Map */
 @media (max-width: 768px) {
   .map-page-container h1 {
@@ -417,97 +385,6 @@
   .leaflet-top.leaflet-right {
     top: 90px;
   }
-}
-/* --- Estilos de Marcador y Popups (Específicos de Leaflet) --- */
-.custom-leaflet-div-icon {
-  background: transparent;
-  border: none;
-  will-change: transform;
-}
-
-.highlighted-marker-icon {
-  position: relative;
-}
-
-.highlighted-marker-icon img {
-  filter: hue-rotate(120deg) saturate(1.5);
-}
-
-.highlight-pulse {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
-  background-color: rgba(23, 162, 184, 0.5);
-  border-radius: 50%;
-  animation: pulse-animation 1.5s infinite;
-  z-index: -1;
-}
-
-@keyframes pulse-animation {
-  0% {
-    transform: translate(-50%, -50%) scale(0.5);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(2);
-    opacity: 0;
-  }
-}
-
-.alternative-routes-panel {
-  margin-bottom: 60px !important;
-  margin-right: 10px !important;
-}
-
-.alternative-routes-control {
-  background-color: white;
-  padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.65);
-  min-width: 200px;
-}
-
-.alternative-routes-control h4 {
-  margin: 0 0 8px 0;
-  font-size: 14px;
-  text-align: center;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 5px;
-}
-
-.alternative-routes-control button {
-  display: block;
-  width: 100%;
-  background-color: #f4f4f4;
-  border: 1px solid #ccc;
-  color: #333;
-  padding: 8px;
-  margin-bottom: 5px;
-  border-radius: 3px;
-  cursor: pointer;
-  text-align: left;
-  font-size: 12px;
-  transition: all 0.2s ease;
-}
-
-.alternative-routes-control button:hover {
-  background-color: #e9e9e9;
-  transform: translateY(-1px);
-}
-
-.alternative-routes-control button.selected {
-  background-color: #0056b3;
-  color: white;
-  border-color: #004494;
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0, 86, 179, 0.3);
-}
-
-.leaflet-routing-container {
-  display: none !important;
 }
 
 .leaflet-control-attribution {
@@ -555,73 +432,6 @@
 
 .leaflet-interactive {
   cursor: pointer;
-}
-
-.custom-popup h4 {
-  margin: 0 0 0.1px 0;
-  color: #333;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.custom-popup h5 {
-  font-size: 1rem;
-}
-
-.custom-popup h6 {
-  margin: 0 0 0.1px 0;
-  color: #333;
-  font-size: 0.2rem;
-}
-
-.custom-popup p {
-  font-size: 0.85em;
-  margin: 2px 0;
-  color: #666;
-}
-
-.popup-route-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9em;
-  margin: 5px 5px 5px 0;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  font-weight: 500;
-}
-
-.popup-route-button:hover:not(:disabled) {
-  background-color: #0056b3;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 86, 179, 0.3);
-}
-
-.popup-route-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.popup-link {
-  display: inline-block;
-  margin-top: 2px;
-  padding: 1px 9px;
-  background-color: #28a745;
-  color: white !important;
-  text-decoration: none;
-  border-radius: 3px;
-  font-size: 0.9em;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  font-weight: 500;
-}
-
-.popup-link:hover {
-  background-color: #1e7e34;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(30, 126, 52, 0.3);
 }
 
 .route-toggle-container {
@@ -690,14 +500,127 @@
   box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
 }
 
-.leaflet-popup-content-wrapper {
-  min-width: 180px;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  backdrop-filter: blur(10px);
+/* --- SOLUCIÓN DEFINITIVA DE CLICS EN MARCADORES --- */
+
+/* Paso 1: Asegurar que los contenedores de marcadores sean clicables */
+.leaflet-marker-pane {
+  z-index: 600 !important;
+  pointer-events: none !important; /* El pane no bloquea */
 }
 
-.leaflet-popup-content {
-  margin: 12px;
-  line-height: 1.5;
+.leaflet-marker-pane * {
+  pointer-events: auto !important; /* Pero sus hijos SÍ reciben clics */
+}
+
+/* Paso 2: Todos los marcadores deben ser clicables */
+.user-location-simple-icon,
+.manual-marker-icon,
+.custom-leaflet-div-icon,
+.highlighted-marker-icon {
+  background: transparent !important;
+  border: none !important;
+  will-change: transform;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  z-index: 600 !important;
+  position: relative !important;
+}
+
+/* Paso 3: El marcador resaltado debe estar más arriba */
+.highlighted-marker-icon {
+  z-index: 650 !important;
+}
+
+/* Paso 4: Los SVG dentro de los marcadores NO deben bloquear clics */
+.custom-leaflet-div-icon svg,
+.highlighted-marker-icon svg,
+.manual-marker-icon svg,
+.user-location-simple-icon svg {
+  pointer-events: none !important; /* SVG transparent al clic, el padre lo maneja */
+}
+
+/* Paso 5: Los elementos path dentro de SVG tampoco bloquean */
+.custom-leaflet-div-icon svg path,
+.highlighted-marker-icon svg path,
+.manual-marker-icon svg path,
+.user-location-simple-icon svg path {
+  pointer-events: none !important;
+}
+
+/* Paso 6: Asegurar que los popups funcionen correctamente */
+.leaflet-popup-pane {
+  z-index: 700 !important;
+  pointer-events: none !important;
+}
+
+.leaflet-popup {
+  pointer-events: auto !important;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  pointer-events: auto !important;
+}
+
+/* Paso 7: Asegurar que el tile pane esté por debajo */
+.leaflet-tile-pane {
+  z-index: 200 !important;
+}
+
+/* Paso 8: Forzar la interactividad de los marcadores en dispositivos táctiles */
+@media (hover: none) and (pointer: coarse) {
+  .custom-leaflet-div-icon,
+  .highlighted-marker-icon,
+  .manual-marker-icon,
+  .user-location-simple-icon {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation !important;
+  }
+}
+
+/* Paso 9: Asegurar que el círculo de precisión no bloquee el marcador de usuario */
+.leaflet-overlay-pane svg {
+  pointer-events: none !important;
+}
+
+.leaflet-overlay-pane path {
+  pointer-events: none !important;
+}
+
+/* Paso 10: Garantizar que los marcadores siempre estén clickeables */
+.leaflet-marker-icon {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Animación del marcador resaltado */
+.highlight-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(23, 162, 184, 0.3);
+  animation: pulse 2s infinite;
+  pointer-events: none !important;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Asegurar que los botones en popups funcionen */
+.leaflet-popup-content button,
+.leaflet-popup-content a {
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
