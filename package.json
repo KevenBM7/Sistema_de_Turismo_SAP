@@ -28,7 +28,6 @@
     "react-leaflet": "^5.0.0",
     "react-responsive-carousel": "^3.2.23",
     "react-router-dom": "^6.24.1",
-    "react-scripts": "5.0.1",
     "react-slick": "^0.31.0",
     "slick-carousel": "^1.8.1",
     "slugify": "^1.6.6",

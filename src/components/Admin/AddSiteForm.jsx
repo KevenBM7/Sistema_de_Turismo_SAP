@@ -30,9 +30,12 @@ function AddSiteForm({ siteToEdit }) {
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
   const [latitude, setLatitude] = useState('');
+  const [email, setEmail] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  const [whatsapp2, setWhatsapp2] = useState('');
   const [facebook, setFacebook] = useState('');
   const [instagram, setInstagram] = useState('');
+  const [tiktok, setTiktok] = useState('');
   const [longitude, setLongitude] = useState('');
   const [imageFiles, setImageFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -68,9 +71,12 @@ function AddSiteForm({ siteToEdit }) {
       setDescription(siteToEdit.description_es || siteToEdit.description || ''); // Compatibilidad con datos antiguos
       setAddress(siteToEdit.address || '');
       setLatitude(siteToEdit.latitude || '');
+      setEmail(siteToEdit.email || '');
       setWhatsapp(siteToEdit.whatsapp || '');
+      setWhatsapp2(siteToEdit.whatsapp2 || '');
       setFacebook(siteToEdit.facebook || '');
       setInstagram(siteToEdit.instagram || '');
+      setTiktok(siteToEdit.tiktok || '');
       setLongitude(siteToEdit.longitude || '');
       setSelectedCategory(siteToEdit.category || '');
       setParentCategory(siteToEdit.parentCategory || '');
@@ -89,9 +95,12 @@ function AddSiteForm({ siteToEdit }) {
       setAddress('');
       setLatitude('');
       setLongitude('');
+      setEmail('');
       setWhatsapp('');
+      setWhatsapp2('');
       setFacebook('');
       setInstagram('');
+      setTiktok('');
       setParentCategory('');
       setSelectedCategory('');
       setNewCategory('');
@@ -125,9 +134,12 @@ function AddSiteForm({ siteToEdit }) {
     setAddress('');
     setLatitude('');
     setLongitude('');
+    setEmail('');
     setWhatsapp('');
+    setWhatsapp2('');
     setFacebook('');
     setInstagram('');
+    setTiktok('');
     setParentCategory('');
     setSelectedCategory('');
     setNewCategory('');
@@ -364,10 +376,13 @@ function AddSiteForm({ siteToEdit }) {
           name_lowercase: name.toLowerCase(),
           description: description, // Usar el campo unificado
           address, 
+          email,
           category: finalCategory,
           whatsapp,
+          whatsapp2,
           facebook,
           instagram,
+          tiktok,
           latitude: Number(latitude),
           longitude: Number(longitude),
           imagePaths: finalImagePaths,
@@ -392,9 +407,12 @@ function AddSiteForm({ siteToEdit }) {
           description: description, // Usar el campo unificado
           address,
           latitude: Number(latitude),
+          email,
           whatsapp,
+          whatsapp2,
           facebook,
           instagram,
+          tiktok,
           longitude: Number(longitude),
           category: finalCategory,
           imagePaths: newImagePaths,
@@ -511,6 +529,17 @@ function AddSiteForm({ siteToEdit }) {
           <h5>Contacto y Redes Sociales (Opcional)</h5>
           <div className="coordinates-group">
             <div className="form-group">
+              <label htmlFor="email">Correo de Contacto</label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Ej: info@negocio.com"
+                disabled={uploading}
+              />
+            </div>
+            <div className="form-group">
               <label htmlFor="whatsapp">Número de WhatsApp</label>
               <input
                 type="tel"
@@ -518,6 +547,17 @@ function AddSiteForm({ siteToEdit }) {
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
                 placeholder="Ej: 50212345678 (sin + ni espacios)"
+                disabled={uploading}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="whatsapp2">2º Número de WhatsApp</label>
+              <input
+                type="tel"
+                id="whatsapp2"
+                value={whatsapp2}
+                onChange={(e) => setWhatsapp2(e.target.value)}
+                placeholder="Ej: 50287654321"
                 disabled={uploading}
               />
             </div>
@@ -540,6 +580,17 @@ function AddSiteForm({ siteToEdit }) {
                 value={instagram}
                 onChange={(e) => setInstagram(e.target.value)}
                 placeholder="https://instagram.com/usuario"
+                disabled={uploading}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="tiktok">URL de TikTok</label>
+              <input
+                type="url"
+                id="tiktok"
+                value={tiktok}
+                onChange={(e) => setTiktok(e.target.value)}
+                placeholder="https://tiktok.com/@usuario"
                 disabled={uploading}
               />
             </div>

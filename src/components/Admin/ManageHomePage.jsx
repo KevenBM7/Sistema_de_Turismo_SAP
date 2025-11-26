@@ -158,7 +158,8 @@ function ManageHomePage() {
             value={subText}
             onChange={(e) => setSubText(e.target.value)}
             placeholder="Describe la bienvenida..."
-            rows="3"
+            rows="7"
+            style={{ minHeight: '120px', resize: 'vertical', width: '100%' }}
           />
         </div>
         <div className="form-group">

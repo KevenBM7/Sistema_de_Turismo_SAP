@@ -31,7 +31,7 @@ const parentCategoryColors = {
 const getIconForCategory = (parentCategory) => {
   const color = parentCategoryColors[parentCategory] || parentCategoryColors.default;
   const markerHtml = `
-    <svg viewBox="0 0 24 24" width="28" height="28" fill="${color}" stroke="white" stroke-width="1">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="${color}" stroke="white" stroke-width="1" style="pointer-events: auto;">
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
     </svg>`;
 
@@ -127,26 +127,18 @@ const UserMarker = ({ position }) => {
 const MapClickHandler = ({ onMapClick, markingMode }) => {
   useMapEvents({
     click: (e) => {
-      // Solo permitir marcado si el modo está activo
-      if (!markingMode) {
+      // VERIFICACIÓN MEJORADA:
+      // Si el objetivo original del evento tiene la clase leaflet-popup-close-button o está dentro de un popup, ignorar.
+      const target = e.originalEvent.target;
+      const isMarkerClick = target.closest && (target.closest('.leaflet-marker-icon') || target.closest('.custom-leaflet-div-icon'));
+      
+      if (e.originalEvent.defaultPrevented || isMarkerClick) {
         return;
       }
-      
-      // VERIFICAR que el clic no venga de un control o botón
-      if (e.originalEvent && e.originalEvent.target) {
-        const target = e.originalEvent.target;
-        
-        // Ignorar clics en controles, botones y otros elementos de UI
-        if (target.closest('.leaflet-control') || 
-            target.closest('.navigation-controls-mobile') ||
-            target.closest('button') ||
-            target.closest('.leaflet-marker-pane') ||
-            target.closest('.leaflet-popup')) {
-          return;
-        }
+
+      if (markingMode) {
+        onMapClick(e);
       }
-      
-      onMapClick(e);
     },
   });
   return null;
@@ -777,8 +769,18 @@ function MapPage() {
             key={site.id} 
             position={[site.latitude, site.longitude]} 
             icon={initialSelectedSite && (initialSelectedSite.id === site.id || 
-                  (initialSelectedSite.lat === site.latitude && initialSelectedSite.lng === site.longitude)) ? 
-                      highlightedIcon : getIconForCategory(site.parentCategory)}
+                  (initialSelectedSite.lat === site.latitude && initialSelectedSite.lng === site.longitude)) ?
+              highlightedIcon : getIconForCategory(site.parentCategory)}
+            
+            // --- NUEVO: ESTO SOLUCIONA EL PROBLEMA DEL POPUP ---
+            eventHandlers={{
+              click: (e) => {
+                // Detiene la propagación para que el mapa no reciba el clic y cierre el popup
+                e.originalEvent.stopPropagation();
+                e.target.openPopup(); 
+              }
+            }}
+            // ---------------------------------------------------
           >
             <Popup>
               <div className="custom-popup">
@@ -787,7 +789,7 @@ function MapPage() {
                 
                 <button 
                   onClick={(e) => {
-                    e.stopPropagation(); // EVITAR propagación al mapa
+                    e.stopPropagation(); // Importante mantener esto
                     handleSetRouting(site);
                   }} 
                   className="popup-route-button"
