@@ -624,3 +624,15 @@
   pointer-events: auto !important;
   cursor: pointer !important;
 }
+
+/* --- ESTILOS PARA EL MARCADOR DE UBICACIÓN DEL USUARIO --- */
+/* Esto soluciona el problema de CSP en producción */
+.user-location-marker {
+  width: 16px;
+  height: 16px;
+  background-color: #1a73e8; /* Azul de Google Maps */
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  pointer-events: none; /* Para que no interfiera con los clics en el mapa */
+}

@@ -38,13 +38,24 @@ function SiteCard({ site, showRemoveButton, onRemoveFavorite }) {
             height="225"
           />
         </div>
+        
         <div className="site-info">
+          {/* El CSS limitará esto a 2 líneas y letra más pequeña */}
           <h3>{site.name}</h3>
+          
+          {/* El CSS limitará esto a 3 líneas */}
           <p className="site-description">{plainTextDescription}</p>
+          
+          {/* Este footer se irá siempre al fondo gracias a margin-top: auto */}
           <div className="site-card-footer">
             {site.category && <span className="site-card-category">{site.category}</span>}
           </div>
-          {showRemoveButton && <button onClick={handleRemoveClick} className="remove-favorite-button">Quitar</button>}
+          
+          {showRemoveButton && (
+            <button onClick={handleRemoveClick} className="remove-favorite-button">
+              Quitar
+            </button>
+          )}
         </div>
       </div>
     </Link>

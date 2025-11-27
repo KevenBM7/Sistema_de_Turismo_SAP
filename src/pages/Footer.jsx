@@ -98,27 +98,26 @@ function Footer() {
       </div>
 
       {/* Barra inferior de copyright */}
-<div className="footer-developer-credit">
-  <p style={{ 
-    margin: 0, 
-    fontSize: '.85rem', 
-    color: '#999',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '10px'
-  }}>
-    <img 
-      src="/logosap.png" 
-      alt="Logo Turismo" 
-      className="foter-logo" 
-      width="59"
-      height="60"
-      style={{ padding: '5px' }}
-    />
-    <span>Sistema de Gestión Turística Municipalidad de San Antonio Palopó</span>
-  </p>
-</div>
+      <div className="footer-developer-credit">
+        <p style={{ 
+          margin: 0, 
+          fontSize: '.85rem', 
+          color: '#999', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          gap: '10px' 
+        }}>
+          <img 
+            src="/logosap.png" 
+            alt="Logo Turismo" 
+            className="foter-logo-optimized" 
+            width="59" 
+            height="60" 
+          />
+          <span>Sistema de Gestión Turística Municipalidad de San Antonio Palopó</span>
+        </p>
+      </div>
     </footer>
   );
 }

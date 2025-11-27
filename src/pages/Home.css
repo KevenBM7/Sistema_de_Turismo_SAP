@@ -19,13 +19,23 @@
   background-color: #f0f0f0;
 }
 
+/* Nueva clase para el contenedor del slide */
+.header-slide-wrapper {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+/* Nueva clase para la imagen IMG real */
 .header-slide-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
+  display: block;
 }
 
+/* Mantenemos la clase antigua por compatibilidad si fuera necesaria, pero ya no se usa en el JSX nuevo */
 .header-slide {
   width: 100%;
   height: 100%;
@@ -92,13 +102,21 @@
 
 .event-slide {
   height: 550px;
-  background-size: cover;
-  background-position: center;
   border-radius: 12px;
   position: relative;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease;
+  background-color: #f0f0f0; /* Color de fondo mientras carga */
+}
+
+/* Nueva clase para imagen de evento */
+.event-slide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .event-slide:hover {
@@ -113,6 +131,7 @@
   background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
   padding: 2rem;
   color: white;
+  z-index: 2; /* Asegurar que esté sobre la imagen */
 }
 
 .event-slide-overlay h3 {
@@ -160,7 +179,7 @@
 
 /* --- Responsive Home --- */
 @media (max-width: 768px) {
-  .home-header-carousel, .header-slide {
+  .home-header-carousel, .header-slide-wrapper {
     aspect-ratio: 16 / 9;
     min-height: 300px;
   }

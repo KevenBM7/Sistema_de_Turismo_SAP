@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { storage } from '../services/firebase'; // Importar storage
+import { storage } from '../services/firebase';
 import SiteList from '../components/SiteList';
-import { ref, getDownloadURL } from 'firebase/storage'; // Importar funciones de storage
+import { ref, getDownloadURL } from 'firebase/storage';
 import EventCarouselSkeleton from '../components/EventCarouselSkeleton';
 import CategoryGroupSkeleton from '../components/CategoryGroupSkeleton';
 import { Link } from 'react-router-dom';
@@ -14,7 +14,6 @@ import '../components/CategoryCard.css';
 import '../styles/Utilities.css';
 import '../styles/Layout.css';
 
-// Función para barajar un array (algoritmo de Fisher-Yates)
 const shuffleArray = (array) => {
   let currentIndex = array.length, randomIndex;
   while (currentIndex !== 0) {
@@ -25,14 +24,12 @@ const shuffleArray = (array) => {
   return array;
 };
 
-// Mapeo de los nombres de backend a los títulos que se mostrarán
 const parentCategoryTitles = {
   "Atracciones y Cultura": "Descubre lo Imprescindible",
   "Servicios y Logística": "Tu Base de Viaje",
   "Movilidad y Transporte": "Movilidad y Transporte",
 };
 
-// Orden deseado para mostrar las categorías principales
 const displayOrder = ["Atracciones y Cultura", "Servicios y Logística", "Movilidad y Transporte"];
 
 function Home() {
@@ -46,27 +43,21 @@ function Home() {
     window.scrollTo(0, 0);
     const fetchData = async () => {
       try {
-        // 1. Cargar datos de la portada
         const homePageRef = doc(db, 'settings', 'homePage');
         const homePageSnap = await getDoc(homePageRef);
-        if (homePageSnap.exists()) { // <-- CORRECCIÓN AQUÍ
+        if (homePageSnap.exists()) {
           const data = homePageSnap.data();
-          // Si tenemos rutas de imágenes (imagePaths), las convertimos a URLs de descarga
           if (data.imagePaths && data.imagePaths.length > 0) {
             const urlPromises = data.imagePaths.map(path => getDownloadURL(ref(storage, path)).catch(() => null));
             const urls = (await Promise.all(urlPromises)).filter(Boolean);
             setHomePageData({ ...data, imageUrls: urls });
           } else {
-            // Si no, usamos los datos como están (compatibilidad con datos antiguos)
             setHomePageData(data);
           }
         }
 
-        // 2. Cargar eventos activos y próximos
         try {
           const today = new Date().toISOString().split('T')[0];
-          
-          // 1. Buscar eventos futuros, ordenados por fecha de inicio.
           const futureEventsQuery = query(
             collection(db, 'events'),
             where('startDate', '>=', today),
@@ -76,19 +67,16 @@ function Home() {
           const futureEventsSnap = await getDocs(futureEventsQuery);
           let upcoming = futureEventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-          // 2. Si no tenemos 5 eventos, buscar eventos en curso para completar.
           if (upcoming.length < 5) {
             const currentlyActiveQuery = query(
               collection(db, 'events'),
               where('startDate', '<', today),
               where('endDate', '>=', today),
-              orderBy('startDate', 'desc'), // Los más recientes primero
+              orderBy('startDate', 'desc'),
               limit(5)
             );
             const activeEventsSnap = await getDocs(currentlyActiveQuery);
             const activeEvents = activeEventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-            // Añadir eventos activos que no estén ya en la lista
             activeEvents.forEach(event => {
               if (upcoming.length < 5 && !upcoming.find(e => e.id === event.id)) {
                 upcoming.push(event);
@@ -96,30 +84,26 @@ function Home() {
             });
           }
           
-          // Volver a ordenar por fecha de inicio por si se añadieron eventos en curso
           upcoming.sort((a, b) => a.startDate.localeCompare(b.startDate));
           setUpcomingEvents(upcoming.slice(0, 5));
 
         } catch (eventsErr) {
           if (eventsErr.message.includes('index')) {
             console.warn("Fallback de eventos activado por falta de índice en Firestore.");
-            // Fallback si el índice compuesto no existe en Firestore.
             const allEventsSnapshot = await getDocs(collection(db, 'events'));
             const today = new Date().toISOString().split('T')[0];
             const allEvents = allEventsSnapshot.docs
               .map(doc => ({ id: doc.id, ...doc.data() }))
               .filter(event => event.endDate >= today)
               .sort((a, b) => a.startDate.localeCompare(b.startDate))
-              .slice(0, 5); // Aseguramos el límite de 5 también en el fallback.
+              .slice(0, 5);
             setUpcomingEvents(allEvents);
           }
         }
 
-        // 3. Cargar todos los sitios para determinar categorías activas y sitios aleatorios
         const sitesSnapshot = await getDocs(collection(db, 'sites'));
         const allSites = sitesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // 4. Agrupar subcategorías por categoría principal
         const sitesByCategory = {};
         const groups = {};
         allSites.forEach(site => {
@@ -142,7 +126,6 @@ function Home() {
         });
         setGroupedCategories(groups);
 
-        // 5. Seleccionar hasta 9 sitios aleatorios, uno por categoría
         const categoriesWithSites = Object.keys(sitesByCategory);
         const shuffledCategories = shuffleArray([...categoriesWithSites]);
         const selectedSites = [];
@@ -185,7 +168,7 @@ function Home() {
     slidesToScroll: 1,
     autoplay: upcomingEvents.length > 1,
     autoplaySpeed: 5000,
-    lazyLoad: 'ondemand', // Carga las imágenes solo cuando son necesarias
+    lazyLoad: 'ondemand',
     arrows: true,
   };
 
@@ -201,7 +184,6 @@ function Home() {
   };
 
   if (loading) {
-    // --- VISTA DE CARGA CON SKELETONS ---
     return (
       <div>
         <header className="home-welcome-text">
@@ -216,7 +198,6 @@ function Home() {
           <CategoryGroupSkeleton />
           <CategoryGroupSkeleton />
         </section>
-        {/* Aquí podríamos añadir el esqueleto para la lista de sitios aleatorios si fuera necesario */}
       </div>
     );
   }
@@ -232,8 +213,17 @@ function Home() {
           <div className="home-header-carousel">
             <Slider {...sliderSettings}>
               {homePageData.imageUrls.map((url, index) => (
-                <div key={index}>
-                  <div className="header-slide" style={{ backgroundImage: `url(${url})` }} />
+                <div key={index} className="header-slide-wrapper">
+                  {/* MEJORA LCP: Usar <img> en lugar de backgroundImage */}
+                  <img 
+                    src={url} 
+                    alt="Portada San Antonio Palopó" 
+                    className="header-slide-image"
+                    width="1200" 
+                    height="675"
+                    fetchPriority={index === 0 ? "high" : "auto"}
+                    loading={index === 0 ? "eager" : "lazy"}
+                  />
                 </div>
               ))}
             </Slider>
@@ -253,20 +243,28 @@ function Home() {
             <Slider {...eventSliderSettings}>
               {upcomingEvents.map(event => {
                 const status = getEventStatus(event);
+                const eventImg = event.imageUrls && event.imageUrls.length > 0 
+                  ? event.imageUrls[Math.floor(Math.random() * event.imageUrls.length)]
+                  : null;
+
                 return (
                   <div key={event.id}>
                     <Link to={`/evento/${event.id}`} className="event-slide-link">
-                      <div 
-                        className="event-slide" 
-                        style={{ 
-                          backgroundImage: 
-                            event.imageUrls && event.imageUrls.length > 0 
-                            ? `url(${event.imageUrls[Math.floor(Math.random() * event.imageUrls.length)]})` 
-                            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          backgroundColor: 
-                            event.imageUrls && event.imageUrls.length > 0 ? 'transparent' : '#667eea'
-                        }}
-                      >
+                      <div className="event-slide">
+                        {/* MEJORA: Usar <img> para eventos también */}
+                        {eventImg ? (
+                          <img 
+                            src={eventImg} 
+                            alt={event.title} 
+                            className="event-slide-image"
+                            loading="lazy"
+                            width="800"
+                            height="550"
+                          />
+                        ) : (
+                          <div className="event-slide-placeholder" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', width: '100%', height: '100%' }}></div>
+                        )}
+                        
                         <div className="event-slide-overlay">
                           <div style={{ 
                             display: 'inline-block',
@@ -310,7 +308,6 @@ function Home() {
           {displayOrder.map(parentCat => (
             groupedCategories[parentCat] && (
               <div key={parentCat} className="category-group">
-                {/* CAMBIO: Usar h3 para la jerarquía correcta (H1 -> H2 -> H3) */}
                 <h3 className="category-group-title">{parentCategoryTitles[parentCat] || parentCat}</h3>
                 <div className="category-filters">
                   {groupedCategories[parentCat].map(subCat => (

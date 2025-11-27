@@ -89,6 +89,11 @@
   margin-top: 1rem !important;
 }
 
+/* Nueva clase para el logo (optimización de renderizado) */
+.foter-logo-optimized {
+  padding: 5px;
+}
+
 /* Footer Responsivo */
 @media (max-width: 768px) {
   .footer-content {
@@ -103,6 +108,7 @@
     text-align: center;
     border-bottom: 1px solid #5a6268;
     min-width: unset;
+    min-height: 150px; /* ✅ FIX CLS: Reservar espacio para evitar saltos */
   }
   .footer-section:last-of-type {
     border-bottom: none;

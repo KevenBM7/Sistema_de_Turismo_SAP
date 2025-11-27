@@ -72,16 +72,8 @@ const manualMarkerIcon = new L.DivIcon({
 const UserMarker = ({ position }) => {
   const markerIcon = React.useMemo(() => {
     return new L.DivIcon({
-      className: 'user-location-simple-icon',
-      html: `<div style="
-        width: 16px;
-        height: 16px;
-        background-color: #1a73e8;
-        border: 3px solid white;
-        border-radius: 50%;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        pointer-events: none;
-      "></div>`,
+      className: 'user-location-container', // Clase para el contenedor principal
+      html: `<div class="user-location-marker"></div>`, // El div interno que tendrá los estilos
       iconSize: [16, 16],
       iconAnchor: [8, 8],
     });

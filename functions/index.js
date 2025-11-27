@@ -10,57 +10,80 @@ const fs = require("fs");
 admin.initializeApp();
 const db = admin.firestore();
 
+// CONFIGURACIÓN
 const DOMAIN = "https://turismosanantoniopalopo.com";
+// IMPORTANTE: Definimos explícitamente el bucket
+const BUCKET_NAME = "turismo-municipal.firebasestorage.app";
 
 /**
- * Genera el contenido XML del sitemap.
- * @param {Date|null} lastmod - La fecha de última modificación para filtrar.
- * @return {Promise<string>} El contenido del sitemap en formato XML.
+ * Genera el sitemap XML.
+ * @param {Date|null} lastmod - Fecha de referencia para logs.
+ * @return {Promise<string>} XML del sitemap.
  */
 async function generateSitemapContent(lastmod) {
   try {
-    let sitesQuery = db.collection("sites");
-
-    if (lastmod) {
-      functions.logger.log(
-          `Generando sitemap para sitios modificados desde: ${
-            lastmod.toISOString()}`,
-      );
-      sitesQuery = sitesQuery.where("lastmod", ">", lastmod);
-    } else {
-      functions.logger.log("Generando sitemap completo por primera vez.");
-    }
-
-    const sitesSnapshot = await sitesQuery.get();
+    functions.logger.log("INICIO: Generando contenido del sitemap...");
 
     const urls = [
-      // URLs estáticas
       {loc: DOMAIN, priority: "1.0", changefreq: "weekly"},
       {loc: `${DOMAIN}/mapa`, priority: "0.9", changefreq: "weekly"},
       {loc: `${DOMAIN}/categorias`, priority: "0.8", changefreq: "monthly"},
       {loc: `${DOMAIN}/eventos`, priority: "0.8", changefreq: "monthly"},
+      {loc: `${DOMAIN}/historia`, priority: "0.8", changefreq: "monthly"},
+      {loc: `${DOMAIN}/sobre-nosotros`, priority: "0.8", changefreq: "monthly"},
+      {loc: `${DOMAIN}/contacto`, priority: "0.7", changefreq: "monthly"},
+      {loc: `${DOMAIN}/privacidad`, priority: "0.5", changefreq: "yearly"},
+      {loc: `${DOMAIN}/terminos`, priority: "0.5", changefreq: "yearly"},
     ];
 
-    // Agregar todas las páginas de sitios turísticos
+    // 1. SITIOS
+    functions.logger.log("Consultando colección 'sites'...");
+    const sitesQuery = db.collection("sites");
+    const sitesSnapshot = await sitesQuery.get();
+    functions.logger.log(`Sitios encontrados: ${sitesSnapshot.size}`);
+
     sitesSnapshot.forEach((doc) => {
       const data = doc.data();
       const slug = data.slug || doc.id;
       const category = data.parentCategory || "sitios";
 
+      const lm = data.lastmod?.toDate().toISOString().split("T")[0] ||
+                 new Date().toISOString().split("T")[0];
+
+      const catPath = encodeURIComponent(category.toLowerCase());
+      const slugPath = encodeURIComponent(slug);
+
       urls.push({
-        loc: `${DOMAIN}/${encodeURIComponent(
-            category.toLowerCase(),
-        )}/${encodeURIComponent(slug)}`,
+        loc: `${DOMAIN}/${catPath}/${slugPath}`,
         priority: "0.8",
         changefreq: "weekly",
-        lastmod: data.lastmod?.toDate().toISOString().split("T")[0] ||
-                 new Date().toISOString().split("T")[0],
+        lastmod: lm,
       });
     });
 
-    // Generar XML
+    // 2. EVENTOS
+    functions.logger.log("Consultando colección 'events'...");
+    const eventsQuery = db.collection("events");
+    const eventsSnapshot = await eventsQuery.get();
+    functions.logger.log(`Eventos encontrados: ${eventsSnapshot.size}`);
+
+    eventsSnapshot.forEach((doc) => {
+      const data = doc.data();
+      const slug = data.slug || doc.id;
+      const lm = data.lastmod?.toDate().toISOString().split("T")[0] ||
+                 new Date().toISOString().split("T")[0];
+
+      urls.push({
+        loc: `${DOMAIN}/eventos/${encodeURIComponent(slug)}`,
+        priority: "0.7",
+        changefreq: "daily",
+        lastmod: lm,
+      });
+    });
+
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${urls.map((url) => `  <url>
     <loc>${url.loc}</loc>
     <lastmod>${url.lastmod || new Date().toISOString().split("T")[0]}</lastmod>
@@ -69,54 +92,48 @@ ${urls.map((url) => `  <url>
   </url>`).join("\n")}
 </urlset>`;
 
+    functions.logger.log("Sitemap XML generado correctamente en memoria.");
     return xml;
   } catch (error) {
-    functions.logger.error("Error generando sitemap:", error);
-    throw new functions.https.HttpsError(
-        "internal",
-        "No se pudo generar el sitemap.",
-    );
+    functions.logger.error("ERROR CRITICO en generateSitemapContent:", error);
+    throw error;
   }
 }
 
 /**
- * Función HTTP para generar y devolver el sitemap.
- * Se puede usar para pruebas: /generateSitemap
+ * HTTP para pruebas: /generateSitemap
  */
 exports.generateSitemapHttp = onRequest(async (req, res) => {
   try {
-    // Genera sitemap completo para pruebas
     const sitemapXml = await generateSitemapContent(null);
     res.set("Content-Type", "application/xml");
     res.status(200).send(sitemapXml);
   } catch (error) {
-    functions.logger.error("Error en generateSitemapHttp:", error);
-    res.status(500).send("Error al generar el sitemap.");
+    functions.logger.error("Error Http:", error);
+    res.status(500).send("Error interno: " + error.message);
   }
 });
 
 /**
- * NUEVA FUNCIÓN: Sirve el sitemap desde Storage para Firebase Hosting
- * Esta función se usa en el rewrite de firebase.json
+ * Serve Sitemap desde Storage (Hosting Rewrite)
  */
 exports.serveSitemap = onRequest({cors: true}, async (req, res) => {
   try {
-    const bucket = getStorage().bucket();
-    const file = bucket.file("sitemaps/sitemap.xml");
+    functions.logger.log("Iniciando serveSitemap...");
 
-    // Verificar si el archivo existe
+    const bucket = getStorage().bucket(BUCKET_NAME);
+    const file = bucket.file("sitemaps/sitemap.xml");
     const [exists] = await file.exists();
 
     if (!exists) {
-      functions.logger.warn("Sitemap no encontrado, generando uno nuevo...");
-      // Generar sitemap si no existe
+      functions.logger.warn("El archivo no existe. Creando nuevo...");
       const sitemapXml = await generateSitemapContent(null);
+
+      functions.logger.log(`Guardando en bucket: ${BUCKET_NAME}`);
       await file.save(sitemapXml, {
         contentType: "application/xml",
         public: true,
-        metadata: {
-          cacheControl: "public, max-age=3600",
-        },
+        metadata: {cacheControl: "public, max-age=3600"},
       });
 
       res.set("Content-Type", "application/xml");
@@ -125,60 +142,42 @@ exports.serveSitemap = onRequest({cors: true}, async (req, res) => {
       return;
     }
 
-    // Descargar y servir el archivo
+    functions.logger.log("Archivo encontrado. Enviando al cliente.");
     const [contents] = await file.download();
-
     res.set("Content-Type", "application/xml");
     res.set("Cache-Control", "public, max-age=3600");
     res.status(200).send(contents);
   } catch (error) {
-    functions.logger.error("Error sirviendo sitemap:", error);
-    res.status(500).send("Error al servir el sitemap.");
+    functions.logger.error("ERROR en serveSitemap:", error);
+    res.status(500).send("Error sirviendo sitemap. Ver logs.");
   }
 });
 
 /**
- * Función programada que genera el sitemap y lo sube a Firebase Storage.
- * Se ejecuta automáticamente cada 3 días.
+ * Cron Job: Cada 72 horas
  */
 exports.updateSitemapScheduled = onSchedule("every 72 hours", async (event) => {
-  const sitemapMetaRef = db.collection("settings").doc("sitemap_meta");
-  const sitemapMetaSnap = await sitemapMetaRef.get();
+  try {
+    const sitemapXml = await generateSitemapContent(null);
+    const tempFilePath = path.join(os.tmpdir(), "sitemap.xml");
+    fs.writeFileSync(tempFilePath, sitemapXml);
 
-  const lastRun = sitemapMetaSnap.exists ?
-sitemapMetaSnap.data().lastRun.toDate() :
-null;
-  const newRunTime = new Date();
+    const bucket = getStorage().bucket(BUCKET_NAME);
+    const destination = "sitemaps/sitemap.xml";
 
-  const sitemapXml = await generateSitemapContent(lastRun);
+    const [file] = await bucket.upload(tempFilePath, {
+      destination: destination,
+      public: true,
+      metadata: {
+        contentType: "application/xml",
+        cacheControl: "public, max-age=3600",
+      },
+    });
 
-  // Si no hay cambios, no hacemos nada para ahorrar operaciones.
-  if (!sitemapXml) return null;
-
-  const tempFilePath = path.join(os.tmpdir(), "sitemap.xml");
-  fs.writeFileSync(tempFilePath, sitemapXml);
-
-  const bucket = getStorage().bucket();
-  const destination = "sitemaps/sitemap.xml";
-
-  const [file] = await bucket.upload(tempFilePath, {
-    destination: destination,
-    public: true,
-    metadata: {
-      contentType: "application/xml",
-      cacheControl: "public, max-age=3600", // Cachear por 1 hora
-    },
-  });
-
-  // Asegurarse de que el archivo sea público.
-  await file.makePublic();
-
-  await sitemapMetaRef.set({
-    lastRun: newRunTime,
-  });
-
-  functions.logger.log(
-      `Sitemap actualizado exitosamente a las ${newRunTime.toISOString()}`,
-  );
+    await file.makePublic();
+    functions.logger.log("Cron Job: Sitemap actualizado exitosamente.");
+  } catch (error) {
+    functions.logger.error("Error en Cron Job:", error);
+  }
   return null;
 });
