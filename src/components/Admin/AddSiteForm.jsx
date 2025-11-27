@@ -394,7 +394,8 @@ function AddSiteForm({ siteToEdit }) {
           latitude: Number(latitude),
           longitude: Number(longitude),
           imagePaths: finalImagePaths,
-          parentCategory
+          parentCategory,
+          lastmod: serverTimestamp() // Actualizar fecha de modificación
         });
 
         toast.promise(updatePromise, { loading: 'Actualizando sitio...', success: '¡Sitio actualizado con éxito!', error: 'No se pudo actualizar el sitio.' });
@@ -426,6 +427,7 @@ function AddSiteForm({ siteToEdit }) {
           imagePaths: newImagePaths,
           parentCategory,
           createdAt: serverTimestamp(),
+          lastmod: serverTimestamp() // Añadir fecha de modificación
         });
 
         toast.promise(addPromise, { loading: 'Agregando sitio...', success: '¡Sitio agregado con éxito!', error: 'No se pudo agregar el sitio.' });
