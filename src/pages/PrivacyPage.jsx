@@ -1,13 +1,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 import './InfoPage.css';
 
 function PrivacyPage() {
 const lastUpdated = "11 de Noviembre de 2025"; // Fecha de referencia
 
+  const jsonLdData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Política de Privacidad - Turismo San Antonio Palopó",
+    "description": "Detalles sobre cómo se recopilan y utilizan los datos en la aplicación de turismo de San Antonio Palopó.",
+    "url": "https://turismosanantoniopalopo.com/privacidad"
+  };
+
   return (
     <div className="legal-page-container">
       <h1>Política de Privacidad</h1>
+      <SEO title="Política de Privacidad" description="Política de privacidad de la guía turística de San Antonio Palopó." url="/privacidad" jsonLd={jsonLdData} />
       <p className="last-updated">Última actualización: {lastUpdated}</p>
 
       <section>

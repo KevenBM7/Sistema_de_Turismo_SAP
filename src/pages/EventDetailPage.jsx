@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs, limit, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import Slider from 'react-slick';
 import "slick-carousel/slick/slick.css";
+import SEO from '../components/SEO'; // Importación de SEO
 import "slick-carousel/slick/slick-theme.css";
 import './EventDetailPage.css';
 
 function EventDetailPage() {
-  const { id } = useParams();
+  const { identifier } = useParams(); // parámetro unificado
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,26 +19,49 @@ function EventDetailPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const docRef = doc(db, 'events', id);
-    const unsubscribe = onSnapshot(docRef, async (docSnap) => {
-      if (docSnap.exists()) {
-        const data = { id: docSnap.id, ...docSnap.data() };
-        // Las URLs ya vienen completas desde Firestore, no es necesario procesarlas.
-        // Aseguramos que imageUrls sea siempre un array.
-        data.imageUrls = data.imageUrls || (data.imageUrl ? [data.imageUrl] : []);
-        setEvent(data);
-      } else {
-        setError('El evento no fue encontrado.');
-      }
-      setLoading(false);
-    }, (err) => {
-      console.error("Error al obtener el evento:", err);
-      setError('Ocurrió un error al cargar la información del evento.');
-      setLoading(false);
-    });
 
-    return () => unsubscribe();
-  }, [id]);
+    const fetchEvent = async () => {
+      setLoading(true);
+      setError('');
+      // Expresión regular para detectar un ID de Firestore (20 caracteres alfanuméricos)
+      const isFirestoreId = (str) => /^[a-zA-Z0-9]{20}$/.test(str);
+
+      try {
+        let eventDoc;
+        const eventsRef = collection(db, 'events');
+
+        // Lógica corregida: Si el identificador es un ID, busca por ID. Si no, busca por slug.
+        if (isFirestoreId(identifier)) {
+          const docRef = doc(db, 'events', identifier);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            eventDoc = docSnap;
+          }
+        } else if (identifier) {
+          const q = query(eventsRef, where("slug", "==", identifier), limit(1));
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            eventDoc = querySnapshot.docs[0];
+          }
+        }
+
+        if (eventDoc) {
+          const data = { id: eventDoc.id, ...eventDoc.data() };
+          data.imageUrls = data.imageUrls || (data.imageUrl ? [data.imageUrl] : []);
+          setEvent(data);
+        } else {
+          setError('El evento no fue encontrado.');
+        }
+      } catch (err) {
+        console.error("Error al obtener el evento:", err);
+        setError('Ocurrió un error al cargar la información del evento.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, [identifier]);
 
   if (loading) return <p>Cargando detalles del evento...</p>;
   if (error) return <p className="error-message">{error}</p>;
@@ -90,9 +114,37 @@ function EventDetailPage() {
     // Para evitar que el clic en la imagen cierre el modal
     customPaging: () => <div />,
   };
+  
+  // 1. Generar el objeto JSON-LD para el evento
+  const jsonLdData = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": event.title,
+    "startDate": event.startDate,
+    "endDate": event.endDate || event.startDate,
+    "description": event.description ? event.description.replace(/<[^>]*>?/gm, '').substring(0, 250) : `Detalles sobre ${event.title}`,
+    "image": allImages.length > 0 ? allImages[0] : null,
+    "eventStatus": new Date(event.endDate || event.startDate) < new Date() ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
+    "location": {
+      "@type": "Place",
+      "name": "San Antonio Palopó",
+      "address": "San Antonio Palopó, Sololá, Guatemala"
+    }
+  };
 
   return (
     <div className="site-detail-container">
+      {/* --- SEO para el Detalle del Evento --- */}
+      <SEO 
+        title={event.title}
+        description={event.description ? event.description.substring(0, 155) : `Detalles sobre el evento ${event.title} en San Antonio Palopó.`}
+        image={allImages.length > 0 ? allImages[0] : null}
+        url={`/evento/${event.slug || event.id}`}
+        type="article"
+        keywords={`${event.title}, evento, san antonio palopó, calendario, cultura`}
+        jsonLd={jsonLdData} // <-- 2. Pasar los datos al componente SEO
+      />
+
       <h1 className="site-detail-title">{event.title}</h1>
       
       <div className="site-detail-header-actions">
@@ -121,10 +173,10 @@ function EventDetailPage() {
         </div>
       ) : null}
       
-      {/* Mostrar la descripción general si existe */}
+      {/* Mostrar la descripción general interpretando HTML */}
       {event.description && (
         <div className="site-detail-description">
-          <p>{event.description}</p>
+          <div dangerouslySetInnerHTML={{ __html: event.description }} />
         </div>
       )}
 

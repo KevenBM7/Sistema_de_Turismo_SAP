@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, updateDoc, doc, serverTimestamp, onSnapshot, query, orderBy, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytesResumable, deleteObject, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
-import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
+import slugify from 'slugify';
+import RichTextEditor from './RichTextEditor';
 import '../AdminForms.css';
 
-function AddEventForm() {
-  const [events, setEvents] = useState([]);
+function AddEventForm({ eventToEdit = null, onFormSubmit }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [slug, setSlug] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
-  const [uploading, setUploading] = useState(false);;
+  const [uploading, setUploading] = useState(false);
   const { currentUser } = useAuth();
 
   // Estados para edición
@@ -29,19 +30,18 @@ function AddEventForm() {
   const [showScheduleForm, setShowScheduleForm] = useState(false);
 
   useEffect(() => {
-    const q = query(collection(db, 'events'), orderBy('startDate', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const eventsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setEvents(eventsData);
-    });
-    return () => unsubscribe();
-  }, []);
+    if (eventToEdit) {
+      handleEdit(eventToEdit);
+    } else {
+      resetForm();
+    }
+  }, [eventToEdit]);
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     if ((existingImageUrls.length - imagesToDelete.length + files.length) > 2) {
       toast.error('Puedes subir un máximo de 2 imágenes en total.');
-      e.target.value = null; // Limpia la selección
+      e.target.value = null;
       return;
     }
     setImageFiles(files);
@@ -50,6 +50,7 @@ function AddEventForm() {
 
   const resetForm = () => {
     setTitle('');
+    setSlug('');
     setDescription('');
     setStartDate('');
     setEndDate('');
@@ -59,7 +60,7 @@ function AddEventForm() {
     setExistingImageUrls([]);
     setImagesToDelete([]);
     setSchedule([]);
-    setShowScheduleForm(false);;
+    setShowScheduleForm(false);
     if (document.getElementById('event-image-input')) {
       document.getElementById('event-image-input').value = null;
     }
@@ -68,33 +69,46 @@ function AddEventForm() {
   const handleEdit = (event) => {
     setEditingEvent(event.id);
     setTitle(event.title);
+    setSlug(event.slug || slugify(event.title, { lower: true, strict: true }));
     setDescription(event.description || '');
     setStartDate(event.startDate);
     setEndDate(event.endDate || '');
-    // Manejar tanto el campo antiguo 'imageUrl' como el nuevo 'imageUrls'
     setExistingImageUrls(event.imageUrls || (event.imageUrl ? [event.imageUrl] : []));
     setImageFiles([]);
     setImagePreviews([]);
-    setSchedule(event.schedule || []); setShowScheduleForm(event.schedule && event.schedule.length > 0);;
+    setSchedule(event.schedule || []);
+    setShowScheduleForm(event.schedule && event.schedule.length > 0);
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Función para agregar un día al schedule
-  const addDay = () => {
-    const newDay = {
-      day: schedule.length + 1,
-      date: '',
-      dayTitle: '',
-      activities: []
-    };
-    setSchedule([...schedule, newDay]);
+  const handleTitleChange = (e) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    setSlug(slugify(newTitle, { lower: true, strict: true }));
   };
 
-  // Función para eliminar un día
+  const handleToggleSchedule = () => {
+    const isOpening = !showScheduleForm;
+    setShowScheduleForm(isOpening);
+
+    if (isOpening && schedule.length === 0) {
+      setSchedule([{
+        day: 1,
+        date: startDate || '',
+        dayTitle: '',
+        activities: []
+      }]);
+    }
+  };
+
+  const addDay = () => {
+    const newDay = { day: schedule.length + 1, date: startDate || '', dayTitle: '', activities: [] };
+    setSchedule(prevSchedule => [...prevSchedule, newDay]);
+  };
+
   const removeDay = (dayIndex) => {
     const newSchedule = schedule.filter((_, index) => index !== dayIndex);
-    // Reindexar los días
     const reindexed = newSchedule.map((day, index) => ({
       ...day,
       day: index + 1
@@ -102,14 +116,12 @@ function AddEventForm() {
     setSchedule(reindexed);
   };
 
-  // Función para actualizar un día
   const updateDay = (dayIndex, field, value) => {
     const newSchedule = [...schedule];
     newSchedule[dayIndex][field] = value;
     setSchedule(newSchedule);
   };
 
-  // Función para agregar una actividad a un día
   const addActivity = (dayIndex) => {
     const newSchedule = [...schedule];
     newSchedule[dayIndex].activities.push({
@@ -120,14 +132,12 @@ function AddEventForm() {
     setSchedule(newSchedule);
   };
 
-  // Función para eliminar una actividad
   const removeActivity = (dayIndex, activityIndex) => {
     const newSchedule = [...schedule];
     newSchedule[dayIndex].activities = newSchedule[dayIndex].activities.filter((_, index) => index !== activityIndex);
     setSchedule(newSchedule);
   };
 
-  // Función para actualizar una actividad
   const updateActivity = (dayIndex, activityIndex, field, value) => {
     const newSchedule = [...schedule];
     newSchedule[dayIndex].activities[activityIndex][field] = value;
@@ -139,8 +149,8 @@ function AddEventForm() {
     
     const totalImages = (existingImageUrls.length - imagesToDelete.length) + imageFiles.length;
 
-    // --- VALIDACIÓN DETALLADA ---
     if (!title.trim()) { toast.error('El título del evento es obligatorio.'); return; }
+    if (!slug.trim()) { toast.error('El slug (generado del título) no puede estar vacío.'); return; }
     if (!startDate) { toast.error('La fecha de inicio es obligatoria.'); return; }
     if (endDate && new Date(endDate) < new Date(startDate)) {
       toast.error('La fecha de fin no puede ser anterior a la fecha de inicio.');
@@ -154,41 +164,37 @@ function AddEventForm() {
     try {
       let finalImageUrls = [...existingImageUrls.filter(url => !imagesToDelete.includes(url))];
 
-      // Subir nuevas imágenes (OPTIMIZADO)
       if (imageFiles.length > 0) {
-        const uploadPromises = imageFiles.map(async (file) => {
-          // Opciones de compresión: 1.5MB max, 1920px, WebP, 80% calidad
+        const uploadPromises = imageFiles.map(async (file, index) => {
           const imageOptions = { 
             maxSizeMB: 1.5, 
             maxWidthOrHeight: 1920, 
             useWebWorker: true,
-            fileType: 'image/webp', // Forzar a WebP
-            initialQuality: 0.8 // 80% calidad para preservar el texto del anuncio
+            fileType: 'image/webp',
+            initialQuality: 0.8 
           };
-          
+
           const compressedFile = await imageCompression(file, imageOptions);
-          
-          // Asegurar nombre de archivo .webp
-          const fileName = compressedFile.name.replace(/\.[^/.]+$/, "") + '.webp';
-          const storageRef = ref(storage, `events/${Date.now()}_${fileName}`);
-          
-          await uploadBytesResumable(storageRef, compressedFile, { contentType: 'image/webp' });
+          const eventSlug = slugify(title, { lower: true, strict: true });
+          const fileName = `san-antonio-palopo-evento-${eventSlug}-${Date.now()}-${index}.webp`;
+          const storageRef = ref(storage, `events/${fileName}`);
+
+          const uploadTask = uploadBytesResumable(storageRef, compressedFile, { contentType: 'image/webp' });
+          await uploadTask;
           return getDownloadURL(storageRef);
         });
         const newUrls = await Promise.all(uploadPromises);
         finalImageUrls.push(...newUrls);
       }
 
-      // Eliminar imágenes marcadas de Storage
       if (imagesToDelete.length > 0) {
         const deletePromises = imagesToDelete.map(url => {
-          // Extraer la ruta del archivo de la URL de descarga
           try {
             const imageRef = ref(storage, url);
             return deleteObject(imageRef);
           } catch (error) {
             console.warn(`Error al crear referencia para borrar imagen de evento: ${url}`, error);
-            return Promise.resolve(); // Continuar sin fallar
+            return Promise.resolve();
           }
         });
         await Promise.all(deletePromises);
@@ -196,16 +202,20 @@ function AddEventForm() {
 
       const eventData = {
         title,
+        slug,
         description,
         startDate,
         endDate: endDate || null,
-        imageUrls: finalImageUrls, // Guardar el array de URLs
+        imageUrls: finalImageUrls,
         schedule: schedule.length > 0 ? schedule : null
       };
 
       if (editingEvent) {
         const eventRef = doc(db, 'events', editingEvent);
-        const promise = updateDoc(eventRef, eventData);
+        const promise = updateDoc(eventRef, {
+          ...eventData,
+          lastmod: serverTimestamp(),
+        });
         toast.promise(promise, { loading: 'Actualizando evento...', success: '¡Evento actualizado con éxito!', error: 'No se pudo actualizar.' });
         await promise;
       } else {
@@ -213,18 +223,13 @@ function AddEventForm() {
           ...eventData,
           createdAt: serverTimestamp(),
           author: currentUser.uid,
+          lastmod: serverTimestamp(),
         });
         toast.promise(promise, { loading: 'Agregando evento...', success: '¡Evento agregado con éxito!', error: 'No se pudo agregar.' });
         await promise;
       }
 
-      if (editingEvent) {
-        setTimeout(() => {
-          resetForm();
-        }, 1500);
-      } else {
-        resetForm();
-      }
+      resetForm();
 
     } catch (err) {
       console.error(err);
@@ -234,55 +239,12 @@ function AddEventForm() {
     }
   };
 
-  const handleDelete = async (event) => {
-    const promise = new Promise(async (resolve, reject) => {
-      try {
-        // Eliminar el documento del evento
-        await deleteDoc(doc(db, 'events', event.id));
-  
-        // Eliminar todas las imágenes asociadas de Storage
-        const imageUrls = event.imageUrls || (event.imageUrl ? [event.imageUrl] : []);
-        if (imageUrls.length > 0) {
-          const deletePromises = imageUrls.map(url => {
-            try {
-              const imageRef = ref(storage, url);
-              return deleteObject(imageRef);
-            } catch (e) { 
-              console.warn(`Error al crear referencia para borrar imagen de evento: ${url}`); 
-              return Promise.resolve(); 
-            }
-          });
-          await Promise.all(deletePromises);
-        }
-        resolve(); // Resuelve la promesa si todo fue exitoso
-      } catch (err) {
-        console.error(err);
-        reject(err); // Rechaza la promesa si hay un error
-      }
-    });
-
-    toast((t) => (
-      <div className="toast-confirmation">
-        <div className="toast-content">
-          <p className="toast-title">Confirmar Eliminación</p>
-          <p className="toast-message">¿Estás seguro de que quieres eliminar este evento? Esta acción es irreversible.</p>
-        </div>
-        <div className="toast-buttons">
-          <button className="toast-button-cancel" onClick={() => toast.dismiss(t.id)}>Cancelar</button>
-          <button className="toast-button-confirm" onClick={() => { toast.dismiss(t.id); toast.promise(promise, { loading: 'Eliminando...', success: 'Evento eliminado.', error: 'No se pudo eliminar.' }); }}>Confirmar</button>
-        </div>
-      </div>
-    ), { duration: 6000 });
-  };
-
   const handleDeleteExistingImage = (url) => {
     setImagesToDelete(prev => [...prev, url]);
   };
 
   return (
     <div className="add-site-container">
-      <h3>Gestionar Eventos</h3>
-      
       <form onSubmit={handleSubmit} className="add-site-form">
         <h4>{editingEvent ? 'Editar Evento' : 'Agregar Nuevo Evento'}</h4>
         
@@ -292,32 +254,29 @@ function AddEventForm() {
           </div>
         )}
         
-        {/* Información básica del evento */}
         <div className="form-section">
-          <h5>Información General</h5>
-          
           <div className="form-group">
             <label htmlFor="event-title">Título del Evento</label>
             <input 
               id="event-title" 
               type="text" 
               value={title} 
-              onChange={(e) => setTitle(e.target.value)} 
+              onChange={handleTitleChange}
               placeholder="Ej: Feria Patronal de San Antonio" 
               disabled={uploading} 
             />
           </div>
           
-          <div className="form-group">
-            <label htmlFor="event-description">Descripción General</label>
-            <textarea 
-              id="event-description" 
-              value={description} 
-              onChange={(e) => setDescription(e.target.value)} 
-              placeholder="Descripción general del evento..." 
-              disabled={uploading} 
-              rows="4"
-            />
+          <div className="form-group full-width">
+            <label>Descripción General</label>
+            <div className="rich-editor-wrapper">
+              <RichTextEditor 
+                key={editingEvent || 'new-event'}
+                content={description} 
+                onChange={setDescription} 
+                placeholder="Escribe aquí los detalles... Puedes usar negritas, listas, etc."
+              />
+            </div>
           </div>
           
           <div className="coordinates-group">
@@ -376,13 +335,13 @@ function AddEventForm() {
           </div>
         </div>
 
-        {/* Programación del evento (sub-eventos) */}
+        {/* Programación del evento */}
         <div className="form-section schedule-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h5>Programación del Evento (Opcional)</h5>
             <button 
               type="button" 
-              onClick={() => setShowScheduleForm(!showScheduleForm)}
+              onClick={handleToggleSchedule}
               className="toggle-schedule-button"
               disabled={uploading}
             >
@@ -432,7 +391,6 @@ function AddEventForm() {
                     </div>
                   </div>
 
-                  {/* Actividades del día */}
                   <div className="activities-list">
                     <label style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>
                       Actividades del Día {day.day}:
@@ -519,56 +477,6 @@ function AddEventForm() {
           </button>
         </div>
       </form>
-
-      <div className="manage-sites-container" style={{ marginTop: '3rem', padding: 0 }}>
-        <h3>Eventos Existentes</h3>
-        <ul className="manage-sites-list">
-          {events.length > 0 ? events.map(event => (
-            <li key={event.id} className="manage-site-item">
-              <img 
-                src={(event.imageUrls && event.imageUrls[0]) || event.imageUrl || "https://placehold.co/60x60/EEE/31343C?text=Sin+Img"} 
-                alt={event.title} 
-                className="manage-site-thumbnail" />
-              <div className="manage-site-info">
-                <span className="manage-site-name">
-                  {event.title}
-                  {event.schedule && event.schedule.length > 0 && (
-                    <span className="event-has-schedule"> 📅 {event.schedule.length} días</span>
-                  )}
-                </span>
-                <span className="manage-site-category">
-                  {new Date(`${event.startDate}T00:00:00`).toLocaleDateString('es-ES')}
-                  {event.endDate && event.endDate !== event.startDate && 
-                    ` - ${new Date(`${event.endDate}T00:00:00`).toLocaleDateString('es-ES')}`
-                  }
-                </span>
-              </div>
-              <div className="manage-site-actions">
-                <Link 
-                  to={`/evento/${event.id}`} 
-                  className="view-button"
-                >
-                  Ver
-                </Link>
-                <button 
-                  onClick={() => handleEdit(event)} 
-                  className="edit-button"
-                  disabled={uploading}
-                >
-                  Editar
-                </button>
-                <button 
-                  onClick={() => handleDelete(event)} 
-                  className="delete-button"
-                  disabled={uploading}
-                >
-                  Eliminar
-                </button>
-              </div>
-            </li>
-          )) : <p>No hay eventos registrados.</p>}
-        </ul>
-      </div>
     </div>
   );
 }

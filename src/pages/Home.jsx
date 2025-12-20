@@ -9,8 +9,10 @@ import EventCarouselSkeleton from '../components/EventCarouselSkeleton';
 import CategoryGroupSkeleton from '../components/CategoryGroupSkeleton';
 import { Link } from 'react-router-dom';
 import Slider from 'react-slick';
+import SEO from '../components/SEO'; // Importación de SEO
 import '../pages/Home.css';
 import '../components/CategoryCard.css';
+import { createSlug } from '../utils/slugUtils';
 import '../styles/Utilities.css';
 import '../styles/Layout.css';
 
@@ -58,47 +60,58 @@ function Home() {
 
         try {
           const today = new Date().toISOString().split('T')[0];
+
+          // 1. Consultar eventos futuros (empiezan hoy o después)
           const futureEventsQuery = query(
             collection(db, 'events'),
             where('startDate', '>=', today),
             orderBy('startDate', 'asc'),
-            limit(5)
+            limit(10)
           );
-          const futureEventsSnap = await getDocs(futureEventsQuery);
-          let upcoming = futureEventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-          if (upcoming.length < 5) {
-            const currentlyActiveQuery = query(
-              collection(db, 'events'),
-              where('startDate', '<', today),
-              where('endDate', '>=', today),
-              orderBy('startDate', 'desc'),
-              limit(5)
-            );
-            const activeEventsSnap = await getDocs(currentlyActiveQuery);
-            const activeEvents = activeEventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            activeEvents.forEach(event => {
-              if (upcoming.length < 5 && !upcoming.find(e => e.id === event.id)) {
-                upcoming.push(event);
-              }
-            });
-          }
-          
-          upcoming.sort((a, b) => a.startDate.localeCompare(b.startDate));
-          setUpcomingEvents(upcoming.slice(0, 5));
+          // 2. Consultar eventos activos (empezaron antes pero terminan hoy o después)
+          // Nota: Esta query requiere un índice compuesto en Firestore.
+          // Si falla, el catch capturará el error y usará el fallback.
+          const activeEventsQuery = query(
+            collection(db, 'events'),
+            where('startDate', '<', today),
+            where('endDate', '>=', today),
+            orderBy('startDate', 'desc'),
+            limit(10)
+          );
+
+          const [futureSnap, activeSnap] = await Promise.all([
+            getDocs(futureEventsQuery),
+            getDocs(activeEventsQuery)
+          ]);
+
+          const futureEvents = futureSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const activeEvents = activeSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+          // Combinar y eliminar duplicados (por si acaso)
+          const allFetched = [...activeEvents, ...futureEvents];
+          const uniqueEvents = Array.from(new Map(allFetched.map(item => [item.id, item])).values());
+
+          // Ordenar por fecha de inicio
+          uniqueEvents.sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+          setUpcomingEvents(uniqueEvents.slice(0, 10));
 
         } catch (eventsErr) {
-          if (eventsErr.message.includes('index')) {
-            console.warn("Fallback de eventos activado por falta de índice en Firestore.");
-            const allEventsSnapshot = await getDocs(collection(db, 'events'));
-            const today = new Date().toISOString().split('T')[0];
-            const allEvents = allEventsSnapshot.docs
-              .map(doc => ({ id: doc.id, ...doc.data() }))
-              .filter(event => event.endDate >= today)
-              .sort((a, b) => a.startDate.localeCompare(b.startDate))
-              .slice(0, 5);
-            setUpcomingEvents(allEvents);
-          }
+          console.warn("Error en consultas optimizadas de eventos, usando fallback:", eventsErr);
+          // Fallback: traer todos y filtrar en cliente
+          // Esto asegura que se vean eventos aunque falten índices
+          const allEventsSnapshot = await getDocs(collection(db, 'events'));
+          const today = new Date().toISOString().split('T')[0];
+          const allEvents = allEventsSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(event => {
+              // Mostrar si termina hoy o después (activo o futuro)
+              return event.endDate ? event.endDate >= today : event.startDate >= today;
+            })
+            .sort((a, b) => a.startDate.localeCompare(b.startDate))
+            .slice(0, 10);
+          setUpcomingEvents(allEvents);
         }
 
         const sitesSnapshot = await getDocs(collection(db, 'sites'));
@@ -157,7 +170,7 @@ function Home() {
     autoplaySpeed: 4000,
     fade: true,
     arrows: false,
-    lazyLoad: 'ondemand', 
+    lazyLoad: 'ondemand',
   };
 
   const eventSliderSettings = {
@@ -183,6 +196,33 @@ function Home() {
     }
   };
 
+  // --- 1. Generar el objeto JSON-LD para la página de inicio ---
+  const jsonLdData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "url": "https://turismosanantoniopalopo.com/",
+    "name": "Turismo San Antonio Palopó",
+    "description": homePageData.subText || "Guía turística oficial de San Antonio Palopó. Descubre hoteles, restaurantes, cultura y atracciones a orillas del Lago Atitlán.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Municipalidad de San Antonio Palopó",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://turismosanantoniopalopo.com/logo512.png"
+      }
+    },
+    // Incluir los próximos eventos si existen
+    ...(upcomingEvents.length > 0 && {
+      "event": upcomingEvents.map(event => ({
+        "@type": "Event",
+        "name": event.title,
+        "startDate": event.startDate,
+        "endDate": event.endDate || event.startDate,
+        "url": `https://turismosanantoniopalopo.com/evento/${event.slug || event.id}`
+      }))
+    })
+  };
+
   if (loading) {
     return (
       <div>
@@ -204,6 +244,15 @@ function Home() {
 
   return (
     <div>
+      {/* --- SEO para la Página de Inicio --- */}
+      <SEO
+        description={homePageData.subText || "Guía turística oficial de San Antonio Palopó. Descubre hoteles, restaurantes, cultura y atracciones a orillas del Lago Atitlán."}
+        image={homePageData.imageUrls && homePageData.imageUrls.length > 0 ? homePageData.imageUrls[0] : null}
+        url="/"
+        keywords="turismo, san antonio palopó, lago atitlán, guatemala, cultura, hoteles, restaurantes, kaqchikel"
+        jsonLd={jsonLdData} // <-- 2. Pasar los datos al componente SEO
+      />
+
       <header className="home-welcome-text">
         <h1>{homePageData.welcomeText}</h1>
       </header>
@@ -215,11 +264,11 @@ function Home() {
               {homePageData.imageUrls.map((url, index) => (
                 <div key={index} className="header-slide-wrapper">
                   {/* MEJORA LCP: Usar <img> en lugar de backgroundImage */}
-                  <img 
-                    src={url} 
-                    alt="Portada San Antonio Palopó" 
+                  <img
+                    src={url}
+                    alt="Portada San Antonio Palopó"
                     className="header-slide-image"
-                    width="1200" 
+                    width="1200"
                     height="675"
                     fetchPriority={index === 0 ? "high" : "auto"}
                     loading={index === 0 ? "eager" : "lazy"}
@@ -243,19 +292,19 @@ function Home() {
             <Slider {...eventSliderSettings}>
               {upcomingEvents.map(event => {
                 const status = getEventStatus(event);
-                const eventImg = event.imageUrls && event.imageUrls.length > 0 
+                const eventImg = event.imageUrls && event.imageUrls.length > 0
                   ? event.imageUrls[Math.floor(Math.random() * event.imageUrls.length)]
                   : null;
 
                 return (
                   <div key={event.id}>
-                    <Link to={`/evento/${event.id}`} className="event-slide-link">
+                    <Link to={`/evento/${event.slug || event.id}`} className="event-slide-link">
                       <div className="event-slide">
                         {/* MEJORA: Usar <img> para eventos también */}
                         {eventImg ? (
-                          <img 
-                            src={eventImg} 
-                            alt={event.title} 
+                          <img
+                            src={eventImg}
+                            alt={event.title}
                             className="event-slide-image"
                             loading="lazy"
                             width="800"
@@ -264,9 +313,9 @@ function Home() {
                         ) : (
                           <div className="event-slide-placeholder" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', width: '100%', height: '100%' }}></div>
                         )}
-                        
+
                         <div className="event-slide-overlay">
-                          <div style={{ 
+                          <div style={{
                             display: 'inline-block',
                             backgroundColor: status.color,
                             color: 'white',
@@ -281,7 +330,7 @@ function Home() {
                           <h3>{event.title}</h3>
                           <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', opacity: 0.9 }}>
                             📅 {new Date(`${event.startDate}T00:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
-                            {event.endDate && event.endDate !== event.startDate && 
+                            {event.endDate && event.endDate !== event.startDate &&
                               ` - ${new Date(`${event.endDate}T00:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}`
                             }
                           </p>
@@ -311,7 +360,7 @@ function Home() {
                 <h3 className="category-group-title">{parentCategoryTitles[parentCat] || parentCat}</h3>
                 <div className="category-filters">
                   {groupedCategories[parentCat].map(subCat => (
-                    <Link key={subCat} to={`/categoria/${encodeURIComponent(subCat)}`} className="category-button">
+                    <Link key={subCat} to={`/categoria/${createSlug(subCat)}`} className="category-button">
                       {subCat}
                     </Link>
                   ))}
@@ -321,7 +370,7 @@ function Home() {
           ))}
         </section>
       )}
-      
+
       {randomSiteIds.length > 0 && (
         <div className="container" style={{ paddingTop: '2rem' }}>
           <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Conociendo San Antonio Palopó</h2>

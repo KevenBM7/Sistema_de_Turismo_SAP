@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import es from 'date-fns/locale/es';
+import SEO from '../components/SEO'; // Importación de SEO
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './CalendarPage.css';
 
@@ -13,7 +14,6 @@ const locales = {
   'es': es,
 };
 
-// Usamos el localizador de date-fns
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 
 const messages = {
@@ -32,16 +32,39 @@ const messages = {
   showMore: total => `+ Ver más (${total})`
 };
 
+// Función auxiliar para limpiar HTML de las descripciones en tarjetas
+const stripHtml = (html) => {
+   if (!html) return "";
+   const tmp = document.createElement("DIV");
+   tmp.innerHTML = html;
+   return tmp.textContent || tmp.innerText || "";
+};
+
 function CalendarPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // 'all', 'upcoming', 'past'
-  const [showCalendar, setShowCalendar] = useState(false); // Estado para mostrar/ocultar el calendario
+  
+  // Filtro por defecto: Próximos eventos
+  const [filter, setFilter] = useState('upcoming');
+  const [showCalendar, setShowCalendar] = useState(false);
+  
+  // Vista por defecto: Agenda en móvil, Mes en PC
+  const [calendarView, setCalendarView] = useState(window.innerWidth < 768 ? 'agenda' : 'month');
+  
   const navigate = useNavigate();
 
   useEffect(() => {
     window.scrollTo(0, 0);
     
+    // Escuchar cambios de tamaño de pantalla para ajustar vista si es necesario
+    const handleResize = () => {
+       if (window.innerWidth < 768 && calendarView === 'month') {
+         // Opcional: Si rota la pantalla, podrías forzar agenda, 
+         // pero mejor dejamos que el usuario decida si ya lo cambió.
+       }
+    };
+    window.addEventListener('resize', handleResize);
+
     const fetchEvents = () => {
       try {
         const q = query(collection(db, 'events'), orderBy('startDate', 'asc'));
@@ -59,10 +82,13 @@ function CalendarPage() {
     };
 
     const unsubscribe = fetchEvents();
-    return () => unsubscribe && unsubscribe();
+    return () => {
+      unsubscribe && unsubscribe();
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
-  // Filtrar eventos según el filtro seleccionado
+  // Filtrado
   const getFilteredEvents = () => {
     const today = new Date().toISOString().split('T')[0];
     
@@ -71,24 +97,15 @@ function CalendarPage() {
     } else if (filter === 'past') {
       return events.filter(event => event.startDate < today);
     }
-    return events;
+    return events.filter(event => event.startDate >= today);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(`${dateString}T00:00:00`);
-    return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-  };
-
+  // Helpers de fecha
   const getMonthYear = (dateString) => {
     const date = new Date(`${dateString}T00:00:00`);
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric', 
-      month: 'long'
-    });
+    return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long' });
   };
 
-  // Agrupar eventos por mes
   const groupEventsByMonth = (eventsList) => {
     const grouped = {};
     eventsList.forEach(event => {
@@ -101,7 +118,6 @@ function CalendarPage() {
     return grouped;
   };
 
-  // Preparar eventos para react-big-calendar
   const calendarEvents = events.map(event => ({
     id: event.id,
     title: event.title,
@@ -111,13 +127,11 @@ function CalendarPage() {
   }));
 
   const handleSelectEvent = (event) => {
-    setShowCalendar(false); // Cierra el modal del calendario
-    navigate(`/evento/${event.id}`);
+    setShowCalendar(false); 
+    navigate(`/evento/${event.slug || event.id}`);
   };
 
-  if (loading) {
-    return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando eventos...</p>;
-  }
+  if (loading) return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Cargando eventos...</p>;
 
   const filteredEvents = getFilteredEvents();
   const groupedEvents = groupEventsByMonth(filteredEvents);
@@ -129,39 +143,41 @@ function CalendarPage() {
 
   return (
     <div className="calendar-page-container">
+      {/* --- SEO para la Página de Calendario --- */}
+      <SEO 
+        title="Calendario de Eventos"
+        description="Descubre las festividades, ferias y eventos culturales de San Antonio Palopó. Mantente al día con nuestro calendario oficial."
+        url="/eventos"
+        keywords="eventos, calendario, festividades, ferias, cultura, san antonio palopó"
+      />
+
       <header className="calendar-header">
-        <h1>Calendario de Eventos</h1>
+        <h2>Calendario de Eventos</h2>
         <p>Descubre las festividades, ferias y eventos culturales de San Antonio Palopó</p>
       </header>
 
-      {/* Filtros */}
-      <div className="event-filters">
-        <button 
-          className={`filter-button ${filter === 'all' ? 'active' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          Todos los eventos
-        </button>
-        <button 
-          className={`filter-button ${filter === 'upcoming' ? 'active' : ''}`}
-          onClick={() => setFilter('upcoming')}
-        >
-          Próximos eventos
-        </button>
-        <button 
-          className={`filter-button ${filter === 'past' ? 'active' : ''}`}
-          onClick={() => setFilter('past')}
-        >
-          Eventos pasados
-        </button>
+      {/* Filtro Dropdown */}
+      <div className="event-filters-container">
+        <div className="select-wrapper">
+          <label htmlFor="eventFilter" className="filter-label">Mostrar:</label>
+          <select 
+            id="eventFilter"
+            className="filter-select"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          >
+            <option value="upcoming">Próximos eventos</option>
+            <option value="past">Eventos pasados</option>
+          </select>
+        </div>
       </div>
 
-      {/* Botón flotante para abrir el calendario */}
+      {/* Botón flotante */}
       <button className="floating-calendar-button" onClick={handleToggleCalendar}>
         📅
       </button>
 
-      {/* Modal del Calendario */}
+      {/* MODAL DEL CALENDARIO */}
       {showCalendar && (
         <div className="calendar-modal-overlay" onClick={() => setShowCalendar(false)}>
           <div className="calendar-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -171,27 +187,35 @@ function CalendarPage() {
                 ✕
               </button>
             </div>
+            
             <div className="calendar-container">
               <Calendar
                 localizer={localizer}
                 events={calendarEvents}
                 startAccessor="start"
                 endAccessor="end"
-                style={{ height: '70vh' }}
+                
+                // CONTROL DE VISTAS
+                view={calendarView}
+                onView={setCalendarView} // Permite cambiar entre mes/agenda
+                views={['month', 'agenda']} // Limitamos a estas dos
+                
+                // ALTURA CONTROLADA (Más cuadrada)
+                style={{ height: 500 }} 
+                
                 messages={messages}
                 onSelectEvent={handleSelectEvent}
                 popup
-                views={['month', 'agenda']}
               />
             </div>
           </div>
         </div>
       )}
 
-      {/* Lista de eventos agrupados por mes */}
+      {/* LISTA DE TARJETAS */}
       {filteredEvents.length === 0 ? (
         <div className="no-events-message">
-          <p>No hay eventos {filter === 'upcoming' ? 'próximos' : filter === 'past' ? 'pasados' : ''} registrados.</p>
+          <p>No hay eventos {filter === 'upcoming' ? 'próximos' : 'pasados'} registrados.</p>
         </div>
       ) : (
         <div className="events-by-month">
@@ -199,12 +223,8 @@ function CalendarPage() {
             <div key={monthYear} className="month-section">
               <h2 className="month-title">{monthYear}</h2>
               <div className="events-grid">
-                {monthEvents.map(event => (
-                  <Link 
-                    to={`/evento/${event.id}`} 
-                    key={event.id} 
-                    className="event-card"
-                  >
+                {monthEvents.map(event => (                  
+                  <Link to={`/evento/${event.slug || event.id}`} key={event.id} className="event-card">
                     <div className="event-card-image-container">
                       <img 
                         src={(event.imageUrls && event.imageUrls[0]) || "https://placehold.co/400x300/EEE/31343C?text=Sin+Imagen"} 
@@ -223,16 +243,11 @@ function CalendarPage() {
                     </div>
                     <div className="event-card-content">
                       <h3 className="event-card-title">{event.title}</h3>
-                      <p className="event-card-date">
-                        {formatDate(event.startDate)}
-                        {event.endDate && event.endDate !== event.startDate && (
-                          <> - {formatDate(event.endDate)}</>
-                        )}
-                      </p>
                       {event.description && (
                         <p className="event-card-description">
-                          {event.description.substring(0, 100)}
-                          {event.description.length > 100 && '...'}
+                          {/* Limpiamos el HTML para la vista previa */}
+                          {stripHtml(event.description).substring(0, 100)}
+                          {stripHtml(event.description).length > 100 && '...'}
                         </p>
                       )}
                     </div>

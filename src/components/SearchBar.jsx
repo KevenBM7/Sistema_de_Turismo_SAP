@@ -22,7 +22,7 @@ function SearchBar({ onSearch }) {
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Buscar sitios por nombre..."
+        placeholder="Buscar sitios, eventos, categorías..."
       />
       <button type="submit">🔍</button>
     </form>

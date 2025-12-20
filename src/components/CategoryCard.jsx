@@ -3,6 +3,7 @@ import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db, storage } from '../services/firebase';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { Link } from 'react-router-dom';
+import { createSlug } from '../utils/slugUtils';
 import './CategoryCard.css';
 
 function CategoryCard({ categoryName }) {
@@ -23,7 +24,7 @@ function CategoryCard({ categoryName }) {
             const downloadUrl = await getDownloadURL(imageRef);
             setImageUrl(downloadUrl);
           } else if (siteData.imageUrl) { // Fallback para URLs directas si existen
-            setImageUrl(siteData.imageUrl); 
+            setImageUrl(siteData.imageUrl);
           } else {
             setImageUrl("https://placehold.co/400x250/EEE/31343C");
           }
@@ -33,7 +34,7 @@ function CategoryCard({ categoryName }) {
       } catch (error) {
         console.error("Error fetching category image:", error);
         setImageUrl(null);
-      } 
+      }
     };
 
     fetchCategoryImage();
@@ -42,14 +43,14 @@ function CategoryCard({ categoryName }) {
   return (
     // Si no se pudo encontrar una imagen para la categoría, no se renderiza la tarjeta.
     !imageUrl ? null : (
-    <Link to={`/categoria/${encodeURIComponent(categoryName)}`} className="category-card-link">
-      <div className="category-card">
-        <img src={imageUrl} alt={categoryName} className="category-card-image" loading="lazy" />
-        <div className="category-card-overlay">
-          <h3>{categoryName}</h3>
+      <Link to={`/categoria/${createSlug(categoryName)}`} className="category-card-link">
+        <div className="category-card">
+          <img src={imageUrl} alt={categoryName} className="category-card-image" loading="lazy" />
+          <div className="category-card-overlay">
+            <h3>{categoryName}</h3>
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
     )
   );
 }

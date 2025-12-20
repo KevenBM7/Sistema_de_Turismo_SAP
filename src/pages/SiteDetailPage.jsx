@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createSlug } from '../utils/slugUtils';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, limit, doc, getDoc } from 'firebase/firestore';
 import { db, storage } from '../services/firebase';
@@ -12,6 +13,7 @@ import SiteDetailSkeleton from '../components/SiteDetailSkeleton';
 import { useAuth } from '../context/AuthContext';
 import { Map, Share2, Edit, Heart } from 'lucide-react';
 import './SiteDetailPage.css';
+import { toast } from 'react-hot-toast';
 
 // CORRECCIÓN PARA ICONOS DE LEAFLET
 import L from 'leaflet';
@@ -68,7 +70,7 @@ function SiteDetailPage() {
             const urlPromises = siteData.imagePaths.map(async (pathData) => {
               const imagePath = typeof pathData === 'string' ? pathData : pathData.original;
               if (!imagePath) return Promise.resolve(null);
-              
+
               const sizes = [150, 800, 1200];
               const srcset = {};
               for (const size of sizes) {
@@ -77,7 +79,7 @@ function SiteDetailPage() {
                   srcset[`${size}w`] = await getDownloadURL(ref(storage, sizedPath));
                 } catch (e) { /* Ignorar si una versión no existe */ }
               }
-              
+
               const originalUrl = srcset['800w'] || srcset['1200w'] || srcset['150w'] || null;
               return { original: originalUrl, srcset: Object.values(srcset).map((url, i) => `${url} ${sizes[i]}w`).join(', ') };
             });
@@ -118,32 +120,128 @@ function SiteDetailPage() {
     setSelectedImageIndex(null);
   };
 
-  const handleShare = () => {
-    const shareText = `¡Echa un vistazo a este lugar en San Antonio Palopó!\n\n*${site.name}*\n${cleanDescription}`;
-    const shareUrl = window.location.href;
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    if (isMobile && navigator.share) {
-      navigator.share({
-        title: site.name,
-        text: `${shareText}\n\nDescubre más aquí:`,
-        url: shareUrl,
-      }).catch((error) => console.log('Error al usar Web Share API', error));
-    } else {
-      const clipboardText = `${shareText}\n\nDescubre más aquí:\n${shareUrl}`;
-      navigator.clipboard.writeText(clipboardText);
-      alert('¡Enlace y detalles copiados al portapapeles!');
-    }
-  };
-
   const cleanDescription = getCleanDescription(site.description || site.description_es);
   const mainImageUrl = site.imageUrls && site.imageUrls.length > 0 ? site.imageUrls[0].original : '';
   const isFavorite = !authLoading && currentUser?.favorites?.includes(site.id);
+
+  // --- LÓGICA DE COMPARTIR ACTUALIZADA ---
+  const handleShare = async () => {
+    // 1. Obtener URL limpia (decodificada) para que se lea "Artesanías" y no "Artesan%C3%ADas"
+    // NOTA: Para enlaces clicables a veces se prefiere encoded, pero para texto visible mejor decoded.
+    // WhatsApp suele reconocer ambos, pero decodeURIComponent se ve mejor.
+    const cleanUrl = decodeURIComponent(window.location.href);
+
+    const shareTitle = site.name;
+    const shareText = `¡Dale un vistazo a este lugar en San Antonio Palopó!\n\n${site.name}\n${cleanDescription}`;
+
+    // Texto completo formateado
+    const fullShareText = `${shareText}\n\n Descubre más aquí:\n${cleanUrl}`;
+
+    // Detectar si es dispositivo móvil
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // MÓVIL: Usar Web Share API nativa (funciona muy bien en Android/iOS)
+    if (isMobile && navigator.share && navigator.canShare && navigator.canShare({ url: window.location.href })) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: `${shareText}\n\n Descubre más aquí:`,
+          url: window.location.href, // Aquí usamos la URL real para asegurar compatibilidad
+        });
+        return;
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+      }
+    }
+
+    // ESCRITORIO (o si falla API nativa): 
+    // Copiar TODO el texto al portapapeles. Esto soluciona que se pierda el texto
+    // al abrir la caja de compartir de Windows/Chrome.
+    try {
+      await navigator.clipboard.writeText(fullShareText);
+      // Toast simple solicitado
+      toast.success('Enlace copiado al portapapeles', {
+        duration: 3000,
+        icon: '📋'
+      });
+    } catch (err) {
+      toast.error('No se pudo copiar.', { duration: 2000 });
+    }
+  };
+
+  // --- LÓGICA DE CONTACTO POR WHATSAPP ACTUALIZADA ---
+  const handleWhatsAppClick = async (e, phone, siteName) => {
+    e.preventDefault();
+
+    // 1. Limpiar número (remover caracteres no numéricos)
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length === 8) {
+      cleanPhone = `502${cleanPhone}`;
+    }
+
+    // 2. URL limpia para el mensaje (sin %C3%AD)
+    const cleanUrl = decodeURIComponent(window.location.href);
+
+    // 3. Construir mensaje
+    const messageText = `¡Hola! Quiero información sobre: "${siteName}"\n\n${cleanUrl}`;
+    const encodedText = encodeURIComponent(messageText);
+
+    // 4. Detectar dispositivo móvil
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // 5. Copiar siempre al portapapeles como respaldo y mostrar toast simple
+    try {
+      await navigator.clipboard.writeText(messageText);
+      toast.success('Enlace copiado al portapapeles', {
+        duration: 3000,
+        icon: '📋'
+      });
+    } catch (err) {
+      // Ignorar error silenciosamente o loguear
+      console.log('Error copiando al portapapeles', err);
+    }
+
+    // 6. Redirección según dispositivo
+    if (isMobile) {
+      // Móvil: API directa, suele abrir la App sin problemas
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
+      window.location.href = whatsappUrl;
+    } else {
+      // Escritorio: Usar web.whatsapp.com en una pestaña NOMBRADA para reutilizarla.
+      // 'whatsapp_window' es el nombre clave para que el navegador busque esa pestaña antes de abrir otra.
+      const webUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
+      window.open(webUrl, 'whatsapp_window');
+    }
+  };
 
   const handleToggleFavorite = async () => {
     if (!authLoading && currentUser) {
       await toggleFavorite(site.id);
     }
+  };
+
+  // Datos estructurados JSON-LD para SEO
+  const jsonLdData = {
+    "@context": "https://schema.org",
+    "@type": "TouristAttraction",
+    "name": site.name,
+    "description": cleanDescription,
+    "image": mainImageUrl,
+    "url": window.location.href,
+    ...(site.latitude && site.longitude && {
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": site.latitude,
+        "longitude": site.longitude
+      }
+    }),
+    ...(ratingCount > 0 && {
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": avgRating.toFixed(1),
+        "reviewCount": ratingCount
+      }
+    })
   };
 
   const sliderSettings = {
@@ -168,19 +266,25 @@ function SiteDetailPage() {
     autoplay: false,
     arrows: true,
     initialSlide: selectedImageIndex,
-    customPaging: () => <div />, 
+    customPaging: () => <div />,
   };
 
   return (
     <>
-      <SEO 
+      {/* --- SEO para el Detalle del Sitio --- */}
+      <SEO
         title={site.name}
         description={cleanDescription}
         image={mainImageUrl}
-        url={`/${site.category}/${site.slug || site.id}`}
+        // USAR SLUG PARA LA URL CANÓNICA
+        url={site.category && site.slug
+          ? `/categoria/${createSlug(site.category)}/${site.slug}`
+          : `/sitio/${site.id}`}
         type="article"
+        keywords={`${site.name}, ${site.category}, san antonio palopó, turismo, ${site.parentCategory}`}
+        jsonLd={jsonLdData}
       />
-      
+
       <div className="site-detail-container">
         <div className="site-detail-header-actions">
           {site.category && (
@@ -211,14 +315,14 @@ function SiteDetailPage() {
             <Slider {...sliderSettings} className="site-carousel">
               {site.imageUrls.map((url, index) => (
                 <div key={index} className="carousel-slide-wrapper">
-                  <img 
+                  <img
                     src={url.original}
                     srcSet={url.srcset}
                     sizes={url.sizes}
-                    alt={`${site.name} ${index + 1}`} 
-                    className="site-detail-image" 
-                    onClick={() => openImageModal(index)} 
-                    style={{cursor: 'pointer'}}
+                    alt={`${site.name} ${index + 1}`}
+                    className="site-detail-image"
+                    onClick={() => openImageModal(index)}
+                    style={{ cursor: 'pointer' }}
                     loading={index === 0 ? 'eager' : 'lazy'}
                     fetchPriority={index === 0 ? 'high' : 'auto'}
                     width="800" height="450"
@@ -246,34 +350,26 @@ function SiteDetailPage() {
               <h5 className="social-group-title">Contáctanos</h5>
               <div className="action-group social-group">
                 {site.whatsapp && (
-                  <a
-                    href={`https://api.whatsapp.com/send?phone=${site.whatsapp.replace(/\D/g, '')}&text=${encodeURIComponent(
-                      `Hola, quiero más información de: "${site.name}"\n${window.location.href}`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={(e) => handleWhatsAppClick(e, site.whatsapp, site.name)}
                     className="action-button social-icon whatsapp-button"
                     aria-label="WhatsApp"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="action-icon" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
-                  </a>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="action-icon" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" /></svg>
+                  </button>
                 )}
                 {site.whatsapp2 && (
-                  <a
-                    href={`https://api.whatsapp.com/send?phone=${site.whatsapp2.replace(/\D/g, '')}&text=${encodeURIComponent(
-                      `Hola, quiero más información de: "${site.name}"\n${window.location.href}`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={(e) => handleWhatsAppClick(e, site.whatsapp2, site.name)}
                     className="action-button social-icon whatsapp-button"
                     aria-label="WhatsApp 2"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="action-icon" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
-                  </a>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="action-icon" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" /></svg>
+                  </button>
                 )}
                 {site.facebook && (
                   <a href={site.facebook} target="_blank" rel="noopener noreferrer" className="action-button social-icon facebook-button" aria-label="Facebook">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="action-icon" viewBox="0 0 16 16"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0 0 3.596 0 8.049c0 4.144 3.062 7.585 7.029 7.95v-5.625h-2.03V8.05H7.03v-2.022c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.967-.365 7.029-3.806 7.029-7.951z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="action-icon" viewBox="0 0 16 16"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0 0 3.596 0 8.049c0 4.144 3.062 7.585 7.029 7.95v-5.625h-2.03V8.05H7.03v-2.022c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.967-.365 7.029-3.806 7.029-7.951z" /></svg>
                   </a>
                 )}
                 {site.instagram && (
@@ -295,12 +391,12 @@ function SiteDetailPage() {
                 )}
                 {site.tiktok && (
                   <a href={site.tiktok} target="_blank" rel="noopener noreferrer" className="action-button social-icon tiktok-button" aria-label="TikTok">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="action-icon" viewBox="0 0 16 16"><path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3V0Z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="action-icon" viewBox="0 0 16 16"><path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3V0Z" /></svg>
                   </a>
                 )}
                 {site.email && (
                   <a href={`mailto:${site.email}`} className="action-button social-icon email-button" aria-label="Correo Electrónico">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="action-icon" viewBox="0 0 16 16"><path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697ZM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757Zm3.436-.586L16 11.801V4.697l-5.803 3.546Z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="action-icon" viewBox="0 0 16 16"><path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697ZM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757Zm3.436-.586L16 11.801V4.697l-5.803 3.546Z" /></svg>
                   </a>
                 )}
               </div>
@@ -309,15 +405,15 @@ function SiteDetailPage() {
         </div>
 
         <div className="site-detail-description">
-          <div 
+          <div
             className="ql-editor-display"
-            dangerouslySetInnerHTML={{ __html: site.description || site.description_es }} 
+            dangerouslySetInnerHTML={{ __html: site.description || site.description_es }}
           />
         </div>
 
-        <Comments 
-          siteId={site.id} 
-          onRatingUpdate={(avg, count) => { setAvgRating(avg); setRatingCount(count); }} 
+        <Comments
+          siteId={site.id}
+          onRatingUpdate={(avg, count) => { setAvgRating(avg); setRatingCount(count); }}
         />
 
         {isImageModalOpen && (

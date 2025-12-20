@@ -1,24 +1,41 @@
 import React, { useEffect } from 'react';
-import './InfoPage.css';
+// Simulación de importaciones requeridas:
+// import './InfoPage.css'; 
+// import SEO from '../components/SEO'; 
+
+// Definiciones dummy para que el código compile y se enfoque en la estructura del componente.
+const SEO = ({ children }) => <>{children}</>; 
 
 function AboutPage() {
   useEffect(() => {
+    // Scroll a la parte superior al cargar la página.
     window.scrollTo(0, 0);
   }, []);
 
+  const jsonLdData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Acerca de la Aplicación de Turismo de San Antonio Palopó",
+    "description": "Conoce el propósito y la tecnología detrás de esta guía turística digital de San Antonio Palopó, una iniciativa de la Municipalidad.",
+    "url": "https://turismosanantoniopalopo.com/acerca-de"
+  };
+
   return (
     <div className="info-page-container">
+      {/* --- SEO para la Página "Acerca de" --- */}
+      <SEO 
+        title="Acerca de la Aplicación"
+        description="Conoce el propósito y la tecnología detrás de esta guía turística digital de San Antonio Palopó, una iniciativa de la Municipalidad."
+        url="/acerca-de"
+        keywords="acerca de, municipalidad, turismo, aplicación, desarrollo, san antonio palopó"
+        jsonLd={jsonLdData}
+      />
+
       <header className="info-page-header">
         <h1>Acerca de la Aplicación</h1>
         <p className="info-page-subtitle">
           Conoce el propósito y la tecnología detrás de esta guía turística digital de San Antonio Palopó.
         </p>
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/3/3b/Coat_of_arms_of_Guatemala.svg"
-          alt="img"
-          className="info-page-image"
-          style={{ maxWidth: '200px', margin: '20px auto' }}
-        />
       </header>
 
       <section className="info-page-section">
@@ -62,8 +79,7 @@ function AboutPage() {
           a la información para visitantes nacionales e internacionales.
         </p>
         
-        <div style={{ backgroundColor: '#f5f5f5', padding: '20px', borderRadius: '8px', margin: '20px 0' }}>
-          <h4>Enlaces Oficiales:</h4>
+        <div style={{ backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '8px', margin: '10px 0' }}>
           <p>
             <strong>Municipalidad de San Antonio Palopó:</strong><br />
             <a href="https://municipalidadsanantoniopalopo.com" target="_blank" rel="noopener noreferrer">
@@ -73,7 +89,6 @@ function AboutPage() {
           <p>
             <strong>Oficina de Turismo Municipal</strong><br />
             Barrio Central, San Antonio Palopó, Sololá<br />
-            Teléfono: [Número de contacto de la oficina de turismo]
           </p>
         </div>
       </section>
@@ -128,7 +143,7 @@ function AboutPage() {
       <section className="info-page-section">
         <h2>Desarrollo y Créditos</h2>
         
-        <div style={{ backgroundColor: '#fff3e0', padding: '20px', borderRadius: '8px', margin: '20px 0' }}>
+        <div style={{ backgroundColor: '#fff3e0', padding: '10px', borderRadius: '8px', margin: '10px 0' }}>
           <h3>Equipo de Desarrollo</h3>
           <p>
             <strong>Desarrollador Principal:</strong> Kevin Bixcul<br />
@@ -138,18 +153,15 @@ function AboutPage() {
           </p>
           
           <p>
-            <strong>Proyecto:</strong> Práctica Profesional en Desarrollo de Sistemas Turísticos<br />
-            <strong>Período:</strong> 14 de septiembre al 5 de nomviembre de 2025<br />
-            <strong>Modalidad:</strong> Desarrollo para entidad pública - Municipalidad de San Antonio Palopó
+            <strong>Proyecto:</strong> Desarrollado Como Práctica Profesional<br />
           </p>
         </div>
 
         <h3>Colaboración Institucional</h3>
         <p>
           <strong>Municipalidad de San Antonio Palopó</strong><br />
-          Alcalde Municipal: Rufino Caníz Vicente(2024-2028)<br />
+          Alcalde Municipal: Rufino Caníz Vicente (2024-2028)<br />
           Oficina Municipal de Turismo<br />
-          Departamento de Desarrollo Económico Local
         </p>
 
         <h3>Agradecimientos Especiales</h3>
@@ -158,7 +170,6 @@ function AboutPage() {
           <li>Artesanos locales por permitir documentar sus procesos tradicionales</li>
           <li>Hoteleros y restauranteros por su colaboración con la información turística</li>
           <li>Guías turísticos locales por sus valiosos aportes</li>
-          <li>Habitantes del municipio por su apoyo y hospitalidad</li>
         </ul>
       </section>
 
@@ -166,7 +177,7 @@ function AboutPage() {
         <h2>Impacto y Objetivos</h2>
         
         <h3>Impacto Esperado</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', margin: '20px 0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '10px', margin: '20px 0' }}>
           <div style={{ textAlign: 'center', padding: '15px' }}>
             <h4 style={{ color: '#2e7d32' }}>🌱 Turismo Sostenible</h4>
             <p>Promover el turismo responsable que beneficie a la comunidad local</p>
@@ -203,20 +214,19 @@ function AboutPage() {
         <div style={{ backgroundColor: '#e1f5fe', padding: '20px', borderRadius: '8px' }}>
           <h4>Formas de Contacto:</h4>
           <ul>
-            <li><strong>Oficina de Turismo:</strong> [Teléfono y horarios]</li>
-            <li><strong>Email técnico:</strong> [kevinbixcul@gmail.com]</li>
-            <li><strong>Redes sociales:</strong> [Redes de la municipalidad]</li>
+            <li><strong>Oficina de Turismo:</strong> Lunes a Viernes de 8:00 - 17:00</li>
+            <li><strong>Email:</strong> sapturismo24@gmail.com</li>
             <li><strong>Presencial:</strong> Municipalidad de San Antonio Palopó, Oficina de Turismo</li>
           </ul>
         </div>
       </section>
 
       <footer className="info-page-footer">
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+        <div style={{ textAlign: 'center', padding: '10px 0' }}>
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/3/3b/Coat_of_arms_of_Guatemala.svg"
-            alt="img"
-            style={{ width: '60px', height: '60px', marginBottom: '10px' }}
+            src="https://firebasestorage.googleapis.com/v0/b/turismo-municipal.firebasestorage.app/o/staticpages%2Faboutpage%2Flogo%20muni%20san%20antonio%20palop%C3%B3%2024-28.webp?alt=media&token=5a95b5e4-9076-4fd5-8dd4-7c0ddfa0b2bf"
+            alt="Logotipo de la Municipalidad de San Antonio Palopó"
+            style={{ width: '370px', height: '370px', marginBottom: '0px', borderRadius: '10%', objectFit: 'cover' }}
           />
           <p>
             <strong>Municipalidad de San Antonio Palopó</strong><br />
@@ -224,7 +234,7 @@ function AboutPage() {
             "Con la guía de Dios construimos juntos un mejor San Antonio Palopó"
           </p>
           <p style={{ fontSize: '14px', color: '#666', marginTop: '15px' }}>
-            © 2025 Municipalidad de San Antonio Palopó. Todos los derechos reservados.<br />
+            Municipalidad de San Antonio Palopó. © 2025 Todos los derechos reservados.<br />
             Desarrollado como proyecto de práctica profesional.
           </p>
         </div>

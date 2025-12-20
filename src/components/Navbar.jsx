@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { 
+  Home, Map, Grid, Calendar, History, Info, 
+  User, LogOut, LogIn, PlusCircle, LayoutDashboard 
+} from 'lucide-react';
 import './Navbar.css';
+
+// URL de tu formulario
+const SUGGEST_SITE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdewv1slZPa1c0jhZLNioTZdbYwyPYgWp4Yq0JL5OznQSA4hg/viewform?usp=preview";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,9 +16,9 @@ function Navbar() {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    closeMenu(); // Cierra el menú al hacer logout
+    closeMenu();
     try {
-      await logout(); // Esta función está en AuthContext
+      await logout();
       navigate('/');
     } catch (error) {
       console.error("Fallo al cerrar sesión:", error);
@@ -43,28 +50,95 @@ function Navbar() {
               src="/LogoTurismo.png" 
               alt="Logo Turismo" 
               className="navbar-logo" 
-              width="105"  // CLS FIX
-              height="105" // CLS FIX
+              width="105"
+              height="105"
             />
           </Link>
         </div>
-        <NavLink to="/" onClick={closeMenu} tabIndex={isOpen ? 0 : -1} end>Inicio</NavLink>
-        <NavLink to="/mapa" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Mapa</NavLink>
-        <NavLink to="/categorias"onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Sitios por Categoría</NavLink>
-        <NavLink to="/eventos" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Calendario de Eventos</NavLink>
-        <NavLink to="/historia" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Historia</NavLink>
-        <NavLink to="/acerca-de" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Acerca de</NavLink>
-        {currentUser && <NavLink to="/profile" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Mi Perfil</NavLink>}
-        {currentUser && currentUser.role === 'admin' && (
-          <NavLink to="/admin" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Administrador</NavLink>
-        )}
-        {currentUser ? (
-          <button onClick={handleLogout} className="navbar-button" tabIndex={isOpen ? 0 : -1}>Cerrar Sesión</button>
-        ) : (
-          <Link to="/login" className="navbar-button" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Iniciar Sesión</Link>
-        )}
-        <NavLink to="/privacidad" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Política de Privacidad</NavLink>
-        <NavLink to="/terminos" onClick={closeMenu} tabIndex={isOpen ? 0 : -1}>Términos y Condiciones</NavLink>
+
+        {/* --- GRUPO 1: PRINCIPAL --- */}
+        <div className="nav-group">
+          <NavLink to="/" onClick={closeMenu} className="nav-item-with-icon" end>
+            <Home size={18} /> Inicio
+          </NavLink>
+          <NavLink to="/mapa" onClick={closeMenu} className="nav-item-with-icon">
+            <Map size={18} /> Mapa Interactivo
+          </NavLink>
+          <NavLink to="/categorias" onClick={closeMenu} className="nav-item-with-icon">
+            <Grid size={18} /> Sitios por Categoría
+          </NavLink>
+          <NavLink to="/eventos" onClick={closeMenu} className="nav-item-with-icon">
+            <Calendar size={18} /> Eventos
+          </NavLink>
+        </div>
+
+        {/* --- SEPARADOR --- */}
+        <div className="nav-divider">
+          <span>Información y Cultura</span>
+        </div>
+
+        {/* --- GRUPO 2: INFORMACIÓN --- */}
+        <div className="nav-group secondary-group">
+          <NavLink to="/historia" onClick={closeMenu} className="nav-item-with-icon">
+            <History size={18} /> Historia y Cultura
+          </NavLink>
+          <NavLink to="/acerca-de" onClick={closeMenu} className="nav-item-with-icon">
+            <Info size={18} /> Acerca de
+          </NavLink>
+        </div>
+
+        {/* --- SEPARADOR --- */}
+        <div className="nav-divider">
+          <span>Usuario</span>
+        </div>
+
+        {/* --- GRUPO 3: USUARIO / ADMIN --- */}
+        <div className="nav-group">
+          {currentUser && (
+            <NavLink to="/profile" onClick={closeMenu} className="nav-item-with-icon">
+              <User size={18} /> Mi Perfil
+            </NavLink>
+          )}
+          
+          {currentUser && currentUser.role === 'admin' && (
+            <NavLink to="/admin" onClick={closeMenu} className="nav-item-with-icon highlight-admin">
+              <LayoutDashboard size={18} /> Administrador
+            </NavLink>
+          )}
+
+          {/* BOTÓN DE SUGERIR SITIO */}
+          <a 
+            href={SUGGEST_SITE_FORM_URL}
+            target="_blank" 
+            rel="noopener noreferrer"
+            onClick={closeMenu}
+            className="nav-suggestion-link"
+          >
+            <PlusCircle size={18} /> Sugerir un Sitio
+          </a>
+
+          {/* LOGIN / LOGOUT */}
+          {currentUser ? (
+            <button onClick={handleLogout} className="navbar-button logout">
+              <LogOut size={16} /> Cerrar Sesión
+            </button>
+          ) : (
+            <Link to="/login" className="navbar-button login" onClick={closeMenu}>
+              <LogIn size={16} /> Iniciar Sesión
+            </Link>
+          )}
+        </div>
+
+        {/* --- LEGALES (Al final, más pequeños) --- */}
+        <div className="nav-legal-links">
+          <NavLink to="/privacidad" onClick={closeMenu}>
+             Privacidad
+          </NavLink>
+          <span>•</span>
+          <NavLink to="/terminos" onClick={closeMenu}>
+             Términos
+          </NavLink>
+        </div>
       </nav>
     </>
   );

@@ -72,8 +72,8 @@ const manualMarkerIcon = new L.DivIcon({
 const UserMarker = ({ position }) => {
   const markerIcon = React.useMemo(() => {
     return new L.DivIcon({
-      className: 'user-location-container', // Clase para el contenedor principal
-      html: `<div class="user-location-marker"></div>`, // El div interno que tendrá los estilos
+      className: 'user-location-container',
+      html: `<div class="user-location-marker"></div>`,
       iconSize: [16, 16],
       iconAnchor: [8, 8],
     });
@@ -115,36 +115,29 @@ const UserMarker = ({ position }) => {
   );
 };
 
-// SOLUCIÓN CRÍTICA: MapClickHandler corregido completamente
-const MapClickHandler = ({ onMapClick, markingMode }) => {
-  const mapRef = React.useRef(null);
-  
+const MapClickHandler = ({ onMapClick, markingMode }) => {  
   useMapEvents({
+    // CORRECCIÓN DEL CLIC: Si el modo de marcado está activo, ejecutamos el handler.
     click: (e) => {
-      // CRÍTICO: Solo procesar si markingMode está activo
       if (!markingMode) {
-        return; // Deja pasar el evento normalmente
+        return;
       }
-
-      // Verificar si el clic fue en el tile del mapa (no en un marcador)
-      const target = e.originalEvent.target;
       
-      // Si el clic fue en un tile del mapa (leaflet-tile-pane), procesar
-      const isMapTile = target.classList.contains('leaflet-tile') || 
-                        target.closest('.leaflet-tile-pane');
-      
-      if (isMapTile) {
-        // Detener la propagación solo si vamos a procesar el clic
-        L.DomEvent.stopPropagation(e);
-        onMapClick(e);
-      }
-      // Si no es un tile del mapa, no hacer nada y dejar que el evento continúe
+      // La clave es ejecutar el handler directamente y detener la propagación de eventos
+      // para evitar que otros elementos (como marcadores de sitios) capten el clic.
+      onMapClick(e);
+      L.DomEvent.stopPropagation(e); 
     },
+    // CORRECCIÓN DEL ZOOM: Si está en modo de marcado, bloqueamos el doble clic (zoom).
+    dblclick: (e) => {
+        if (markingMode) {
+            L.DomEvent.stopPropagation(e);
+        }
+    }
   });
   
   return null;
 };
-
 const MapController = React.forwardRef(({ center, isFollowing, initialSelectedSite, hasActiveRoute, defaultCenter }, mapRef) => {
   const map = useMap();
   
@@ -233,11 +226,22 @@ const RoutingMachine = ({ start, end, onRoutesFound }) => {
 
     routingControlRef.current = instance;
 
+    // --- FIX APLICADO AQUÍ ---
     return () => {
-      if (routingControlRef.current) {
-        map.removeControl(routingControlRef.current);
+      // Verificamos si existe la referencia y el mapa
+      if (routingControlRef.current && map) {
+        try {
+          // Intentamos remover el control de forma segura
+          map.removeControl(routingControlRef.current);
+        } catch (error) {
+          // Si falla (porque el mapa ya se destruyó al cambiar de página),
+          // capturamos el error silenciosamente para que no rompa la app.
+          console.warn('Limpieza de ruta ignorada durante navegación');
+        }
+        routingControlRef.current = null;
       }
     };
+    // --- FIN DEL FIX ---
   }, [map, onRoutesFound]);
 
   useEffect(() => {
@@ -370,7 +374,7 @@ function MapPage() {
           const user = L.latLng(latitude, longitude);
           const distance = user.distanceTo(destination);
 
-          if (distance < 20) {
+          if (distance < 10) {
             toast.success(`¡Has llegado a tu destino!`, {
               duration: 5000,
             });
@@ -629,14 +633,27 @@ function MapPage() {
               >
                 A→B
               </button>
-              <div className="marking-mode-help">
-                <span className="help-text">más..</span>
+              {/* --- NUEVO BOTÓN Y TOOLTIP DE AYUDA --- */}
+              <div className="map-help-container">
+                <button type="button" className="control-button help-button" aria-label="Ayuda del mapa">?</button>
                 <div className="help-tooltip">
-                  <strong>Marcado Manual</strong><br/>
-                  1. Activa este botón<br/>
-                  2. Haz clic en cualquier punto del mapa<br/>
-                  3. Se calculará la ruta automáticamente<br/>
-                  <small>Útil para marcar destinos específicos</small>
+                  <h4>Guía Rápida del Mapa</h4>
+                  <ul>
+                    <li>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2,17 12,22 22,17"></polyline><polyline points="2,12 12,17 22,12"></polyline></svg>
+                      <strong>Cambiar Vista:</strong> Alterna entre mapa satelital y de calles.
+                    </li>
+                    <li>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+                      <strong>Seguir Ubicación:</strong> Centra el mapa en tu posición actual.
+                    </li>
+                    <li>
+                      <strong>SAP:</strong> Vuelve a centrar el mapa en San Antonio Palopó.
+                    </li>
+                    <li>
+                      <strong>A→B:</strong> Activa el modo de marcado manual para trazar una ruta a cualquier punto.
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>

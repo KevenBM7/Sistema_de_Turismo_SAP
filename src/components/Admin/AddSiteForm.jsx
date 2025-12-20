@@ -312,8 +312,8 @@ function AddSiteForm({ siteToEdit }) {
         imagePreviews.forEach(url => URL.revokeObjectURL(url));
 
         // Generar slugs base para el nombre del archivo
-        const catSlug = slugify(finalCategory, { lower: true, strict: true });
-        const siteSlug = slugify(name, { lower: true, strict: true });
+        const catSlug = slugify(finalCategory || 'categoria', { lower: true, strict: true });
+        const siteSlug = slug; // Usamos el slug del estado que ya se genera en tiempo real
 
         const imageProcessingPromises = imageFiles.map(async (file, index) => {
           try {
@@ -323,8 +323,8 @@ function AddSiteForm({ siteToEdit }) {
 
             // --- CAMBIO CLAVE: NOMBRE DE ARCHIVO SEO OPTIMIZADO ---
             // Formato: san-antonio-palopo-categoria-nombre-sitio-indice.webp
-            // El 'index' (0, 1, 2) diferencia las imágenes subidas al mismo tiempo.
-            const fileName = `san-antonio-palopo-${catSlug}-${siteSlug}-${index}.webp`;
+            // El timestamp asegura que el nombre sea único incluso si se sube la misma imagen dos veces.
+            const fileName = `san-antonio-palopo-${catSlug}-${siteSlug}-${Date.now()}-${index}.webp`;
 
             const mainImageOptions = {
               maxSizeMB: 2,

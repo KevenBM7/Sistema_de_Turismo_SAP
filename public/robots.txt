@@ -10,6 +10,7 @@ Disallow: /registro/
 
 # Bloquear archivos privados
 Disallow: /api/
+Allow: /manifest.json
 Disallow: /*.json$
 
 # Sitemap

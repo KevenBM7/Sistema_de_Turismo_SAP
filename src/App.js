@@ -29,7 +29,6 @@ const Dashboard = lazy(() => import('./pages/Admin/Dashboard'));
 const Profile = lazy(() => import('./pages/Profile'));
 const SiteDetailPage = lazy(() => import('./pages/SiteDetailPage'));
 const MapPage = lazy(() => import('./pages/MapPage'));
-const EditSitePage = lazy(() => import('./pages/Admin/EditSitePage'));
 const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const EventDetailPage = lazy(() => import('./pages/EventDetailPage'));
@@ -84,8 +83,8 @@ function AppContent() {
             <Route path="/terminos" element={<LazyPageWrapper><TermsPage /></LazyPageWrapper>} />
             <Route path="/privacidad" element={<LazyPageWrapper><PrivacyPage /></LazyPageWrapper>} />
             <Route path="/search" element={<LazyPageWrapper><SearchResults /></LazyPageWrapper>} />
-            <Route path="/evento/:id" element={<LazyPageWrapper><EventDetailPage /></LazyPageWrapper>} />
             <Route path="/eventos" element={<LazyPageWrapper><CalendarPage /></LazyPageWrapper>} />
+            <Route path="/evento/:identifier" element={<LazyPageWrapper><EventDetailPage /></LazyPageWrapper>} />
             <Route path="/login" element={<LoggedInRoute><LazyPageWrapper><Login /></LazyPageWrapper></LoggedInRoute>} />
             <Route
               path="/profile"
@@ -94,10 +93,6 @@ function AppContent() {
             <Route 
               path="/admin"
               element={<AdminRoute><LazyPageWrapper><Dashboard /></LazyPageWrapper></AdminRoute>}
-            />
-            <Route 
-              path="/admin/edit/:id"
-              element={<AdminRoute><LazyPageWrapper><EditSitePage /></LazyPageWrapper></AdminRoute>}
             />
           </Routes>
         </Suspense>

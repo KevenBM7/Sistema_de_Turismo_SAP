@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import CategoryCard from '../components/CategoryCard';
+import SEO from '../components/SEO'; // Importación de SEO
 import '../components/CategoryCard.css';
 
 
@@ -64,6 +65,14 @@ function CategoriesPage() {
 
   return (
     <div>
+      {/* --- SEO para la Página de Categorías --- */}
+      <SEO 
+        title="Sitios por Categoría"
+        description="Explora todos los sitios turísticos de San Antonio Palopó organizados por categoría: atracciones, hoteles, restaurantes, transporte y más."
+        url="/categorias"
+        keywords="categorías, atracciones, hoteles, restaurantes, servicios, san antonio palopó"
+      />
+
       <h1 style={{ textAlign: 'center' }}>Categorías</h1>
       {displayOrder.map(parentCat => (
         groupedCategories[parentCat] && (
