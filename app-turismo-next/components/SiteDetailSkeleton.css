@@ -1,0 +1,58 @@
+/* --- Site Detail Skeleton --- */
+.site-detail-skeleton {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  animation: pulse-bg 1.5s infinite alternate;
+}
+
+.site-detail-skeleton > div {
+  background-color: #e0e0e0;
+  border-radius: 4px;
+}
+
+.skeleton-category {
+  width: 120px;
+  height: 28px;
+  margin: 0 auto 1.5rem auto;
+  border-radius: 15px;
+}
+
+.skeleton-title {
+  width: 70%;
+  height: 36px;
+  margin: 0 auto 1.5rem auto;
+}
+
+.skeleton-carousel {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 1.5rem;
+}
+
+.skeleton-address {
+  width: 80%;
+  height: 20px;
+  margin-bottom: 2rem;
+}
+
+.skeleton-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background-color: transparent;
+}
+
+.skeleton-button {
+  width: 120px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.skeleton-description .skeleton-line { height: 18px; margin-bottom: 10px; }
+.skeleton-description .skeleton-line.short { width: 60%; }
+.skeleton-comments-header { width: 40%; height: 28px; margin-top: 3rem; margin-bottom: 1.5rem; }
+.skeleton-comment-form { width: 100%; height: 120px; margin-bottom: 2rem; }
+.skeleton-comment { width: 100%; height: 60px; margin-bottom: 1rem; }

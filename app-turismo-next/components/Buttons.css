@@ -1,0 +1,357 @@
+/* --- Buttons --- */
+.button-primary {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.button-primary:hover {
+  background-color: #0056b3;
+}
+
+.button-primary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.button-google {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #444;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-weight: 600;
+}
+
+.google-logo {
+  width: 20px;
+  height: 20px;
+}
+
+.button-google:hover {
+  background-color: #f5f5f5;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.back-to-menu-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.back-to-menu-button:hover {
+  background-color: #5a6268;
+}
+
+.cancel-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+.cancel-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submit-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.submit-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.view-button {
+  background-color: #17a2b8;
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+  text-align: center;
+  display: inline-block;
+}
+
+.view-button:hover {
+  background-color: #138496;
+}
+
+.edit-button {
+  background-color: #ffc107;
+  color: #212529;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+  text-align: center;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.edit-button:hover {
+  background-color: #e0a800;
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+}
+/* src/components/Buttons.css - Añadir al final */
+
+.cancel-edit-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.cancel-edit-button:hover {
+  background-color: #5a6268;
+}
+
+.delete-route-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.delete-route-button:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.delete-route-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.edit-route-button {
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.edit-route-button:hover:not(:disabled) {
+  background-color: #ffb300;
+}
+
+.edit-route-notice {
+  /* Este es un estilo de contenedor, pero lo dejamos aquí ya que se usa con los botones de ruta */
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 0.9rem;
+}
+
+.cancel-route-button {
+  flex: 1;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.cancel-route-button:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+.update-route-button {
+  flex: 2;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.update-route-button:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.update-route-button:disabled,
+.cancel-route-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.add-route-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.add-route-button:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.add-route-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Toggle Schedule Button */
+.toggle-schedule-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.toggle-schedule-button:hover {
+  background-color: #5a6268;
+}
+
+/* Add Day Button */
+.add-day-button {
+  background-color: white;
+  color: #007bff;
+  border: 2px dashed #007bff;
+  padding: 0.6rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  width: 100%;
+  margin-top: 0.5rem;
+  transition: all 0.2s;
+}
+
+.add-day-button:hover {
+  background-color: #007bff;
+  color: white;
+  border-style: solid;
+}
+
+/* Remove Activity Button */
+.remove-activity-button {
+  background-color: transparent;
+  color: #dc3545;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.remove-activity-button:hover {
+  background-color: #dc354520;
+}
+
+/* Add Activity Button */
+.add-activity-button {
+  background-color: transparent;
+  color: #28a745;
+  border: 1px dashed #28a745;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  transition: all 0.2s;
+}
+
+.add-activity-button:hover {
+  background-color: #28a74510;
+}

@@ -1,8 +1,10 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
-  onAuthStateChanged, 
-  signOut, 
-  GoogleAuthProvider, 
+  onAuthStateChanged,
+  signOut,
+  GoogleAuthProvider,
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -11,10 +13,11 @@ import {
   sendEmailVerification,
   deleteUser
 } from 'firebase/auth';
-import { auth, db, storage } from '../services/firebase';
+import { auth, db, storage } from '@/lib/firebase';
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc, arrayUnion, arrayRemove, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import imageCompression from 'browser-image-compression';
+// import imageCompression from 'browser-image-compression'; // Eliminar importación estática
+
 
 const AuthContext = createContext();
 
@@ -28,15 +31,15 @@ export function AuthProvider({ children }) {
 
   async function signup(email, password, displayName) {
     let userCreated = null;
-    
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       userCreated = userCredential.user;
-      
+
       await updateProfile(userCreated, { displayName });
       await sendEmailVerification(userCreated);
       console.log("Correo de verificación enviado exitosamente");
-      
+
       await setDoc(doc(db, 'users', userCreated.uid), {
         email: userCreated.email,
         displayName: displayName,
@@ -45,14 +48,14 @@ export function AuthProvider({ children }) {
         createdAt: serverTimestamp(),
         createdAtMillis: Date.now(),
       });
-      
+
       await signOut(auth);
-      
+
       return { success: true };
-      
+
     } catch (error) {
       console.error("Error en signup:", error.code, error.message);
-      
+
       if (userCreated) {
         try {
           if (error.code !== 'auth/email-already-in-use') {
@@ -63,7 +66,7 @@ export function AuthProvider({ children }) {
         }
         await signOut(auth);
       }
-      
+
       if (error.code === 'auth/email-already-in-use') {
         throw new Error('EMAIL_IN_USE');
       } else if (error.code === 'auth/invalid-email') {
@@ -80,39 +83,39 @@ export function AuthProvider({ children }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
+
       if (!user.emailVerified) {
         console.log("Usuario no verificado encontrado. Verificando tiempo de espera...");
-        
+
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
-        
+
         if (userDoc.exists()) {
           const userData = userDoc.data();
           const createdAtMillis = userData.createdAtMillis;
           const now = Date.now();
           const thirtyMinutesInMillis = 30 * 60 * 1000;
           const timePassed = now - createdAtMillis;
-          
+
           if (timePassed < thirtyMinutesInMillis) {
             const timeRemaining = thirtyMinutesInMillis - timePassed;
             const minutesRemaining = Math.ceil(timeRemaining / 60000);
-            
+
             await signOut(auth);
             throw new Error(`WAIT_TIME_${minutesRemaining}`);
           }
         }
-        
+
         try {
           await deleteDoc(doc(db, 'users', user.uid));
           console.log("Documento de Firestore eliminado");
         } catch (error) {
           console.log("No había documento en Firestore o ya fue eliminado");
         }
-        
+
         await deleteUser(user);
         console.log("Usuario de Auth eliminado");
-        
+
         return await signup(email, password, displayName);
       } else {
         await signOut(auth);
@@ -148,9 +151,9 @@ export function AuthProvider({ children }) {
     if (!newName.trim()) throw new Error("El nombre no puede estar vacío.");
 
     await updateProfile(auth.currentUser, { displayName: newName });
-    await updateDoc(doc(db, 'users', currentUser.uid), { 
-      displayName: newName, 
-      displayNameLastChanged: serverTimestamp() 
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      displayName: newName,
+      displayNameLastChanged: serverTimestamp()
     });
     await refreshCurrentUser();
   }
@@ -159,10 +162,12 @@ export function AuthProvider({ children }) {
     if (!currentUser) return;
 
     const imageOptions = { maxSizeMB: 0.5, maxWidthOrHeight: 400, useWebWorker: true };
+    // Importación dinámica
+    const { default: imageCompression } = await import('browser-image-compression');
     const compressedFile = await imageCompression(file, imageOptions);
 
     const fileRef = ref(storage, `profile-pictures/${currentUser.uid}`);
-    
+
     await uploadBytes(fileRef, compressedFile);
     const photoURL = await getDownloadURL(fileRef);
 
@@ -191,12 +196,12 @@ export function AuthProvider({ children }) {
 
   async function login(email, password, bypassVerificationCheck = false) {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    
+
     if (!bypassVerificationCheck && !userCredential.user.emailVerified) {
       await signOut(auth);
       throw new Error('email-not-verified');
     }
-    
+
     return userCredential;
   }
 
@@ -205,13 +210,13 @@ export function AuthProvider({ children }) {
     provider.setCustomParameters({
       prompt: 'select_account'
     });
-    
+
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
-    
+
     const userDocRef = doc(db, 'users', user.uid);
     const userDoc = await getDoc(userDocRef);
-    
+
     if (!userDoc.exists()) {
       await setDoc(userDocRef, {
         email: user.email,
@@ -222,7 +227,7 @@ export function AuthProvider({ children }) {
         createdAtMillis: Date.now(),
       });
     }
-    
+
     return result;
   }
 
@@ -259,9 +264,9 @@ export function AuthProvider({ children }) {
               photoURL: user.photoURL || userData.photoURL,
               ...userData,
             };
-            
+
             setCurrentUser(userProfile);
-            
+
           } else {
             const newUserProfile = {
               email: user.email,
@@ -280,7 +285,7 @@ export function AuthProvider({ children }) {
           console.error("Error al escuchar el documento del usuario:", error);
           setLoading(false);
         });
-        
+
         return () => docUnsubscribe();
       } else {
         setCurrentUser(null);

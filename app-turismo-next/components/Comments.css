@@ -1,0 +1,237 @@
+/* ---------- Comments Section ---------- */
+.comments-section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #eee;
+}
+
+.comments-section h3 {
+  text-align: left;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+  font-size: 1.5rem;
+}
+
+.add-comment-container {
+  margin-bottom: 2rem;
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.add-comment-container h4 {
+  margin-bottom: 1rem;
+  margin-top: 0;
+}
+
+.rating-input {
+  margin-bottom: 1rem;
+}
+
+.rating-input p {
+  margin: 0 0 0.5rem 0;
+}
+
+.add-comment-container form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  resize: vertical;
+  margin-bottom: 0.5rem;
+  box-sizing: border-box;
+}
+
+.add-comment-container form button {
+  padding: 0.5rem 1.5rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-comment-container form button:hover {
+  background-color: #0056b3;
+}
+
+.add-comment-container form button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.add-comment-container .error-message {
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.login-prompt {
+  text-align: center;
+}
+
+.login-prompt p {
+  margin-bottom: 1rem;
+}
+
+.no-comments-message {
+  text-align: center;
+  color: #666;
+}
+.comment-list-container h4 {
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.comment-list {
+  list-style: none;
+  padding: 0;
+}
+
+.comment-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.comment-user-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.comment-user-name {
+  font-weight: bold;
+}
+
+.comment-date {
+  font-size: 0.8rem;
+  color: #888;
+  margin-left: auto;
+}
+
+.comment-text {
+  margin: 0;
+  padding-left: 52px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.comment-item.highlight-comment {
+  background-color: #f8d7da;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px #f5c6cb;
+  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+.report-button {
+  background: none;
+  border: 1px solid #ddd;
+  color: #888;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-left: 52px;
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+.report-button:hover {
+  background-color: #fffbe6;
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.suspend-comment-button {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  font-size: 1.2rem;
+  transition: color 0.2s;
+}
+.suspend-comment-button:hover {
+  color: #dc3545;
+}
+
+/* --- Estilos para Toast de Confirmación --- */
+.toast-confirmation {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 380px;
+  pointer-events: auto;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.toast-content {
+  padding: 1rem;
+}
+
+.toast-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.toast-message {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin: 0;
+}
+
+.toast-buttons {
+  display: flex;
+  background-color: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.toast-buttons button {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toast-button-cancel {
+  color: #4b5563;
+  border-right: 1px solid #e5e7eb;
+}
+
+.toast-button-cancel:hover {
+  background-color: #f3f4f6;
+}
+
+.toast-button-confirm {
+  color: #007bff;
+}
+
+.toast-button-confirm:hover {
+  background-color: #f3f4f6;
+}

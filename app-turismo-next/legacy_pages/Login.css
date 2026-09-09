@@ -1,0 +1,119 @@
+/* ---------- Login / Register Page ---------- */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+
+.login-card {
+  background-color: #fff;
+  padding: 2.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.password-group {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 65%;
+  right: 10px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: #888;
+  display: flex;
+}
+
+.password-requirement {
+  font-size: 0.8rem;
+  color: #666;
+  text-align: left;
+  margin-top: 0.5rem;
+}
+
+.login-card h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.login-card .form-group {
+  text-align: left;
+  margin-bottom: 1rem;
+}
+
+.login-card .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.login-card .form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: #888;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+
+.login-divider:not(:empty)::before {
+  margin-right: 0.25em;
+}
+
+.login-divider:not(:empty)::after {
+  margin-left: 0.25em;
+}
+
+.login-footer {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.login-footer p {
+  margin: 0.5rem 0;
+}
+
+.login-footer a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.login-footer .link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.login-footer .link-button:hover {
+  text-decoration: underline;
+}

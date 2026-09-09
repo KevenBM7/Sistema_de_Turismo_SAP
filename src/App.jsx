@@ -10,18 +10,18 @@ import AdminRoute from './components/AdminRoute';
 import LoggedInRoute from './components/LoggedInRoute';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+// import "slick-carousel/slick/slick.css"; // Styles moved to specific pages
+// import "slick-carousel/slick/slick-theme.css";
 import { Toaster } from 'react-hot-toast';
 import { usePageLoader } from './hooks/usePageLoader';
 import { usePageTracking } from './hooks/usePageTracking';
 import LazyPageWrapper from './components/LazyPageWrapper.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
-import './styles/Layout.css'; 
-import './styles/Utilities.css'; 
+import './styles/Layout.css';
+import './styles/Utilities.css';
+import Home from './pages/Home';
 
 // --- Code Splitting: Carga diferida de componentes de página ---
-const Home = lazy(() => import('./pages/Home'));
 const Login = lazy(() => import('./pages/Login'));
 const HistoryPage = lazy(() => import('./pages/HistoryPage')); // Nueva página
 const AboutPage = lazy(() => import('./pages/AboutPage'));   // Nueva página
@@ -90,7 +90,7 @@ function AppContent() {
               path="/profile"
               element={<ProtectedRoute><LazyPageWrapper><Profile /></LazyPageWrapper></ProtectedRoute>}
             />
-            <Route 
+            <Route
               path="/admin"
               element={<AdminRoute><LazyPageWrapper><Dashboard /></LazyPageWrapper></AdminRoute>}
             />

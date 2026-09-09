@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../services/firebase';
-import { storage } from '../services/firebase';
-import SiteList from '../components/SiteList';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore/lite';
+import { doc, getDoc } from 'firebase/firestore/lite';
+import { db, storage } from '../services/firebaseLite';
+// Eliminada la doble importación de storage
+const SiteList = lazy(() => import('../components/SiteList'));
 import { ref, getDownloadURL } from 'firebase/storage';
 import EventCarouselSkeleton from '../components/EventCarouselSkeleton';
 import CategoryGroupSkeleton from '../components/CategoryGroupSkeleton';
 import { Link } from 'react-router-dom';
 import Slider from 'react-slick';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import SEO from '../components/SEO'; // Importación de SEO
 import '../pages/Home.css';
 import '../components/CategoryCard.css';
@@ -39,11 +41,14 @@ function Home() {
   const [groupedCategories, setGroupedCategories] = useState({});
   const [randomSiteIds, setRandomSiteIds] = useState([]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingHome, setLoadingHome] = useState(true);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [loadingSites, setLoadingSites] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const fetchData = async () => {
+
+    const fetchHomeData = async () => {
       try {
         const homePageRef = doc(db, 'settings', 'homePage');
         const homePageSnap = await getDoc(homePageRef);
@@ -57,63 +62,37 @@ function Home() {
             setHomePageData(data);
           }
         }
+      } catch (error) {
+        console.error("Error al cargar los datos de inicio:", error);
+      } finally {
+        setLoadingHome(false);
+      }
+    };
 
-        try {
-          const today = new Date().toISOString().split('T')[0];
+    const fetchEvents = async () => {
+      try {
+        // Fallback directo: Se evitan las consultas complejas que requieren un índice compuesto en Firestore 
+        // para prevenir el error 400 (Bad Request) que bloqueaba la carga en la consola.
+        // Si tienes muchos eventos, crea el índice en Firebase Console y usa la consulta optimizada.
+        const allEventsSnapshot = await getDocs(collection(db, 'events'));
+        const today = new Date().toISOString().split('T')[0];
+        const allEvents = allEventsSnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(event => {
+            return event.endDate ? event.endDate >= today : event.startDate >= today;
+          })
+          .sort((a, b) => a.startDate.localeCompare(b.startDate))
+          .slice(0, 10);
+        setUpcomingEvents(allEvents);
+      } catch (eventsErr) {
+        console.error("Error al cargar eventos:", eventsErr);
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
 
-          // 1. Consultar eventos futuros (empiezan hoy o después)
-          const futureEventsQuery = query(
-            collection(db, 'events'),
-            where('startDate', '>=', today),
-            orderBy('startDate', 'asc'),
-            limit(10)
-          );
-
-          // 2. Consultar eventos activos (empezaron antes pero terminan hoy o después)
-          // Nota: Esta query requiere un índice compuesto en Firestore.
-          // Si falla, el catch capturará el error y usará el fallback.
-          const activeEventsQuery = query(
-            collection(db, 'events'),
-            where('startDate', '<', today),
-            where('endDate', '>=', today),
-            orderBy('startDate', 'desc'),
-            limit(10)
-          );
-
-          const [futureSnap, activeSnap] = await Promise.all([
-            getDocs(futureEventsQuery),
-            getDocs(activeEventsQuery)
-          ]);
-
-          const futureEvents = futureSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          const activeEvents = activeSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-          // Combinar y eliminar duplicados (por si acaso)
-          const allFetched = [...activeEvents, ...futureEvents];
-          const uniqueEvents = Array.from(new Map(allFetched.map(item => [item.id, item])).values());
-
-          // Ordenar por fecha de inicio
-          uniqueEvents.sort((a, b) => a.startDate.localeCompare(b.startDate));
-
-          setUpcomingEvents(uniqueEvents.slice(0, 10));
-
-        } catch (eventsErr) {
-          console.warn("Error en consultas optimizadas de eventos, usando fallback:", eventsErr);
-          // Fallback: traer todos y filtrar en cliente
-          // Esto asegura que se vean eventos aunque falten índices
-          const allEventsSnapshot = await getDocs(collection(db, 'events'));
-          const today = new Date().toISOString().split('T')[0];
-          const allEvents = allEventsSnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(event => {
-              // Mostrar si termina hoy o después (activo o futuro)
-              return event.endDate ? event.endDate >= today : event.startDate >= today;
-            })
-            .sort((a, b) => a.startDate.localeCompare(b.startDate))
-            .slice(0, 10);
-          setUpcomingEvents(allEvents);
-        }
-
+    const fetchSites = async () => {
+      try {
         const sitesSnapshot = await getDocs(collection(db, 'sites'));
         const allSites = sitesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -151,13 +130,22 @@ function Home() {
         setRandomSiteIds(selectedSites.map(site => site.id));
 
       } catch (error) {
-        console.error("Error al cargar los datos de la página de inicio:", error);
+        console.error("Error al cargar los sitios de inicio:", error);
       } finally {
-        setLoading(false);
+        setLoadingSites(false);
       }
     };
 
-    fetchData();
+    fetchHomeData();
+
+    // Diferir la carga de eventos y sitios para que el navegador priorice 
+    // renderizar la sección principal (Hero) de inmediato.
+    const timer = setTimeout(() => {
+      fetchEvents();
+      fetchSites();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const sliderSettings = {
@@ -223,7 +211,7 @@ function Home() {
     })
   };
 
-  if (loading) {
+  if (loadingHome) {
     return (
       <div>
         <header className="home-welcome-text">
@@ -282,7 +270,11 @@ function Home() {
         <p className="home-description-text">{homePageData.subText}</p>
       </div>
 
-      {upcomingEvents.length > 0 ? (
+      {loadingEvents ? (
+        <section className="home-section">
+          <EventCarouselSkeleton />
+        </section>
+      ) : upcomingEvents.length > 0 ? (
         <section className="home-section">
           <h2 style={{ textAlign: 'center' }}>Eventos Activos y Próximos</h2>
           <p style={{ textAlign: 'center', color: '#666', fontSize: '0.9rem', marginTop: '-0.5rem' }}>
@@ -351,7 +343,12 @@ function Home() {
         </section>
       )}
 
-      {Object.keys(groupedCategories).length > 0 && (
+      {loadingSites ? (
+        <section className="home-section">
+          <CategoryGroupSkeleton />
+          <CategoryGroupSkeleton />
+        </section>
+      ) : Object.keys(groupedCategories).length > 0 && (
         <section className="home-section">
           <h2 style={{ textAlign: 'center' }}>Explora por Categoría</h2>
           {displayOrder.map(parentCat => (
@@ -374,7 +371,9 @@ function Home() {
       {randomSiteIds.length > 0 && (
         <div className="container" style={{ paddingTop: '2rem' }}>
           <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Conociendo San Antonio Palopó</h2>
-          <SiteList siteIds={randomSiteIds} />
+          <Suspense fallback={<div style={{ textAlign: 'center', padding: '2rem' }}>Cargando sitios...</div>}>
+            <SiteList siteIds={randomSiteIds} />
+          </Suspense>
         </div>
       )}
     </div>

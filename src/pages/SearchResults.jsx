@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { createSlug } from '../utils/slugUtils';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { collection, getDocs } from 'firebase/firestore/lite'; // Usamos Lite para mejor rendimiento
+import { db } from '../services/firebaseLite';
 import SEO from '../components/SEO';
 import SiteList from '../components/SiteList';
 import { SearchX, PlusCircle, Grid, Calendar, MapPin } from 'lucide-react'; // Iconos
-
+import SearchBar from '../components/SearchBar';
+import '../components/FloatingSearchButton.css'; // Estilos para la barra de búsqueda
 
 // URL del Formulario
 const SUGGEST_SITE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdewv1slZPa1c0jhZLNioTZdbYwyPYgWp4Yq0JL5OznQSA4hg/viewform?usp=preview";
@@ -29,74 +30,74 @@ function SearchResults() {
 
       setLoading(true);
       setError('');
-      const searchTerm = q.toLowerCase();
+      const searchTerm = q.toLowerCase().trim();
 
-      // Dividir el término de búsqueda en palabras (tokens)
-      const searchTokens = searchTerm.split(' ').filter(token => token.length > 0);
+      // Dividir el término de búsqueda en palabras (tokens) para búsqueda "Y" (AND)
+      const searchTokens = searchTerm.split(/\s+/).filter(token => token.length > 0);
+
       if (searchTokens.length === 0) {
         setLoading(false);
         return;
       }
 
       try {
-        // --- Búsqueda en paralelo ---
-        const [sites, events, categories] = await Promise.all([
-          // 1. Buscar Sitios
-          getDocs(query(
-            collection(db, 'sites'),
-            where('search_tokens', 'array-contains-any', searchTokens)
-          )),
-          // 2. Buscar Eventos
-          getDocs(query(
-            collection(db, 'events'),
-            where('search_tokens', 'array-contains-any', searchTokens)
-          )),
-          // 3. Buscar Categorías (obteniendo todas y filtrando en cliente)
-          getDocs(collection(db, 'sites'))
+        // --- Búsqueda en cliente (más efectiva sin índices complejos) ---
+        // Traemos todo y filtramos aquí. Para un app de este tamaño es perfectamente viable y rápido.
+        const [sitesSnap, eventsSnap] = await Promise.all([
+          getDocs(collection(db, 'sites')),
+          getDocs(collection(db, 'events'))
         ]);
 
-        // Procesar resultados de sitios
-        const siteIds = sites.docs.map(doc => doc.id);
-        // Filtro adicional en cliente para asegurar que todos los tokens están presentes
-        const filteredSiteIds = sites.docs
-          .filter(doc => searchTokens.every(token => doc.data().search_tokens.includes(token)))
-          .map(doc => doc.id);
-        setSiteResults(filteredSiteIds);
+        const allSites = sitesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const allEvents = eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // Procesar resultados de eventos
-        const eventData = events.docs
-          .filter(doc => searchTokens.every(token => doc.data().search_tokens.includes(token)))
-          .map(doc => ({ id: doc.id, ...doc.data() }));
+        // Función auxiliar para limpiar texto de HTML
+        const stripHtml = (html) => {
+          if (!html) return "";
+          const tmp = document.createElement("DIV");
+          tmp.innerHTML = html;
+          return (tmp.textContent || tmp.innerText || "").toLowerCase();
+        };
 
-        // Ordenar eventos por relevancia (más tokens coincidentes primero)
-        eventData.sort((a, b) => b.search_tokens.filter(t => searchTokens.includes(t)).length - a.search_tokens.filter(t => searchTokens.includes(t)).length);
+        // --- FILTRADO DE SITIOS ---
+        const filteredSites = allSites.filter(site => {
+          const name = (site.name || "").toLowerCase();
+          const desc = stripHtml(site.description || site.description_es || "");
+          const cat = (site.category || "").toLowerCase();
 
-        setEventResults(eventData);
-
-        // Procesar y filtrar categorías
-        const uniqueCategories = new Set();
-        categories.forEach(doc => {
-          const site = doc.data();
-          if (site.category) {
-            uniqueCategories.add(site.category);
-          }
+          // Verificamos que TODOS los tokens de búsqueda estén presentes en algún campo
+          return searchTokens.every(token =>
+            name.includes(token) || desc.includes(token) || cat.includes(token)
+          );
         });
+
+        // --- FILTRADO DE EVENTOS ---
+        const filteredEvents = allEvents.filter(event => {
+          const title = (event.title || "").toLowerCase();
+          const desc = stripHtml(event.description || "");
+
+          return searchTokens.every(token =>
+            title.includes(token) || desc.includes(token)
+          );
+        });
+
+        // --- FILTRADO DE CATEGORÍAS ---
+        // Extraemos categorías únicas de los sitios encontrados O de todos los sitios si coinciden con el token
+        const uniqueCategories = new Set();
+        allSites.forEach(site => {
+          if (site.category) uniqueCategories.add(site.category);
+        });
+
         const matchingCategories = Array.from(uniqueCategories).filter(cat =>
           searchTokens.some(token => cat.toLowerCase().includes(token))
         );
+
+        setSiteResults(filteredSites.map(s => s.id));
+        setEventResults(filteredEvents);
         setCategoryResults(matchingCategories);
 
       } catch (err) {
         console.error("Error al buscar:", err);
-        // Verificamos si el error es por un índice faltante en Firestore
-        if (err.message && err.message.includes("indexes?create_composite")) {
-          setError(
-            <span>
-              La búsqueda avanzada no está completamente configurada. Por favor, contacta al administrador.
-              <a href={err.message.split(' ')[9]} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', marginLeft: '5px' }}>Crear índice</a>
-            </span>
-          );
-        }
         setError('Ocurrió un error al realizar la búsqueda.');
       } finally {
         setLoading(false);
@@ -116,6 +117,10 @@ function SearchResults() {
         noIndex={true}
       />
 
+      <div style={{ marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem auto' }}>
+        <SearchBar />
+      </div>
+
       <h1>Resultados para: "{q}"</h1>
 
       {loading && <p>Buscando...</p>}
@@ -127,7 +132,7 @@ function SearchResults() {
           {/* --- Resultados de Sitios --- */}
           {siteResults.length > 0 && (
             <section className="results-section">
-              <h2><MapPin size={22} style={{ marginRight: '8px' }} /> Sitios encontrados</h2>
+              <h2><MapPin size={22} style={{ marginRight: '8px' }} /> Sitios encontrados ({siteResults.length})</h2>
               <SiteList siteIds={siteResults} />
             </section>
           )}
@@ -135,7 +140,7 @@ function SearchResults() {
           {/* --- Resultados de Eventos --- */}
           {eventResults.length > 0 && (
             <section className="results-section">
-              <h2><Calendar size={22} style={{ marginRight: '8px' }} /> Eventos relacionados</h2>
+              <h2><Calendar size={22} style={{ marginRight: '8px' }} /> Eventos relacionados ({eventResults.length})</h2>
               <ul className="generic-results-list">
                 {eventResults.map(event => (
                   <li key={event.id}>
@@ -166,8 +171,8 @@ function SearchResults() {
         </div>
       )}
 
-      {/* Caso Sin Resultados + Sugerencia */}
-      {!loading && !error && totalResults === 0 && (
+      {/* Caso: Si no hay SITIOS específicos, mostrar sugerencia (incluso si hay categorías) */}
+      {!loading && !error && siteResults.length === 0 && (
         <div style={{
           textAlign: 'center',
           padding: '3rem 1rem',
@@ -179,9 +184,12 @@ function SearchResults() {
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
             <SearchX size={48} color="#999" />
           </div>
-          <h3 style={{ color: '#555', marginBottom: '10px' }}>No encontramos "{q}"</h3>
+          {/* Mensaje dinámico dependiendo de si se encontró ALGO o NADA */}
+          <h3 style={{ color: '#555', marginBottom: '10px' }}>
+            {totalResults === 0 ? `No encontramos "${q}"` : `¿No encuentras el lugar específico?`}
+          </h3>
           <p style={{ color: '#666', marginBottom: '20px' }}>
-            ¿Crees que este lugar debería estar en nuestra guía?
+            Si estás buscando un sitio que no aparece aquí, ¡ayúdanos a mejorarlo!
           </p>
 
           <a

@@ -36,6 +36,8 @@ function AddSiteForm({ siteToEdit }) {
   const [facebook, setFacebook] = useState('');
   const [instagram, setInstagram] = useState('');
   const [tiktok, setTiktok] = useState('');
+  const [youtube, setYoutube] = useState(''); // Nuevo
+  const [website, setWebsite] = useState(''); // Nuevo
   const [longitude, setLongitude] = useState('');
   const [imageFiles, setImageFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -50,7 +52,7 @@ function AddSiteForm({ siteToEdit }) {
   const [imagePreviews, setImagePreviews] = useState([]);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  
+
   // --- SOLUCIÓN: Cargar categorías desde Firestore ---
   useEffect(() => {
     const q = query(collection(db, 'categories'), orderBy('name'));
@@ -77,13 +79,15 @@ function AddSiteForm({ siteToEdit }) {
       setFacebook(siteToEdit.facebook || '');
       setInstagram(siteToEdit.instagram || '');
       setTiktok(siteToEdit.tiktok || '');
+      setYoutube(siteToEdit.youtube || ''); // Cargar YouTube
+      setWebsite(siteToEdit.website || ''); // Cargar Website
       setLongitude(siteToEdit.longitude || '');
       setSelectedCategory(siteToEdit.category || '');
       setParentCategory(siteToEdit.parentCategory || '');
-      
+
       const imagePaths = Array.isArray(siteToEdit.imagePaths) ? siteToEdit.imagePaths : [];
       setExistingImagePaths(imagePaths);
-      
+
       if (siteToEdit.latitude && siteToEdit.longitude) {
         setMarkerPosition([siteToEdit.latitude, siteToEdit.longitude]);
       }
@@ -101,6 +105,8 @@ function AddSiteForm({ siteToEdit }) {
       setFacebook('');
       setInstagram('');
       setTiktok('');
+      setYoutube('');
+      setWebsite('');
       setParentCategory('');
       setSelectedCategory('');
       setNewCategory('');
@@ -140,6 +146,8 @@ function AddSiteForm({ siteToEdit }) {
     setFacebook('');
     setInstagram('');
     setTiktok('');
+    setYoutube(''); // Reset YouTube
+    setWebsite(''); // Reset Website
     setParentCategory('');
     setSelectedCategory('');
     setNewCategory('');
@@ -185,7 +193,7 @@ function AddSiteForm({ siteToEdit }) {
         if (!file) return null;
         return URL.createObjectURL(file);
       }).filter(url => url !== null);
-      
+
       setImagePreviews(previewUrls);
       setImageFiles(files);
     } catch (err) {
@@ -249,8 +257,8 @@ function AddSiteForm({ siteToEdit }) {
 
   const deleteImagesFromStorage = async (paths) => {
     const deletePromises = paths.flatMap(pathData => {
-      let originalPath;      
-      
+      let originalPath;
+
       if (typeof pathData === 'string') {
         originalPath = pathData;
       } else if (pathData && pathData.original) {
@@ -379,11 +387,11 @@ function AddSiteForm({ siteToEdit }) {
 
         const siteRef = doc(db, 'sites', siteId);
         const updatePromise = updateDoc(siteRef, {
-          name, 
+          name,
           slug,
           name_lowercase: name.toLowerCase(),
           description: description, // Usar el campo unificado
-          address, 
+          address,
           email,
           category: finalCategory,
           whatsapp,
@@ -391,6 +399,8 @@ function AddSiteForm({ siteToEdit }) {
           facebook,
           instagram,
           tiktok,
+          youtube, // Nuevo campo
+          website, // Nuevo campo
           latitude: Number(latitude),
           longitude: Number(longitude),
           imagePaths: finalImagePaths,
@@ -400,9 +410,9 @@ function AddSiteForm({ siteToEdit }) {
 
         toast.promise(updatePromise, { loading: 'Actualizando sitio...', success: '¡Sitio actualizado con éxito!', error: 'No se pudo actualizar el sitio.' });
         await updatePromise;
-        
+
         if (imagesToDelete.length > 0) {
-          deleteImagesFromStorage(imagesToDelete).catch(err => 
+          deleteImagesFromStorage(imagesToDelete).catch(err =>
             console.error("Error al eliminar imágenes antiguas:", err)
           );
         }
@@ -422,6 +432,8 @@ function AddSiteForm({ siteToEdit }) {
           facebook,
           instagram,
           tiktok,
+          youtube, // Nuevo campo
+          website, // Nuevo campo
           longitude: Number(longitude),
           category: finalCategory,
           imagePaths: newImagePaths,
@@ -468,7 +480,7 @@ function AddSiteForm({ siteToEdit }) {
         setMarkerPosition([lat, lng]);
         setLatitude(lat.toFixed(6));
         setLongitude(lng.toFixed(6));
-        
+
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
           .then(res => res.json())
           .then(data => {
@@ -512,7 +524,7 @@ function AddSiteForm({ siteToEdit }) {
       <form onSubmit={handleSubmit} className="add-site-form">
         <div className="form-group">
           <label htmlFor="name">Nombre del Sitio</label>
-          <input 
+          <input
             type="text"
             id="name"
             value={name}
@@ -521,7 +533,7 @@ function AddSiteForm({ siteToEdit }) {
             disabled={uploading}
           />
         </div>
-        
+
         <div className="form-group">
           <label htmlFor="description">Descripción</label>
           <RichTextEditor
@@ -602,6 +614,28 @@ function AddSiteForm({ siteToEdit }) {
                 disabled={uploading}
               />
             </div>
+            <div className="form-group">
+              <label htmlFor="youtube">URL de YouTube</label>
+              <input
+                type="url"
+                id="youtube"
+                value={youtube}
+                onChange={(e) => setYoutube(e.target.value)}
+                placeholder="https://youtube.com/@canal"
+                disabled={uploading}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="website">Sitio Web</label>
+              <input
+                type="url"
+                id="website"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                placeholder="https://misitio.com"
+                disabled={uploading}
+              />
+            </div>
           </div>
         </div>
 
@@ -620,7 +654,7 @@ function AddSiteForm({ siteToEdit }) {
             <option value="Movilidad y Transporte">Movilidad y Transporte</option>
           </select>
         </div>
-        
+
         <div className="form-group">
           <label htmlFor="category">Subcategoría</label>
           <select
@@ -636,7 +670,7 @@ function AddSiteForm({ siteToEdit }) {
             <option value="otro">Otra...</option>
           </select>
         </div>
-        
+
         {selectedCategory === 'otro' && (
           <div className="form-group">
             <label htmlFor="newCategory">Nombre de la Nueva Categoría</label>
@@ -650,7 +684,7 @@ function AddSiteForm({ siteToEdit }) {
             />
           </div>
         )}
-        
+
         <div className="form-group">
           <label htmlFor="address">Dirección</label>
           <input
@@ -662,18 +696,18 @@ function AddSiteForm({ siteToEdit }) {
             disabled={uploading}
           />
         </div>
-        
+
         <div className="form-group">
           <label>Seleccionar Ubicación en el Mapa</label>
           <p className="map-instructions">Haz clic en el mapa para establecer la ubicación y obtener la dirección automáticamente.</p>
-          <MapContainer 
-            center={markerPosition || mapCenter} 
-            zoom={markerPosition ? 15 : 13} 
+          <MapContainer
+            center={markerPosition || mapCenter}
+            zoom={markerPosition ? 15 : 13}
             className="location-picker-map"
           >
-            
+
             <LayersControl position="topright">
-              
+
               {/* Vista Híbrida (Satélite + Nombres) - PREDETERMINADA. Usamos LayerGroup para agrupar las capas. */}
               <LayersControl.BaseLayer checked name="Híbrido (Satélite + Nombres)">
                 <LayerGroup>
@@ -721,17 +755,17 @@ function AddSiteForm({ siteToEdit }) {
 
                 const imagePath = typeof path === 'string' ? path : (path.original || '');
                 const thumbnailPath = imagePath.replace(/(\.[^.]+)$/i, '_150x150.webp');
-                
+
                 return (
                   <div key={index} className="image-preview-wrapper">
-                    <img 
-                      src={`https://firebasestorage.googleapis.com/v0/b/${storage.app.options.storageBucket}/o/${encodeURIComponent(thumbnailPath)}?alt=media`} 
-                      alt={`Imagen actual ${index + 1}`} 
-                      className="image-preview" 
+                    <img
+                      src={`https://firebasestorage.googleapis.com/v0/b/${storage.app.options.storageBucket}/o/${encodeURIComponent(thumbnailPath)}?alt=media`}
+                      alt={`Imagen actual ${index + 1}`}
+                      className="image-preview"
                     />
-                    <button 
-                      type="button" 
-                      onClick={() => handleDeleteExistingImage(path)} 
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteExistingImage(path)}
                       className="delete-image-button"
                     >
                       X
@@ -745,7 +779,7 @@ function AddSiteForm({ siteToEdit }) {
 
         <div className="form-group">
           <label htmlFor="image-input">Imágenes (máximo 3, formato WebP recomendado)</label>
-          <input 
+          <input
             type="file"
             id="image-input"
             accept="image/*"
@@ -766,16 +800,16 @@ function AddSiteForm({ siteToEdit }) {
         </div>
 
         <div className="form-actions">
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={handleCancel}
             className="cancel-button"
             disabled={uploading}
           >
             Cancelar
           </button>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={uploading || !currentUser || currentUser.role !== 'admin'}
             className="submit-button"
           >

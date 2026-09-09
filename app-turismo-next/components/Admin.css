@@ -1,0 +1,473 @@
+/* --- Dashboard Page --- */
+.dashboard-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.dashboard-header {
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h2 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.dashboard-header p {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Menu principal - 3 columnas */
+.dashboard-menu {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-menu-button {
+  background-color: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.dashboard-menu-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-color: #007bff;
+}
+
+.dashboard-menu-button .button-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.6rem;
+}
+
+.dashboard-menu-button .button-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.3rem;
+}
+
+.dashboard-menu-button .button-description {
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.3;
+}
+
+.dashboard-menu-button.home-button:hover {
+  border-color: #ffc107;
+}
+
+.dashboard-menu-button.home-button .button-icon {
+  color: #ffc107;
+}
+
+.dashboard-menu-button.add-button:hover {
+  border-color: #28a745;
+}
+
+.dashboard-menu-button.add-button .button-icon {
+  color: #28a745;
+}
+
+.dashboard-menu-button.manage-button:hover {
+  border-color: #17a2b8;
+}
+
+.dashboard-menu-button.manage-button .button-icon {
+  color: #17a2b8;
+}
+
+/* Insignia de notificación */
+.notification-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* Botón de volver al menú */
+.back-to-menu-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.back-to-menu-button:hover {
+  background-color: #5a6268;
+}
+
+/* --- Filtros --- */
+.filters-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.filter-select {
+  padding: 0.6rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.filter-select:hover:not(:disabled) {
+  border-color: #007bff;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.filter-select:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.reset-filters-button {
+  padding: 0.6rem 1.2rem;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+  white-space: nowrap;
+}
+
+.reset-filters-button:hover {
+  background-color: #c82333;
+}
+
+/* --- Gestionar Sitios --- */
+.manage-sites-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+.sites-count {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+  font-weight: 500;
+}
+
+.manage-sites-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.manage-site-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.manage-site-item:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-color: #007bff;
+}
+
+.manage-site-thumbnail {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.manage-site-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.manage-site-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manage-site-category {
+  font-size: 0.75rem;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manage-site-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.view-button,
+.edit-button,
+.delete-button {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.view-button {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.view-button:hover {
+  background-color: #138496;
+}
+
+.edit-button {
+  background-color: #ffc107;
+  color: #333;
+}
+
+.edit-button:hover {
+  background-color: #e0a800;
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+}
+
+.no-results {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #666;
+  font-size: 1rem;
+}
+
+/* --- Toast Confirmación --- */
+.toast-confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.toast-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast-title {
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.toast-message {
+  color: #666;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.toast-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.toast-button-cancel,
+.toast-button-confirm {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.toast-button-cancel {
+  background-color: #6c757d;
+  color: white;
+}
+
+.toast-button-cancel:hover {
+  background-color: #5a6268;
+}
+
+.toast-button-confirm {
+  background-color: #dc3545;
+  color: white;
+}
+
+.toast-button-confirm:hover {
+  background-color: #c82333;
+}
+
+/* --- Responsive --- */
+
+/* Tablets */
+@media (max-width: 992px) {
+  .dashboard-menu {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Móviles */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem 0.5rem;
+  }
+  
+  .dashboard-menu {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+  
+  .dashboard-menu-button {
+    padding: 1rem;
+  }
+  
+  .dashboard-menu-button .button-icon {
+    font-size: 2rem;
+  }
+  
+  .dashboard-menu-button .button-title {
+    font-size: 1rem;
+  }
+  
+  .filters-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-group {
+    min-width: 100%;
+  }
+  
+  .reset-filters-button {
+    width: 100%;
+  }
+  
+  .manage-site-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .manage-site-thumbnail {
+    width: 100%;
+    height: 120px;
+  }
+  
+  .manage-site-info {
+    width: 100%;
+  }
+  
+  .manage-site-actions {
+    flex-direction: row;
+    width: 100%;
+    gap: 0.4rem;
+    justify-content: space-between;
+  }
+  
+  .view-button,
+  .edit-button,
+  .delete-button {
+    flex: 1;
+  }
+}
+
+/* Móviles pequeños */
+@media (max-width: 480px) {
+  .dashboard-header h2 {
+    font-size: 1.4rem;
+  }
+  
+  .dashboard-menu-button .button-icon {
+    font-size: 1.8rem;
+  }
+  
+  .dashboard-menu-button .button-title {
+    font-size: 0.95rem;
+  }
+  
+  .dashboard-menu-button .button-description {
+    font-size: 0.75rem;
+  }
+}

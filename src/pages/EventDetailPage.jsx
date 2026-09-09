@@ -4,8 +4,8 @@ import { doc, onSnapshot, collection, query, where, getDocs, limit, getDoc } fro
 import { db } from '../services/firebase';
 import Slider from 'react-slick';
 import "slick-carousel/slick/slick.css";
-import SEO from '../components/SEO'; // Importación de SEO
 import "slick-carousel/slick/slick-theme.css";
+import SEO from '../components/SEO'; // Importación de SEO
 import './EventDetailPage.css';
 
 function EventDetailPage() {
@@ -114,7 +114,7 @@ function EventDetailPage() {
     // Para evitar que el clic en la imagen cierre el modal
     customPaging: () => <div />,
   };
-  
+
   // 1. Generar el objeto JSON-LD para el evento
   const jsonLdData = {
     "@context": "https://schema.org",
@@ -135,7 +135,7 @@ function EventDetailPage() {
   return (
     <div className="site-detail-container">
       {/* --- SEO para el Detalle del Evento --- */}
-      <SEO 
+      <SEO
         title={event.title}
         description={event.description ? event.description.substring(0, 155) : `Detalles sobre el evento ${event.title} en San Antonio Palopó.`}
         image={allImages.length > 0 ? allImages[0] : null}
@@ -146,7 +146,7 @@ function EventDetailPage() {
       />
 
       <h1 className="site-detail-title">{event.title}</h1>
-      
+
       <div className="site-detail-header-actions">
         <span className="site-detail-category">
           {formatDate(event.startDate)}
@@ -161,18 +161,18 @@ function EventDetailPage() {
             {(event.imageUrls || [event.imageUrl]).map((url, index) => (
               <div key={index}>
                 {url && (
-                  <img 
-                    src={url} 
-                    alt={`${event.title} - Imagen ${index + 1}`} 
-                    className="site-detail-image" 
-                    onClick={() => openImageModal(index)} style={{cursor: 'pointer'}}/>
+                  <img
+                    src={url}
+                    alt={`${event.title} - Imagen ${index + 1}`}
+                    className="site-detail-image"
+                    onClick={() => openImageModal(index)} style={{ cursor: 'pointer' }} />
                 )}
               </div>
             ))}
           </Slider>
         </div>
       ) : null}
-      
+
       {/* Mostrar la descripción general interpretando HTML */}
       {event.description && (
         <div className="site-detail-description">

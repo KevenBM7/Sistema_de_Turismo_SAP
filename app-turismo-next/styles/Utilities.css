@@ -1,0 +1,59 @@
+/* --- Utilidades y Mensajes --- */
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.error-message .link-button {
+  font-weight: bold;
+}
+
+.success-message {
+  color: #5cb85c;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* Role Badges */
+.role-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.role-admin {
+  background-color: #dc3545;
+}
+
+.role-user {
+  background-color: #007bff;
+}
+
+/* --- Global Keyframes (Usados por esqueletos y el mapa) --- */
+@keyframes pulse-bg {
+  0% {
+    background-color: #f0f0f0;
+  }
+  100% {
+    background-color: #e0e0e0;
+  }
+}
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
