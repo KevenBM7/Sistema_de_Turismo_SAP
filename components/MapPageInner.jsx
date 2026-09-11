@@ -1260,34 +1260,7 @@ function MapPage() {
     };
   }, [routingDestination, routeOrigin, routeTransportMode, isRealLocationAvailable]);
 
-  // Sitios recomendados (ordenados por cercanía en tiempo real si el GPS está disponible)
-  const recommendedSites = React.useMemo(() => {
-    if (!sites || sites.length === 0) return [];
-    let list = sites
-      .filter(s => s.latitude && s.longitude)
-      .map(s => {
-        const distM = (isRealLocationAvailable && userLocation)
-          ? calculateDistanceMeters(userLocation.lat, userLocation.lng, s.latitude, s.longitude)
-          : null;
-        return {
-          id: `site-${s.id}`,
-          type: 'local',
-          title: s.name,
-          subtitle: s.category || s.parentCategory || 'Sitio turístico',
-          lat: s.latitude,
-          lng: s.longitude,
-          distMeters: distM,
-          siteData: s
-        };
-      });
-
-    if (isRealLocationAvailable && userLocation) {
-      list.sort((a, b) => (a.distMeters ?? Infinity) - (b.distMeters ?? Infinity));
-    }
-    return list.slice(0, 5);
-  }, [sites, isRealLocationAvailable, userLocation]);
-
-  // 3. Búsqueda y autocompletado inteligente (Sitios Firebase + Lugares Geoapify)
+  // 3. Búsqueda y autocompletado inteligente (Sitios Firebase + Lugares Geoapify en todo el mapa)
   useEffect(() => {
     if (!searchQuery || searchQuery.trim().length < 2) {
       setSearchResults([]);
@@ -1299,7 +1272,7 @@ function MapPage() {
     const timer = setTimeout(async () => {
       const q = searchQuery.toLowerCase().trim();
 
-      // Sitios turísticos registrados en Firebase
+      // Sitios turísticos registrados en Firebase con distancia calculada
       let localMatches = (sites || []).filter(site => 
         (site.name && site.name.toLowerCase().includes(q)) ||
         (site.category && site.category.toLowerCase().includes(q)) ||
@@ -1320,18 +1293,14 @@ function MapPage() {
         };
       });
 
-      if (isRealLocationAvailable && userLocation) {
-        localMatches.sort((a, b) => (a.distMeters ?? Infinity) - (b.distMeters ?? Infinity));
-      }
-      localMatches = localMatches.slice(0, 5);
-
-      // Lugares, calles y comercios en Atitlán mediante Geoapify
+      // Lugares, calles y comercios en general (priorizando cercanía al usuario o región)
       let geoMatches = [];
       try {
-        const places = await autocompletePlaces(searchQuery, { 
-          lat: SAN_ANTONIO_PALOPO[0], 
-          lon: SAN_ANTONIO_PALOPO[1] 
-        });
+        const proximityCoords = (isRealLocationAvailable && userLocation)
+          ? { lat: userLocation.lat, lon: userLocation.lng }
+          : { lat: SAN_ANTONIO_PALOPO[0], lon: SAN_ANTONIO_PALOPO[1] };
+
+        const places = await autocompletePlaces(searchQuery, proximityCoords);
         geoMatches = (places || []).map(p => {
           const distM = (isRealLocationAvailable && userLocation && p.lat && p.lng)
             ? calculateDistanceMeters(userLocation.lat, userLocation.lng, p.lat, p.lng)
@@ -1345,12 +1314,16 @@ function MapPage() {
             lng: p.lng,
             distMeters: distM
           };
-        }).slice(0, 5);
+        });
       } catch (err) {
         console.warn('Error en autocompletado:', err);
       }
 
-      setSearchResults([...localMatches, ...geoMatches]);
+      let combined = [...localMatches, ...geoMatches];
+      if (isRealLocationAvailable && userLocation) {
+        combined.sort((a, b) => (a.distMeters ?? Infinity) - (b.distMeters ?? Infinity));
+      }
+      setSearchResults(combined.slice(0, 10));
       setIsSearching(false);
     }, 300);
 
@@ -1494,7 +1467,7 @@ function MapPage() {
             <input
               type="text"
               className="map-search-input"
-              placeholder="Buscar sitios, hoteles, miradores..."
+              placeholder="Buscar sitios, calles, tiendas, hoteles..."
               value={searchQuery}
               autoFocus
               onChange={(e) => {
@@ -1528,99 +1501,58 @@ function MapPage() {
             </button>
           </div>
 
-          {/* Desplegable de Recomendaciones y Resultados */}
-          <div className="map-search-dropdown">
-            {searchQuery.trim().length < 2 ? (
-              <div className="map-search-recommended-section">
-                <div className="map-search-section-header">
-                  <span className="map-search-section-title">
-                    {isRealLocationAvailable 
-                      ? 'Lugares recomendados cerca de ti' 
-                      : 'Lugares destacados en San Antonio Palopó'}
-                  </span>
+          {/* Desplegable de Resultados de Búsqueda con Distancia en Vivo */}
+          {searchQuery.trim().length >= 2 && (
+            <div className="map-search-dropdown">
+              {isSearching && (
+                <div className="map-search-loading">
+                  <span>Buscando lugares...</span>
                 </div>
-                {recommendedSites.length > 0 ? (
-                  <div className="map-search-results-list">
-                    {recommendedSites.map((item) => {
-                      const distStr = formatDistanceStr(item.distMeters);
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className="map-search-item"
-                          onClick={() => handleSelectSearchResult(item)}
-                        >
-                          <div className="map-search-item-icon">
+              )}
+              {!isSearching && searchResults.length === 0 && (
+                <div className="map-search-empty">
+                  No se encontraron resultados para "{searchQuery}"
+                </div>
+              )}
+              {!isSearching && searchResults.length > 0 && (
+                <div className="map-search-results-list">
+                  {searchResults.map((item) => {
+                    const distStr = formatDistanceStr(item.distMeters);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className="map-search-item"
+                        onClick={() => handleSelectSearchResult(item)}
+                      >
+                        <div className="map-search-item-icon">
+                          {item.type === 'local' ? (
                             <MapPin size={17} color="#10b981" />
-                          </div>
-                          <div className="map-search-item-info">
-                            <div className="map-search-item-title">{item.title}</div>
+                          ) : (
+                            <Navigation size={17} color="#2563eb" />
+                          )}
+                        </div>
+                        <div className="map-search-item-info">
+                          <div className="map-search-item-title">{item.title}</div>
+                          {item.subtitle && (
                             <div className="map-search-item-subtitle">{item.subtitle}</div>
-                          </div>
-                          <div className="map-search-item-badges">
-                            {distStr && (
-                              <span className="map-search-dist-badge">a {distStr}</span>
-                            )}
-                            <span className="map-search-badge local">Turismo</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="map-search-empty">No hay sitios registrados aún.</div>
-                )}
-              </div>
-            ) : (
-              <>
-                {isSearching && (
-                  <div className="map-search-loading">
-                    <span>Buscando en San Antonio Palopó...</span>
-                  </div>
-                )}
-                {!isSearching && searchResults.length === 0 && (
-                  <div className="map-search-empty">
-                    No se encontraron resultados para "{searchQuery}"
-                  </div>
-                )}
-                {!isSearching && searchResults.length > 0 && (
-                  <div className="map-search-results-list">
-                    {searchResults.map((item) => {
-                      const distStr = formatDistanceStr(item.distMeters);
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className="map-search-item"
-                          onClick={() => handleSelectSearchResult(item)}
-                        >
-                          <div className="map-search-item-icon">
-                            {item.type === 'local' ? (
-                              <MapPin size={17} color="#10b981" />
-                            ) : (
-                              <Navigation size={17} color="#2563eb" />
-                            )}
-                          </div>
-                          <div className="map-search-item-info">
-                            <div className="map-search-item-title">{item.title}</div>
-                            <div className="map-search-item-subtitle">{item.subtitle}</div>
-                          </div>
-                          <div className="map-search-item-badges">
-                            {distStr && (
-                              <span className="map-search-dist-badge">a {distStr}</span>
-                            )}
-                            <span className={`map-search-badge ${item.type}`}>
-                              {item.type === 'local' ? 'Turismo' : 'Lugar'}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+                          )}
+                        </div>
+                        <div className="map-search-item-badges">
+                          {distStr && (
+                            <span className="map-search-dist-badge">a {distStr}</span>
+                          )}
+                          <span className={`map-search-badge ${item.type}`}>
+                            {item.type === 'local' ? 'Turismo' : 'Lugar'}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
