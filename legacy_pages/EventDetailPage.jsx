@@ -9,13 +9,14 @@ import Slider from 'react-slick';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import SEO from '../components/SEO'; // Importación de SEO
+import { generateEventJsonLd } from '@/lib/eventSchema';
 import './EventDetailPage.css';
 
-function EventDetailPage() {
+function EventDetailPage({ initialEvent = null }) {
   const { identifier } = useParams(); // parámetro unificado
   const router = useRouter();
-  const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [event, setEvent] = useState(initialEvent);
+  const [loading, setLoading] = useState(!initialEvent);
   const [error, setError] = useState(null);
   // Estados para el modal de la imagen
   const [isImageModalOpen, setIsImageModalOpen] = useState(false); // Para saber si está abierto
@@ -31,6 +32,13 @@ function EventDetailPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    // Si ya fue provisto por SSR y coincide con el identificador actual, evitar refetch redundante
+    if (initialEvent && (initialEvent.slug === identifier || initialEvent.id === identifier)) {
+      setEvent(initialEvent);
+      setLoading(false);
+      return;
+    }
 
     const fetchEvent = async () => {
       setLoading(true);
@@ -148,22 +156,8 @@ function EventDetailPage() {
     customPaging: () => <div />,
   };
 
-  // 1. Generar el objeto JSON-LD para el evento
-  const jsonLdData = {
-    "@context": "https://schema.org",
-    "@type": "Event",
-    "name": event.title,
-    "startDate": event.startDate,
-    "endDate": event.endDate || event.startDate,
-    "description": event.description ? event.description.replace(/<[^>]*>?/gm, '').substring(0, 250) : `Detalles sobre ${event.title}`,
-    "image": allImages.length > 0 ? allImages[0] : null,
-    "eventStatus": new Date(event.endDate || event.startDate) < new Date() ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
-    "location": {
-      "@type": "Place",
-      "name": "San Antonio Palopó",
-      "address": "San Antonio Palopó, Sololá, Guatemala"
-    }
-  };
+  // Generar el objeto JSON-LD para el evento (100% compliant con Google Rich Results)
+  const jsonLdData = generateEventJsonLd(event);
 
   return (
     <div className="site-detail-container">

@@ -40,6 +40,8 @@ async function fetchCollectionREST(collectionName) {
         category: extract(fields.category),
         categorySlug: extract(fields.categorySlug),
         createdAt: extract(fields.createdAt),
+        updatedAt: extract(fields.updatedAt),
+        startDate: extract(fields.startDate),
         lastmod: extract(fields.lastmod)
       };
     });
@@ -102,7 +104,8 @@ export default async function sitemap() {
       .filter(data => (data.slug || data.id))
       .map((data) => {
         const eventSlug = createSlug(data.slug || data.id);
-        const lastModDate = data.lastmod || data.createdAt ? new Date(data.lastmod || data.createdAt) : new Date();
+        const rawDate = data.lastmod || data.updatedAt || data.createdAt || data.startDate;
+        const lastModDate = rawDate ? new Date(rawDate) : new Date();
 
         return {
           url: `${baseUrl}/evento/${eventSlug}`,

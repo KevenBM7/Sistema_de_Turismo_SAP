@@ -13,6 +13,7 @@ import {
 import '../legacy_pages/Home.css';
 import '../components/CategoryCard.css';
 import { createSlug } from '@/lib/slugUtils';
+import { generateEventJsonLd } from '@/lib/eventSchema';
 import '../styles/Utilities.css';
 import '../styles/Layout.css';
 
@@ -298,8 +299,8 @@ function Home({
     };
   };
 
-  // JSON-LD para SEO
-  const jsonLdData = {
+  // JSON-LD para SEO (WebSite)
+  const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "url": "https://turismosanantoniopalopo.com/",
@@ -312,27 +313,30 @@ function Home({
         "@type": "ImageObject",
         "url": "https://turismosanantoniopalopo.com/logo512.png"
       }
-    },
-    ...(upcomingEvents.length > 0 && {
-      "event": upcomingEvents.map(event => ({
-        "@type": "Event",
-        "name": event.title,
-        "startDate": event.startDate,
-        "endDate": event.endDate || event.startDate,
-        "url": `https://turismosanantoniopalopo.com/evento/${event.slug || event.id}`
-      }))
-    })
+    }
   };
+
+  // JSON-LD para Eventos (Cumple 100% con Google Rich Results)
+  const eventsJsonLd = upcomingEvents.length > 0
+    ? upcomingEvents.map(event => generateEventJsonLd(event)).filter(Boolean)
+    : [];
 
   const heroImageUrls = homePageData.imageUrls || [];
 
   return (
     <div className="home-page-stitch">
-      {/* Marcado Schema.org */}
+      {/* Marcado Schema.org WebSite */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
       />
+      {/* Marcado Schema.org Eventos (Rich Results 100% compliant) */}
+      {eventsJsonLd.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventsJsonLd) }}
+        />
+      )}
 
       {/* ─── APARTADO 1: PORTADA & BIENVENIDA ─────────────────────────────────── */}
       <section className="home-section-band home-band-hero">

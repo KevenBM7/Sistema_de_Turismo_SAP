@@ -49,12 +49,16 @@ const stripHtml = (html) => {
     .trim();
 };
 
-function CalendarPage() {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+function CalendarPage({ initialEvents = [] }) {
+  // Pre-calcular si hay eventos futuros para evitar renderizar lista vacía
+  const nowIso = new Date().toISOString().split('T')[0];
+  const hasUpcomingInitial = initialEvents.some(e => (e.endDate ? e.endDate >= nowIso : e.startDate >= nowIso));
+
+  const [events, setEvents] = useState(initialEvents);
+  const [loading, setLoading] = useState(initialEvents.length === 0);
   
-  // Filtro por defecto: Próximos eventos
-  const [filter, setFilter] = useState('upcoming');
+  // Filtro por defecto inteligente: Si hay próximos muestra 'upcoming', si todos son pasados muestra 'past'
+  const [filter, setFilter] = useState(hasUpcomingInitial || initialEvents.length === 0 ? 'upcoming' : 'past');
   const [showCalendar, setShowCalendar] = useState(false);
   
   // Vista por defecto: Agenda (segura para SSR, adaptada en useEffect)
