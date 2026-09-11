@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, addDoc, updateDoc, doc, serverTimestamp, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytesResumable, deleteObject } from 'firebase/storage';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useRouter } from 'next/navigation';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap, LayersControl } from 'react-leaflet';
 import { 
@@ -42,18 +43,37 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow.src 
 });
 
-// Forzar a Leaflet a invalidar y recalcular dimensiones para evitar cuadrículas blancas
+// Forzar a Leaflet a invalidar y recalcular dimensiones para evitar cuadrículas oscuras o sin cargar
 function MapResizeHandler() {
   const map = useMap();
   useEffect(() => {
-    map.invalidateSize();
-    const t1 = setTimeout(() => map.invalidateSize(), 200);
-    const t2 = setTimeout(() => map.invalidateSize(), 500);
-    const t3 = setTimeout(() => map.invalidateSize(), 1000);
+    map.invalidateSize({ pan: false });
+    const t1 = setTimeout(() => map.invalidateSize({ pan: false }), 150);
+    const t2 = setTimeout(() => map.invalidateSize({ pan: false }), 400);
+    const t3 = setTimeout(() => map.invalidateSize({ pan: false }), 800);
+    const t4 = setTimeout(() => map.invalidateSize({ pan: false }), 1500);
+
+    const container = map.getContainer();
+    if (!container || typeof ResizeObserver === 'undefined') {
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        clearTimeout(t4);
+      };
+    }
+
+    const ro = new ResizeObserver(() => {
+      map.invalidateSize({ pan: false });
+    });
+    ro.observe(container);
+
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      clearTimeout(t4);
+      ro.disconnect();
     };
   }, [map]);
   return null;
@@ -102,6 +122,11 @@ function AddSiteForm({ siteToEdit }) {
   const [imagePreviews, setImagePreviews] = useState([]);
   const { currentUser } = useAuth();
   const router = useRouter();
+  const [isMapReady, setIsMapReady] = useState(false);
+
+  useEffect(() => {
+    setIsMapReady(true);
+  }, []);
 
   // --- SOLUCIÓN: Cargar categorías desde Firestore ---
   useEffect(() => {
@@ -783,57 +808,79 @@ function AddSiteForm({ siteToEdit }) {
 
           {/* Contenedor del Mapa con Capas Google HD */}
           <div className="map-picker-wrapper">
-            <MapContainer
-              center={markerPosition || mapCenter}
-              zoom={markerPosition ? 16 : 14}
-              className="location-picker-map"
-              scrollWheelZoom={false}
-            >
-              <LayersControl position="topright">
-                {/* Capa Principal: Google Híbrido HD (Satélite nítido con nombres) */}
-                <LayersControl.BaseLayer checked name="Google Híbrido HD">
-                  <TileLayer
-                    key="google-hybrid-hd"
-                    url="https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
-                    subdomains={['0', '1', '2', '3']}
-                    attribution="&copy; Google Maps"
-                    maxNativeZoom={20}
-                    maxZoom={21}
-                    crossOrigin="anonymous"
-                  />
-                </LayersControl.BaseLayer>
+            {isMapReady ? (
+              <MapContainer
+                center={markerPosition || mapCenter}
+                zoom={markerPosition ? 16 : 14}
+                className="location-picker-map"
+                scrollWheelZoom={false}
+                fadeAnimation={false}
+              >
+                <LayersControl position="topright">
+                  {/* Capa Principal: Google Híbrido HD (Satélite nítido con nombres) */}
+                  <LayersControl.BaseLayer checked name="Google Híbrido HD">
+                    <TileLayer
+                      key="google-hybrid-hd"
+                      url="https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                      subdomains={['0', '1', '2', '3']}
+                      attribution="&copy; Google Maps"
+                      maxNativeZoom={20}
+                      maxZoom={21}
+                      keepBuffer={15}
+                      updateWhenIdle={false}
+                      updateWhenZooming={false}
+                      updateInterval={80}
+                      tileSize={256}
+                      crossOrigin="anonymous"
+                    />
+                  </LayersControl.BaseLayer>
 
-                {/* Capa Secundaria: Google Calles */}
-                <LayersControl.BaseLayer name="Google Calles">
-                  <TileLayer
-                    key="google-streets"
-                    url="https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
-                    subdomains={['0', '1', '2', '3']}
-                    attribution="&copy; Google Maps"
-                    maxNativeZoom={20}
-                    maxZoom={21}
-                    crossOrigin="anonymous"
-                  />
-                </LayersControl.BaseLayer>
+                  {/* Capa Secundaria: Google Calles */}
+                  <LayersControl.BaseLayer name="Google Calles">
+                    <TileLayer
+                      key="google-streets"
+                      url="https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+                      subdomains={['0', '1', '2', '3']}
+                      attribution="&copy; Google Maps"
+                      maxNativeZoom={20}
+                      maxZoom={21}
+                      keepBuffer={15}
+                      updateWhenIdle={false}
+                      updateWhenZooming={false}
+                      updateInterval={80}
+                      tileSize={256}
+                      crossOrigin="anonymous"
+                    />
+                  </LayersControl.BaseLayer>
 
-                {/* Capa Alternativa: OpenStreetMap */}
-                <LayersControl.BaseLayer name="OpenStreetMap">
-                  <TileLayer
-                    key="osm-streets"
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    maxNativeZoom={19}
-                    maxZoom={21}
-                    crossOrigin="anonymous"
-                  />
-                </LayersControl.BaseLayer>
-              </LayersControl>
+                  {/* Capa Alternativa: OpenStreetMap */}
+                  <LayersControl.BaseLayer name="OpenStreetMap">
+                    <TileLayer
+                      key="osm-streets"
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      maxNativeZoom={19}
+                      maxZoom={21}
+                      keepBuffer={15}
+                      updateWhenIdle={false}
+                      updateWhenZooming={false}
+                      updateInterval={80}
+                      tileSize={256}
+                      crossOrigin="anonymous"
+                    />
+                  </LayersControl.BaseLayer>
+                </LayersControl>
 
-              <LocationMarker />
-              <MapInteractionController />
-              <MapResizeHandler />
-              <MapRecenterController target={recenterTarget} />
-            </MapContainer>
+                <LocationMarker />
+                <MapInteractionController />
+                <MapResizeHandler />
+                <MapRecenterController target={recenterTarget} />
+              </MapContainer>
+            ) : (
+              <div style={{ height: '520px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.95rem' }}>
+                🗺️ Cargando mapa interactivo...
+              </div>
+            )}
           </div>
 
           {/* Coordenadas numéricas editables */}

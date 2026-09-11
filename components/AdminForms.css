@@ -312,6 +312,28 @@
   z-index: 1;
 }
 
+/* Evitar que Leaflet tiles sufran distorsión o desplazamiento */
+.location-picker-map img.leaflet-tile,
+.leaflet-container img.leaflet-tile {
+  max-width: none !important;
+  max-height: none !important;
+  width: 256px !important;
+  height: 256px !important;
+  box-sizing: content-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  outline: 1px solid transparent;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.location-picker-map .leaflet-tile-container,
+.leaflet-container .leaflet-tile-container {
+  will-change: transform;
+}
+
 /* ==================================================================
    3. Subida y Previsualización de Imágenes
    ================================================================== */

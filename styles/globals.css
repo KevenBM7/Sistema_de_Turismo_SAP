@@ -7,6 +7,9 @@
 /* NProgress */
 @import 'nprogress/nprogress.css';
 
+/* Leaflet CSS (necesario para el posicionamiento absoluto de tiles y paneles en toda la app) */
+@import 'leaflet/dist/leaflet.css';
+
 /* ─── Reset y variables base (del proyecto original) ──────────────────────── */
 *,
 *::before,
@@ -34,7 +37,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-img {
+/* Evitar que img { max-width: 100% } rompa las teselas (tiles) de 256x256 de Leaflet */
+img:not(.leaflet-tile) {
   max-width: 100%;
   height: auto;
 }
