@@ -1386,11 +1386,15 @@ function MapPage() {
                 ? `${(rt.distanceMeters / 1000).toFixed(1)} km` 
                 : `${Math.round(rt.distanceMeters)} m`;
 
+              const routeColor = idx === 0 
+                ? (routeTransportMode === 'walk' ? '#10b981' : '#2563eb')
+                : (routeTransportMode === 'walk' ? '#34d399' : '#38bdf8');
+
               return (
                 <button
                   key={rt.id || idx}
                   type="button"
-                  className={`route-pill-btn ${isSelected ? 'active' : ''}`}
+                  className={`route-pill-btn route-pill-${idx === 0 ? 'primary' : 'alternate'} ${isSelected ? 'active' : ''}`}
                   onClick={() => {
                     setSelectedRouteIndex(idx);
                     if (mapRef.current && rt.coordinates?.length > 0) {
@@ -1398,6 +1402,10 @@ function MapPage() {
                     }
                   }}
                 >
+                  <span 
+                    className="route-pill-indicator-dot" 
+                    style={{ backgroundColor: routeColor }}
+                  ></span>
                   <span className="route-pill-btn-label">{idx === 0 ? 'Ruta 1' : 'Ruta 2'}</span>
                   <span className="route-pill-btn-stats">{timeMin} min ({distStr})</span>
                 </button>
@@ -1669,28 +1677,33 @@ function MapPage() {
           />
         )}
 
-        {/* Trazado de Rutas Alternativas (Si existen 2 opciones evaluadas) */}
+        {/* Trazado de Rutas Alternativas (Segunda opción en celeste vibrante de alta visibilidad) */}
         {availableRoutes && availableRoutes.length > 1 && availableRoutes.map((altRt, altIdx) => {
           if (altIdx === selectedRouteIndex) return null;
+          const altColor = routeTransportMode === 'walk' ? '#34d399' : '#38bdf8';
+          const altBorderColor = routeTransportMode === 'walk' ? '#065f46' : '#0369a1';
+
           return (
             <React.Fragment key={`alt-route-${altRt.id || altIdx}`}>
+              {/* Contorno protector de alto contraste para visibilidad sobre satélite y calles */}
               <Polyline 
                 positions={altRt.coordinates} 
                 pathOptions={{
-                  color: '#000000',
-                  weight: 6,
-                  opacity: 0.18,
+                  color: altBorderColor,
+                  weight: 7,
+                  opacity: 0.5,
                   lineCap: 'round',
                   lineJoin: 'round'
                 }} 
               />
+              {/* Trazo celeste visible y claro */}
               <Polyline 
                 positions={altRt.coordinates} 
                 pathOptions={{
-                  color: '#64748b',
-                  weight: 4.5,
-                  opacity: 0.75,
-                  dashArray: '6, 8',
+                  color: altColor,
+                  weight: 5,
+                  opacity: 0.95,
+                  dashArray: '9, 6',
                   lineCap: 'round',
                   lineJoin: 'round'
                 }} 
@@ -1706,15 +1719,15 @@ function MapPage() {
           );
         })}
 
-        {/* Trazado de Ruta Inteligente Geoapify (Peatonal o Vehicular) */}
+        {/* Trazado de Ruta Inteligente Geoapify (Principal / Activa en azul intenso o verde) */}
         {geoapifyRoute && geoapifyRoute.coordinates && geoapifyRoute.coordinates.length > 0 && (
           <>
             <Polyline 
               positions={geoapifyRoute.coordinates} 
               pathOptions={{
-                color: '#000000',
-                weight: 7,
-                opacity: 0.22,
+                color: '#0f172a',
+                weight: 7.5,
+                opacity: 0.35,
                 lineCap: 'round',
                 lineJoin: 'round'
               }} 
@@ -1723,8 +1736,8 @@ function MapPage() {
               positions={geoapifyRoute.coordinates} 
               pathOptions={{
                 color: routeTransportMode === 'walk' ? '#10b981' : '#2563eb',
-                weight: 5,
-                opacity: 0.95,
+                weight: 5.5,
+                opacity: 0.98,
                 lineCap: 'round',
                 lineJoin: 'round'
               }} 
