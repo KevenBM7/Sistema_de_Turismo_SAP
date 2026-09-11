@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
 import slugify from 'slugify';
 import { triggerRevalidation } from '@/lib/revalidate';
+import { Calendar, Sparkles, Clock, Camera, UploadCloud, Plus, Check, CalendarDays } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import '../AdminForms.css';
 
@@ -251,53 +252,82 @@ function AddEventForm({ eventToEdit = null, onFormSubmit }) {
 
   return (
     <div className="add-site-container">
+      {/* Header Banner */}
+      <div className="form-header-banner">
+        <span className="form-header-badge">
+          <CalendarDays size={13} /> Agenda Cultural y Festividades
+        </span>
+        <h2 className="form-header-title">
+          {editingEvent ? 'Editar Evento Cultural' : 'Registrar Nuevo Evento'}
+        </h2>
+        <p className="form-header-subtitle">
+          Publica ferias, celebraciones y actividades turísticas de San Antonio Palopó con fechas y cronograma por días.
+        </p>
+      </div>
+
+      {editingEvent && (
+        <div className="edit-notice">
+          <p>
+            ✏️ Estás editando el evento: <strong>{title}</strong>
+          </p>
+          <button type="button" onClick={resetForm} className="cancel-edit-button">
+            Cancelar edición
+          </button>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="add-site-form">
-        <h4>{editingEvent ? 'Editar Evento' : 'Agregar Nuevo Evento'}</h4>
         
-        {editingEvent && (
-          <div className="edit-notice">
-            <p>✏️ Estás editando un evento. <button type="button" onClick={resetForm} className="cancel-edit-button">Cancelar edición</button></p>
+        {/* =======================================================
+            SECCIÓN 1: INFORMACIÓN PRINCIPAL
+            ======================================================= */}
+        <div className="form-card-section">
+          <div className="section-title-row">
+            <div className="section-icon-pill bg-blue">
+              <Calendar size={20} />
+            </div>
+            <div>
+              <h3 className="section-card-title">1. Información Principal del Evento</h3>
+              <p className="section-card-desc">Título representativo, fechas oficiales de celebración y descripción detallada.</p>
+            </div>
           </div>
-        )}
-        
-        <div className="form-section">
+
           <div className="form-group">
-            <label htmlFor="event-title">Título del Evento</label>
+            <label htmlFor="event-title">
+              Título del Evento <span className="required-star">*</span>
+            </label>
             <input 
               id="event-title" 
               type="text" 
               value={title} 
               onChange={handleTitleChange}
-              placeholder="Ej: Feria Patronal de San Antonio" 
+              placeholder="Ej: Feria Patronal de San Antonio Palopó" 
               disabled={uploading} 
+              required
             />
+            <span className="slug-preview">
+              <strong>Slug SEO:</strong> /evento/{slug || 'titulo-del-evento'}
+            </span>
           </div>
-          
-          <div className="form-group full-width">
-            <label>Descripción General</label>
-            <div className="rich-editor-wrapper">
-              <RichTextEditor 
-                key={editingEvent || 'new-event'}
-                content={description} 
-                onChange={setDescription} 
-                placeholder="Escribe aquí los detalles... Puedes usar negritas, listas, etc."
-              />
-            </div>
-          </div>
-          
-          <div className="coordinates-group">
+
+          <div className="form-grid-2">
             <div className="form-group">
-              <label htmlFor="event-start-date">Fecha de Inicio</label>
+              <label htmlFor="event-start-date">
+                Fecha de Inicio <span className="required-star">*</span>
+              </label>
               <input 
                 id="event-start-date" 
                 type="date" 
                 value={startDate} 
                 onChange={(e) => setStartDate(e.target.value)} 
                 disabled={uploading} 
+                required
               />
             </div>
             <div className="form-group">
-              <label htmlFor="event-end-date">Fecha de Fin (opcional)</label>
+              <label htmlFor="event-end-date">
+                Fecha de Fin (opcional)
+              </label>
               <input 
                 id="event-end-date" 
                 type="date" 
@@ -307,44 +337,106 @@ function AddEventForm({ eventToEdit = null, onFormSubmit }) {
               />
             </div>
           </div>
-          
+
           <div className="form-group">
-            <label>Imágenes del Evento (máximo 2)</label>
-            {existingImageUrls.length > 0 && (
+            <label>Descripción General del Evento</label>
+            <div className="rich-editor-wrapper">
+              <RichTextEditor 
+                key={editingEvent || 'new-event'}
+                content={description} 
+                onChange={setDescription} 
+                placeholder="Escribe aquí los detalles del evento, historia, actividades principales y recomendaciones..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* =======================================================
+            SECCIÓN 2: FOTOGRAFÍAS DEL EVENTO
+            ======================================================= */}
+        <div className="form-card-section">
+          <div className="section-title-row">
+            <div className="section-icon-pill bg-purple">
+              <Camera size={20} />
+            </div>
+            <div>
+              <h3 className="section-card-title">2. Fotografías del Evento</h3>
+              <p className="section-card-desc">Sube hasta 2 imágenes promocionales o afiches (se convertirán automáticamente a WebP).</p>
+            </div>
+          </div>
+
+          {existingImageUrls.length > 0 && (
+            <div className="form-group">
+              <label>Imágenes Actuales:</label>
               <div className="image-preview-container">
                 {existingImageUrls.map((url, index) => {
                   if (imagesToDelete.includes(url)) return null;
                   return (
                     <div key={index} className="image-preview-wrapper">
                       <img src={url} alt={`Imagen actual ${index + 1}`} className="image-preview" />
-                      <button type="button" onClick={() => handleDeleteExistingImage(url)} className="delete-image-button">X</button>
+                      <button 
+                        type="button" 
+                        onClick={() => handleDeleteExistingImage(url)} 
+                        className="delete-image-button"
+                        title="Eliminar imagen"
+                      >
+                        ✕
+                      </button>
                     </div>
                   );
                 })}
               </div>
-            )}
-            <input 
-              id="event-image-input" 
-              type="file" 
-              accept="image/*" 
-              onChange={handleImageChange} 
-              disabled={uploading} 
-              multiple
-            />
-            {imagePreviews.length > 0 && (
+            </div>
+          )}
+
+          <div className="form-group">
+            <label>Subir Nuevas Fotografías (Máximo 2 en total) <span className="required-star">*</span></label>
+            <div className="image-upload-dropzone">
+              <input 
+                id="event-image-input" 
+                type="file" 
+                accept="image/*" 
+                onChange={handleImageChange} 
+                disabled={uploading} 
+                multiple
+              />
+              <div className="upload-dropzone-content">
+                <UploadCloud size={38} className="upload-dropzone-icon" />
+                <span className="upload-dropzone-title">Haz clic aquí o arrastra tus imágenes</span>
+                <span className="upload-dropzone-hint">Formatos: JPG, PNG o WebP. Tamaño óptimo panorámico.</span>
+              </div>
+            </div>
+          </div>
+
+          {imagePreviews.length > 0 && (
+            <div className="form-group">
+              <label>Nuevas imágenes a subir ({imagePreviews.length}):</label>
               <div className="image-preview-container">
                 {imagePreviews.map((preview, index) => (
-                  <img key={index} src={preview} alt={`Previsualización ${index + 1}`} className="image-preview" />
+                  <div key={index} className="image-preview-wrapper">
+                    <img src={preview} alt={`Previsualización ${index + 1}`} className="image-preview" />
+                  </div>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* Programación del evento */}
-        <div className="form-section schedule-section">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h5>Programación del Evento (Opcional)</h5>
+        {/* =======================================================
+            SECCIÓN 3: PROGRAMACIÓN POR DÍAS (CRONOGRAMA)
+            ======================================================= */}
+        <div className="form-card-section schedule-section">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="section-title-row" style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
+              <div className="section-icon-pill bg-emerald">
+                <Clock size={20} />
+              </div>
+              <div>
+                <h3 className="section-card-title">3. Programación Detallada</h3>
+                <p className="section-card-desc">Organiza actividades por día y hora (ideal para festividades de varios días).</p>
+              </div>
+            </div>
+
             <button 
               type="button" 
               onClick={handleToggleSchedule}
@@ -356,11 +448,7 @@ function AddEventForm({ eventToEdit = null, onFormSubmit }) {
           </div>
 
           {showScheduleForm && (
-            <div className="schedule-builder">
-              <p className="section-description">
-                Ideal para eventos de varios días (ferias, festivales). Organiza actividades por día y hora.
-              </p>
-
+            <div className="schedule-builder" style={{ marginTop: '1.25rem' }}>
               {schedule.map((day, dayIndex) => (
                 <div key={dayIndex} className="day-container">
                   <div className="day-header">
@@ -375,7 +463,7 @@ function AddEventForm({ eventToEdit = null, onFormSubmit }) {
                     </button>
                   </div>
 
-                  <div className="coordinates-group">
+                  <div className="form-grid-2">
                     <div className="form-group">
                       <label>Fecha del Día {day.day}</label>
                       <input 
@@ -386,7 +474,7 @@ function AddEventForm({ eventToEdit = null, onFormSubmit }) {
                       />
                     </div>
                     <div className="form-group">
-                      <label>Título del Día (ej: "Inicio de la Feria")</label>
+                      <label>Título del Día (ej: "Apertura y Alborada")</label>
                       <input 
                         type="text"
                         value={day.dayTitle}
@@ -398,7 +486,7 @@ function AddEventForm({ eventToEdit = null, onFormSubmit }) {
                   </div>
 
                   <div className="activities-list">
-                    <label style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>
+                    <label style={{ fontWeight: 600, marginBottom: '0.65rem', display: 'block', color: '#1e293b' }}>
                       Actividades del Día {day.day}:
                     </label>
                     
@@ -411,7 +499,7 @@ function AddEventForm({ eventToEdit = null, onFormSubmit }) {
                             onChange={(e) => updateActivity(dayIndex, actIndex, 'time', e.target.value)}
                             placeholder="Hora"
                             disabled={uploading}
-                            style={{ width: '120px' }}
+                            style={{ width: '130px' }}
                           />
                           <input 
                             type="text"
@@ -430,10 +518,11 @@ function AddEventForm({ eventToEdit = null, onFormSubmit }) {
                             style={{ flex: 3 }}
                           />
                           <button 
-                            type="button"
+                            type="button" 
                             onClick={() => removeActivity(dayIndex, actIndex)}
                             className="remove-activity-button"
                             disabled={uploading}
+                            title="Eliminar actividad"
                           >
                             ✕
                           </button>
@@ -442,7 +531,7 @@ function AddEventForm({ eventToEdit = null, onFormSubmit }) {
                     ))}
 
                     <button 
-                      type="button"
+                      type="button" 
                       onClick={() => addActivity(dayIndex)}
                       className="add-activity-button"
                       disabled={uploading}
@@ -454,17 +543,20 @@ function AddEventForm({ eventToEdit = null, onFormSubmit }) {
               ))}
 
               <button 
-                type="button"
-                onClick={addDay}
+                type="button" 
+                onClick={addDay} 
                 className="add-day-button"
                 disabled={uploading}
               >
-                + Agregar día
+                + Agregar otro día al programa
               </button>
             </div>
           )}
         </div>
         
+        {/* =======================================================
+            SECCIÓN 4: ACCIONES
+            ======================================================= */}
         <div className="form-actions">
           <button 
             type="button" 
@@ -479,7 +571,17 @@ function AddEventForm({ eventToEdit = null, onFormSubmit }) {
             disabled={uploading} 
             className="submit-button"
           >
-            {uploading ? 'Guardando...' : editingEvent ? 'Actualizar Evento' : 'Agregar Evento'}
+            {uploading ? (
+              'Guardando...'
+            ) : editingEvent ? (
+              <>
+                <Check size={18} /> Actualizar Evento
+              </>
+            ) : (
+              <>
+                <Check size={18} /> Publicar Evento
+              </>
+            )}
           </button>
         </div>
       </form>

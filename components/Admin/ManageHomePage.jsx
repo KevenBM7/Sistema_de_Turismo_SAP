@@ -7,6 +7,7 @@ import { db, storage } from '@/lib/firebase';
 import imageCompression from 'browser-image-compression';
 import toast from 'react-hot-toast';
 import { triggerRevalidation } from '@/lib/revalidate';
+import { Layout, Sparkles, Camera, UploadCloud, Check } from 'lucide-react';
 import '../AdminForms.css'; // Asegurando el CSS de Admin
 
 function ManageHomePage() {
@@ -144,61 +145,149 @@ function ManageHomePage() {
 
   return (
     <div className="add-site-container">
-      <h3>Gestionar Portada de Inicio</h3>
+      {/* Header Banner */}
+      <div className="form-header-banner">
+        <span className="form-header-badge">
+          <Layout size={13} /> Portada Principal y Bienvenida
+        </span>
+        <h2 className="form-header-title">
+          Gestionar Portada de Inicio
+        </h2>
+        <p className="form-header-subtitle">
+          Configura los títulos de bienvenida y las fotografías del carrusel principal que reciben a los visitantes del portal.
+        </p>
+      </div>
+
       <form onSubmit={handleSave} className="add-site-form">
-        <div className="form-group">
-          <label htmlFor="welcomeText">Título de Bienvenida</label>
-          <input
-            type="text"
-            id="welcomeText"
-            value={welcomeText}
-            onChange={(e) => setWelcomeText(e.target.value)}
-            placeholder="Ej: Bienvenido a San Antonio Palopó"
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="subText">Texto Secundario</label>
-          <textarea
-            id="subText"
-            value={subText}
-            onChange={(e) => setSubText(e.target.value)}
-            placeholder="Describe la bienvenida..."
-            rows="7"
-            style={{ minHeight: '120px', resize: 'vertical', width: '100%' }}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="homeImage">Imágenes de Portada (Carrusel, máximo 3)</label>
-          <div className="image-preview-container">
-            {currentImagePaths.map((path, index) => {
-              if (imagesToDelete.includes(path)) return null;
-              return (
-                <div key={index} className="image-preview-wrapper">
-                  <ImageFromPath path={path} alt={`Portada actual ${index + 1}`} className="image-preview" />
-                  <button type="button" onClick={() => handleDeleteExistingImage(path)} className="delete-image-button">X</button>
-                </div>
-              );
-            })}
+        
+        {/* =======================================================
+            SECCIÓN 1: TEXTOS DE BIENVENIDA
+            ======================================================= */}
+        <div className="form-card-section">
+          <div className="section-title-row">
+            <div className="section-icon-pill bg-blue">
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <h3 className="section-card-title">1. Mensajes de Bienvenida</h3>
+              <p className="section-card-desc">Frases destacadas visibles en el encabezado principal del sitio web.</p>
+            </div>
           </div>
-          {imagePreviews.length > 0 && (
-            <div className="image-preview-container" style={{ marginTop: '1rem' }}>
-              {imagePreviews.map((preview, index) => (
-                <img key={index} src={preview} alt={`Previsualización ${index + 1}`} className="image-preview" />
-              ))}
+
+          <div className="form-group">
+            <label htmlFor="welcomeText">
+              Título de Bienvenida <span className="required-star">*</span>
+            </label>
+            <input
+              type="text"
+              id="welcomeText"
+              value={welcomeText}
+              onChange={(e) => setWelcomeText(e.target.value)}
+              placeholder="Ej: Bienvenido a San Antonio Palopó"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="subText">
+              Texto Secundario o Lema Turístico <span className="required-star">*</span>
+            </label>
+            <textarea
+              id="subText"
+              value={subText}
+              onChange={(e) => setSubText(e.target.value)}
+              placeholder="Describe el lema o bienvenida general a San Antonio Palopó..."
+              rows={4}
+              required
+            />
+          </div>
+        </div>
+
+        {/* =======================================================
+            SECCIÓN 2: FOTOGRAFÍAS DE PORTADA (CARRUSEL)
+            ======================================================= */}
+        <div className="form-card-section">
+          <div className="section-title-row">
+            <div className="section-icon-pill bg-purple">
+              <Camera size={20} />
+            </div>
+            <div>
+              <h3 className="section-card-title">2. Fotografías de Portada (Carrusel)</h3>
+              <p className="section-card-desc">Sube hasta 3 imágenes panorámicas de alta resolución para el carrusel de la página de inicio.</p>
+            </div>
+          </div>
+
+          {currentImagePaths.length > 0 && (
+            <div className="form-group">
+              <label>Imágenes Actuales de Portada:</label>
+              <div className="image-preview-container">
+                {currentImagePaths.map((path, index) => {
+                  if (imagesToDelete.includes(path)) return null;
+                  return (
+                    <div key={index} className="image-preview-wrapper">
+                      <ImageFromPath path={path} alt={`Portada actual ${index + 1}`} className="image-preview" />
+                      <button 
+                        type="button" 
+                        onClick={() => handleDeleteExistingImage(path)} 
+                        className="delete-image-button"
+                        title="Eliminar esta foto"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
-          <input
-            type="file"
-            id="homeImage"
-            accept="image/*"
-            onChange={handleImageChange}
-            multiple
-          />
-          <p className="map-instructions">Puedes eliminar imágenes existentes y/o subir nuevas (máximo 3 en total). Se recomienda un tamaño panorámico.</p>
+
+          <div className="form-group">
+            <label>Subir Nuevas Fotografías de Portada (Máximo 3 en total) <span className="required-star">*</span></label>
+            <div className="image-upload-dropzone">
+              <input
+                type="file"
+                id="homeImage"
+                accept="image/*"
+                onChange={handleImageChange}
+                disabled={saving}
+                multiple
+              />
+              <div className="upload-dropzone-content">
+                <UploadCloud size={38} className="upload-dropzone-icon" />
+                <span className="upload-dropzone-title">Haz clic aquí o arrastra tus fotos de portada</span>
+                <span className="upload-dropzone-hint">JPG, PNG o WebP. Se recomienda proporción panorámica (16:9).</span>
+              </div>
+            </div>
+          </div>
+
+          {imagePreviews.length > 0 && (
+            <div className="form-group">
+              <label>Nuevas imágenes a subir ({imagePreviews.length}):</label>
+              <div className="image-preview-container">
+                {imagePreviews.map((preview, index) => (
+                  <div key={index} className="image-preview-wrapper">
+                    <img key={index} src={preview} alt={`Previsualización ${index + 1}`} className="image-preview" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-        <button type="submit" disabled={saving}>
-          {saving ? 'Guardando...' : 'Guardar Cambios en Portada'}
-        </button>
+
+        {/* =======================================================
+            SECCIÓN 3: ACCIONES
+            ======================================================= */}
+        <div className="form-actions">
+          <button type="submit" disabled={saving} className="submit-button">
+            {saving ? (
+              'Guardando portada...'
+            ) : (
+              <>
+                <Check size={18} /> Guardar Cambios en Portada
+              </>
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );

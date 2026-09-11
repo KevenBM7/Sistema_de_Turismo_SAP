@@ -5,7 +5,20 @@ import { collection, addDoc, updateDoc, doc, serverTimestamp, onSnapshot, query,
 import { ref, uploadBytesResumable, deleteObject } from 'firebase/storage';
 import L from 'leaflet';
 import { useRouter } from 'next/navigation';
-import { MapContainer, TileLayer, Marker, useMapEvents, LayersControl, GeoJSON, LayerGroup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap, LayersControl } from 'react-leaflet';
+import { 
+  MapPin, 
+  Sparkles, 
+  Camera, 
+  Globe, 
+  Mail, 
+  Phone, 
+  Share2, 
+  UploadCloud, 
+  Navigation, 
+  Check, 
+  Compass
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import imageCompression from 'browser-image-compression';
 import RichTextEditor from './RichTextEditor'; // Importamos el nuevo editor
@@ -28,6 +41,34 @@ L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x.src, 
   shadowUrl: markerShadow.src 
 });
+
+// Forzar a Leaflet a invalidar y recalcular dimensiones para evitar cuadrículas blancas
+function MapResizeHandler() {
+  const map = useMap();
+  useEffect(() => {
+    map.invalidateSize();
+    const t1 = setTimeout(() => map.invalidateSize(), 200);
+    const t2 = setTimeout(() => map.invalidateSize(), 500);
+    const t3 = setTimeout(() => map.invalidateSize(), 1000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [map]);
+  return null;
+}
+
+// Centrar el mapa con animación fluida
+function MapRecenterController({ target }) {
+  const map = useMap();
+  useEffect(() => {
+    if (target && target.coords) {
+      map.flyTo([target.coords[0], target.coords[1]], target.zoom || 15, { duration: 1.2 });
+    }
+  }, [target, map]);
+  return null;
+}
 
 function AddSiteForm({ siteToEdit }) {
   const isEditMode = !!siteToEdit;
@@ -54,6 +95,7 @@ function AddSiteForm({ siteToEdit }) {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [newCategory, setNewCategory] = useState('');
   const [markerPosition, setMarkerPosition] = useState(null);
+  const [recenterTarget, setRecenterTarget] = useState(null);
   const mapCenter = [14.70, -91.13];
   const [existingImagePaths, setExistingImagePaths] = useState([]);
   const [imagesToDelete, setImagesToDelete] = useState([]);
@@ -129,6 +171,26 @@ function AddSiteForm({ siteToEdit }) {
     const newName = e.target.value;
     setName(newName);
     setSlug(slugify(newName, { lower: true, strict: true }));
+  };
+
+  const handleLatitudeChange = (e) => {
+    const val = e.target.value;
+    setLatitude(val);
+    const numLat = parseFloat(val);
+    const numLng = parseFloat(longitude);
+    if (!isNaN(numLat) && !isNaN(numLng)) {
+      setMarkerPosition([numLat, numLng]);
+    }
+  };
+
+  const handleLongitudeChange = (e) => {
+    const val = e.target.value;
+    setLongitude(val);
+    const numLat = parseFloat(latitude);
+    const numLng = parseFloat(val);
+    if (!isNaN(numLat) && !isNaN(numLng)) {
+      setMarkerPosition([numLat, numLng]);
+    }
   };
 
   // Función para quitar una imagen recién seleccionada (de la previsualización)
@@ -534,286 +596,538 @@ function AddSiteForm({ siteToEdit }) {
 
   return (
     <div className="add-site-container">
-      <h3>{isEditMode ? 'Editar Sitio Turístico' : 'Agregar Nuevo Sitio Turístico'}</h3>
+      {/* Banner de Cabecera */}
+      <div className="form-header-banner">
+        <span className="form-header-badge">
+          <Sparkles size={13} /> {isEditMode ? 'Edición de Contenido' : 'Gestión de Contenido'}
+        </span>
+        <h2 className="form-header-title">
+          {isEditMode ? 'Editar Sitio Turístico' : 'Registrar Nuevo Sitio Turístico'}
+        </h2>
+        <p className="form-header-subtitle">
+          Completa todos los datos requeridos. Los cambios se actualizarán de forma instantánea en el mapa interactivo y el catálogo web.
+        </p>
+      </div>
+
+      {isEditMode && (
+        <div className="edit-notice">
+          <p>
+            ✏️ Estás editando el sitio: <strong>{name || siteToEdit?.name}</strong>
+          </p>
+          <button type="button" onClick={handleCancel} className="cancel-edit-button">
+            Cancelar edición
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="add-site-form">
-        <div className="form-group">
-          <label htmlFor="name">Nombre del Sitio</label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={handleNameChange}
-            placeholder="Ej: Plaza Principal"
-            disabled={uploading}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="description">Descripción</label>
-          <RichTextEditor
-            content={description}
-            onChange={setDescription}
-            readOnly={uploading}
-            placeholder="Describe el lugar..."
-          />
-        </div>
-
-        {/* Sección de Contacto y Redes Sociales */}
-        <div className="form-section">
-          <h5>Contacto y Redes Sociales (Opcional)</h5>
-          <div className="coordinates-group">
-            <div className="form-group">
-              <label htmlFor="email">Correo de Contacto</label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Ej: info@negocio.com"
-                disabled={uploading}
-              />
+        
+        {/* =======================================================
+            SECCIÓN 1: INFORMACIÓN PRINCIPAL Y CATEGORIZACIÓN
+            ======================================================= */}
+        <div className="form-card-section">
+          <div className="section-title-row">
+            <div className="section-icon-pill bg-blue">
+              <Sparkles size={20} />
             </div>
-            <div className="form-group">
-              <label htmlFor="whatsapp">Número de WhatsApp</label>
-              <input
-                type="tel"
-                id="whatsapp"
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="Ej: 50212345678 (sin + ni espacios)"
-                disabled={uploading}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="whatsapp2">2º Número de WhatsApp</label>
-              <input
-                type="tel"
-                id="whatsapp2"
-                value={whatsapp2}
-                onChange={(e) => setWhatsapp2(e.target.value)}
-                placeholder="Ej: 50287654321"
-                disabled={uploading}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="facebook">URL de Facebook</label>
-              <input
-                type="url"
-                id="facebook"
-                value={facebook}
-                onChange={(e) => setFacebook(e.target.value)}
-                placeholder="https://facebook.com/pagina"
-                disabled={uploading}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="instagram">URL de Instagram</label>
-              <input
-                type="url"
-                id="instagram"
-                value={instagram}
-                onChange={(e) => setInstagram(e.target.value)}
-                placeholder="https://instagram.com/usuario"
-                disabled={uploading}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="tiktok">URL de TikTok</label>
-              <input
-                type="url"
-                id="tiktok"
-                value={tiktok}
-                onChange={(e) => setTiktok(e.target.value)}
-                placeholder="https://tiktok.com/@usuario"
-                disabled={uploading}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="youtube">URL de YouTube</label>
-              <input
-                type="url"
-                id="youtube"
-                value={youtube}
-                onChange={(e) => setYoutube(e.target.value)}
-                placeholder="https://youtube.com/@canal"
-                disabled={uploading}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="website">Sitio Web</label>
-              <input
-                type="url"
-                id="website"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="https://misitio.com"
-                disabled={uploading}
-              />
+            <div>
+              <h3 className="section-card-title">1. Información Principal</h3>
+              <p className="section-card-desc">Nombre comercial o del punto de interés, URL amigable y clasificación turística.</p>
             </div>
           </div>
-        </div>
 
-        <div className="form-group">
-          <label htmlFor="parent-category">Categoría Principal</label>
-          <select
-            id="parent-category"
-            value={parentCategory}
-            onChange={(e) => setParentCategory(e.target.value)}
-            disabled={uploading}
-            required
-          >
-            <option value="">Selecciona una categoría principal</option>
-            <option value="Atracciones y Cultura">Atracciones y Cultura</option>
-            <option value="Servicios y Logística">Servicios y Logística</option>
-            <option value="Movilidad y Transporte">Movilidad y Transporte</option>
-          </select>
-        </div>
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label htmlFor="name">
+                Nombre del Sitio <span className="required-star">*</span>
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={handleNameChange}
+                placeholder="Ej: Mirador San Antonio Palopó"
+                disabled={uploading}
+                required
+              />
+              <span className="slug-preview">
+                <strong>Slug SEO:</strong> /{slug || 'nombre-del-sitio'}
+              </span>
+            </div>
 
-        <div className="form-group">
-          <label htmlFor="category">Subcategoría</label>
-          <select
-            id="category"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            disabled={uploading}
-          >
-            <option value="">Selecciona una categoría</option>
-            {categories.map(cat => (
-              <option key={cat.id} value={cat.name}>{cat.name}</option>
-            ))}
-            <option value="otro">Otra...</option>
-          </select>
-        </div>
+            <div className="form-group">
+              <label htmlFor="parent-category">
+                Categoría Principal <span className="required-star">*</span>
+              </label>
+              <select
+                id="parent-category"
+                value={parentCategory}
+                onChange={(e) => setParentCategory(e.target.value)}
+                disabled={uploading}
+                required
+              >
+                <option value="">Selecciona una categoría principal</option>
+                <option value="Atracciones y Cultura">Atracciones y Cultura</option>
+                <option value="Servicios y Logística">Servicios y Logística</option>
+                <option value="Movilidad y Transporte">Movilidad y Transporte</option>
+              </select>
+            </div>
+          </div>
 
-        {selectedCategory === 'otro' && (
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label htmlFor="category">
+                Subcategoría Específica <span className="required-star">*</span>
+              </label>
+              <select
+                id="category"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                disabled={uploading}
+                required
+              >
+                <option value="">Selecciona una subcategoría</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                ))}
+                <option value="otro">Otra (crear nueva)...</option>
+              </select>
+            </div>
+
+            {selectedCategory === 'otro' && (
+              <div className="form-group">
+                <label htmlFor="newCategory">
+                  Nombre de la Nueva Subcategoría <span className="required-star">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="newCategory"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="Ej: Galerías de Arte"
+                  disabled={uploading}
+                  required
+                />
+              </div>
+            )}
+          </div>
+
           <div className="form-group">
-            <label htmlFor="newCategory">Nombre de la Nueva Categoría</label>
-            <input
-              type="text"
-              id="newCategory"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="Ej: Restaurante"
-              disabled={uploading}
+            <label htmlFor="description">
+              Descripción Detallada <span className="required-star">*</span>
+            </label>
+            <RichTextEditor
+              content={description}
+              onChange={setDescription}
+              readOnly={uploading}
+              placeholder="Describe detalladamente los atractivos, historia, qué hacer y recomendaciones..."
             />
           </div>
-        )}
-
-        <div className="form-group">
-          <label htmlFor="address">Dirección</label>
-          <input
-            type="text"
-            id="address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Selecciona en el mapa o ingresa manualmente"
-            disabled={uploading}
-          />
         </div>
 
-        <div className="form-group">
-          <label>Seleccionar Ubicación en el Mapa</label>
-          <p className="map-instructions">Haz clic en el mapa para establecer la ubicación y obtener la dirección automáticamente.</p>
-          <MapContainer
-            center={markerPosition || mapCenter}
-            zoom={markerPosition ? 15 : 13}
-            className="location-picker-map"
-          >
-
-            <LayersControl position="topright">
-
-              {/* Vista Híbrida (Satélite + Nombres) - PREDETERMINADA. Usamos LayerGroup para agrupar las capas. */}
-              <LayersControl.BaseLayer checked name="Híbrido (Satélite + Nombres)">
-                <LayerGroup>
-                  <TileLayer
-                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                    attribution='Tiles &copy; Esri'
-                  />
-                  <TileLayer
-                    url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                    pane="shadowPane" // Asegura que las etiquetas estén encima
-                  />
-                </LayerGroup>
-              </LayersControl.BaseLayer>
-
-              {/* Mapa de calles */}
-              <LayersControl.BaseLayer name="Mapa de calles">
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution='&copy; OpenStreetMap contributors'
-                />
-              </LayersControl.BaseLayer>
-            </LayersControl>
-
-            <LocationMarker />
-            <MapInteractionController />
-          </MapContainer>
-        </div>
-
-        {isEditMode && existingImagePaths.length > 0 && (
-          <div className="form-group">
-            <label>Imágenes Actuales</label>
-            <div className="image-preview-container">
-              {existingImagePaths.map((path, index) => {
-                const isMarkedForDeletion = imagesToDelete.some(deleteItem => {
-                  if (typeof deleteItem === 'string' && typeof path === 'string') {
-                    return path === deleteItem;
-                  } else if (deleteItem && deleteItem.original && path && path.original) {
-                    return path.original === deleteItem.original;
-                  }
-                  return false;
-                });
-
-                if (isMarkedForDeletion) return null;
-
-                // Usar normalizeImagePath para obtener la URL directa de la imagen original
-                const imageUrl = normalizeImagePath(path);
-
-                return (
-                  <div key={index} className="image-preview-wrapper">
-                    <img
-                      src={imageUrl || 'https://placehold.co/150x100?text=Error'}
-                      alt={`Imagen actual ${index + 1}`}
-                      className="image-preview"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteExistingImage(path)}
-                      className="delete-image-button"
-                    >
-                      X
-                    </button>
-                  </div>
-                );
-              })}
+        {/* =======================================================
+            SECCIÓN 2: UBICACIÓN GEOGRÁFICA Y MAPA INTERACTIVO
+            ======================================================= */}
+        <div className="form-card-section">
+          <div className="section-title-row">
+            <div className="section-icon-pill bg-emerald">
+              <MapPin size={20} />
+            </div>
+            <div>
+              <h3 className="section-card-title">2. Ubicación Geográfica en el Mapa</h3>
+              <p className="section-card-desc">Haz clic en el mapa satelital para fijar el marcador exacto y autocompletar la dirección.</p>
             </div>
           </div>
-        )}
 
-        <div className="form-group">
-          <label htmlFor="image-input">Imágenes (máximo 3, formato WebP recomendado)</label>
-          <input
-            type="file"
-            id="image-input"
-            accept="image/*"
-            onChange={handleImageChange}
-            disabled={uploading}
-            multiple
-          />
-          <div className="image-preview-container">
-            {imagePreviews.map((previewUrl, index) => (
-              <div key={previewUrl} className="image-preview-wrapper">
-                <img src={previewUrl} alt={`Previsualización ${index + 1}`} className="image-preview" />
-                <button type="button" onClick={() => handleRemoveNewImage(index)} className="delete-image-button">
-                  X
-                </button>
-              </div>
-            ))}
+          <div className="form-group">
+            <label htmlFor="address">
+              Dirección o Referencia <span className="required-star">*</span>
+            </label>
+            <div className="input-with-icon">
+              <span className="input-icon-prefix">
+                <MapPin size={18} />
+              </span>
+              <input
+                type="text"
+                id="address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Selecciona en el mapa satelital o ingresa manualmente"
+                disabled={uploading}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Barra de herramientas del mapa */}
+          <div className="map-toolbar-container">
+            <div className="map-coords-badge">
+              <Compass size={17} style={{ color: '#2563eb' }} />
+              {markerPosition ? (
+                <span>
+                  <strong>Punto fijado:</strong> Lat {Number(latitude).toFixed(6)}, Lng {Number(longitude).toFixed(6)}
+                </span>
+              ) : (
+                <span className="coords-pending">Haz clic sobre el mapa para colocar el marcador de ubicación</span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setRecenterTarget({ coords: mapCenter, zoom: 15, key: Date.now() })}
+              className="map-recenter-button"
+              title="Centrar vista en San Antonio Palopó"
+            >
+              <Navigation size={14} /> Centrar en San Antonio Palopó
+            </button>
+          </div>
+
+          {/* Contenedor del Mapa con Capas Google HD */}
+          <div className="map-picker-wrapper">
+            <MapContainer
+              center={markerPosition || mapCenter}
+              zoom={markerPosition ? 16 : 14}
+              className="location-picker-map"
+              scrollWheelZoom={false}
+            >
+              <LayersControl position="topright">
+                {/* Capa Principal: Google Híbrido HD (Satélite nítido con nombres) */}
+                <LayersControl.BaseLayer checked name="Google Híbrido HD">
+                  <TileLayer
+                    key="google-hybrid-hd"
+                    url="https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                    subdomains={['0', '1', '2', '3']}
+                    attribution="&copy; Google Maps"
+                    maxNativeZoom={20}
+                    maxZoom={21}
+                    crossOrigin="anonymous"
+                  />
+                </LayersControl.BaseLayer>
+
+                {/* Capa Secundaria: Google Calles */}
+                <LayersControl.BaseLayer name="Google Calles">
+                  <TileLayer
+                    key="google-streets"
+                    url="https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+                    subdomains={['0', '1', '2', '3']}
+                    attribution="&copy; Google Maps"
+                    maxNativeZoom={20}
+                    maxZoom={21}
+                    crossOrigin="anonymous"
+                  />
+                </LayersControl.BaseLayer>
+
+                {/* Capa Alternativa: OpenStreetMap */}
+                <LayersControl.BaseLayer name="OpenStreetMap">
+                  <TileLayer
+                    key="osm-streets"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    maxNativeZoom={19}
+                    maxZoom={21}
+                    crossOrigin="anonymous"
+                  />
+                </LayersControl.BaseLayer>
+              </LayersControl>
+
+              <LocationMarker />
+              <MapInteractionController />
+              <MapResizeHandler />
+              <MapRecenterController target={recenterTarget} />
+            </MapContainer>
+          </div>
+
+          {/* Coordenadas numéricas editables */}
+          <div className="form-grid-2" style={{ marginTop: '1.25rem' }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label htmlFor="latitude">
+                Latitud <span className="required-star">*</span>
+              </label>
+              <input
+                type="text"
+                id="latitude"
+                value={latitude}
+                onChange={handleLatitudeChange}
+                placeholder="14.700000"
+                disabled={uploading}
+                required
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label htmlFor="longitude">
+                Longitud <span className="required-star">*</span>
+              </label>
+              <input
+                type="text"
+                id="longitude"
+                value={longitude}
+                onChange={handleLongitudeChange}
+                placeholder="-91.130000"
+                disabled={uploading}
+                required
+              />
+            </div>
           </div>
         </div>
 
+        {/* =======================================================
+            SECCIÓN 3: GALERÍA FOTOGRÁFICA
+            ======================================================= */}
+        <div className="form-card-section">
+          <div className="section-title-row">
+            <div className="section-icon-pill bg-purple">
+              <Camera size={20} />
+            </div>
+            <div>
+              <h3 className="section-card-title">3. Galería Fotográfica</h3>
+              <p className="section-card-desc">Sube hasta 3 fotografías representativas. Se comprimirán y convertirán a WebP optimizado para alta velocidad.</p>
+            </div>
+          </div>
+
+          {/* Imágenes ya existentes (Modo Edición) */}
+          {isEditMode && existingImagePaths.length > 0 && (
+            <div className="form-group">
+              <label>Imágenes Actuales del Sitio</label>
+              <div className="image-preview-container">
+                {existingImagePaths.map((path, index) => {
+                  const isMarkedForDeletion = imagesToDelete.some(deleteItem => {
+                    if (typeof deleteItem === 'string' && typeof path === 'string') {
+                      return path === deleteItem;
+                    } else if (deleteItem && deleteItem.original && path && path.original) {
+                      return path.original === deleteItem.original;
+                    }
+                    return false;
+                  });
+
+                  if (isMarkedForDeletion) return null;
+                  const imageUrl = normalizeImagePath(path);
+
+                  return (
+                    <div key={index} className="image-preview-wrapper">
+                      <img
+                        src={imageUrl || 'https://placehold.co/150x100?text=Error'}
+                        alt={`Foto actual ${index + 1}`}
+                        className="image-preview"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteExistingImage(path)}
+                        className="delete-image-button"
+                        title="Eliminar esta foto"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Dropzone de subida */}
+          <div className="form-group">
+            <label>Subir Nuevas Fotografías (Máximo 3 fotos en total) <span className="required-star">*</span></label>
+            <div className="image-upload-dropzone">
+              <input
+                type="file"
+                id="image-input"
+                accept="image/*"
+                onChange={handleImageChange}
+                disabled={uploading}
+                multiple
+              />
+              <div className="upload-dropzone-content">
+                <UploadCloud size={38} className="upload-dropzone-icon" />
+                <span className="upload-dropzone-title">Haz clic aquí o arrastra tus imágenes</span>
+                <span className="upload-dropzone-hint">JPG, PNG o WebP. Se optimizarán automáticamente a WebP de alta fidelidad.</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Previsualización de imágenes nuevas */}
+          {imagePreviews.length > 0 && (
+            <div className="form-group">
+              <label>Nuevas imágenes a subir ({imagePreviews.length}):</label>
+              <div className="image-preview-container">
+                {imagePreviews.map((previewUrl, index) => (
+                  <div key={previewUrl} className="image-preview-wrapper">
+                    <img src={previewUrl} alt={`Nueva foto ${index + 1}`} className="image-preview" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveNewImage(index)}
+                      className="delete-image-button"
+                      title="Quitar foto"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* =======================================================
+            SECCIÓN 4: CONTACTO Y REDES SOCIALES
+            ======================================================= */}
+        <div className="form-card-section">
+          <div className="section-title-row">
+            <div className="section-icon-pill bg-amber">
+              <Globe size={20} />
+            </div>
+            <div>
+              <h3 className="section-card-title">4. Contacto Directo y Redes Sociales</h3>
+              <p className="section-card-desc">Información opcional para que los turistas se comuniquen por WhatsApp, redes o visiten el sitio web.</p>
+            </div>
+          </div>
+
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label htmlFor="email">Correo Electrónico de Contacto</label>
+              <div className="input-with-icon">
+                <span className="input-icon-prefix">
+                  <Mail size={17} />
+                </span>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="ejemplo@sanantonio.gt"
+                  disabled={uploading}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="website">Sitio Web Oficial</label>
+              <div className="input-with-icon">
+                <span className="input-icon-prefix">
+                  <Globe size={17} />
+                </span>
+                <input
+                  type="url"
+                  id="website"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://ejemplo.com"
+                  disabled={uploading}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label htmlFor="whatsapp">Número de WhatsApp Principal</label>
+              <div className="input-with-icon">
+                <span className="input-icon-prefix">
+                  <Phone size={17} />
+                </span>
+                <input
+                  type="tel"
+                  id="whatsapp"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  placeholder="Ej: 50212345678 (código de país sin +)"
+                  disabled={uploading}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="whatsapp2">WhatsApp Secundario / Auxiliar</label>
+              <div className="input-with-icon">
+                <span className="input-icon-prefix">
+                  <Phone size={17} />
+                </span>
+                <input
+                  type="tel"
+                  id="whatsapp2"
+                  value={whatsapp2}
+                  onChange={(e) => setWhatsapp2(e.target.value)}
+                  placeholder="Ej: 50287654321"
+                  disabled={uploading}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label htmlFor="facebook">Perfil o Página de Facebook</label>
+              <div className="input-with-icon">
+                <span className="input-icon-prefix">
+                  <Share2 size={17} />
+                </span>
+                <input
+                  type="url"
+                  id="facebook"
+                  value={facebook}
+                  onChange={(e) => setFacebook(e.target.value)}
+                  placeholder="https://facebook.com/tupagina"
+                  disabled={uploading}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="instagram">Perfil de Instagram</label>
+              <div className="input-with-icon">
+                <span className="input-icon-prefix">
+                  <Share2 size={17} />
+                </span>
+                <input
+                  type="url"
+                  id="instagram"
+                  value={instagram}
+                  onChange={(e) => setInstagram(e.target.value)}
+                  placeholder="https://instagram.com/tuperfil"
+                  disabled={uploading}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label htmlFor="tiktok">Perfil de TikTok</label>
+              <div className="input-with-icon">
+                <span className="input-icon-prefix">
+                  <Share2 size={17} />
+                </span>
+                <input
+                  type="url"
+                  id="tiktok"
+                  value={tiktok}
+                  onChange={(e) => setTiktok(e.target.value)}
+                  placeholder="https://tiktok.com/@tuperfil"
+                  disabled={uploading}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="youtube">Canal o Video de YouTube</label>
+              <div className="input-with-icon">
+                <span className="input-icon-prefix">
+                  <Share2 size={17} />
+                </span>
+                <input
+                  type="url"
+                  id="youtube"
+                  value={youtube}
+                  onChange={(e) => setYoutube(e.target.value)}
+                  placeholder="https://youtube.com/@tucanal"
+                  disabled={uploading}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* =======================================================
+            SECCIÓN 5: BOTONES DE ACCIÓN
+            ======================================================= */}
         <div className="form-actions">
           <button
             type="button"
@@ -828,7 +1142,17 @@ function AddSiteForm({ siteToEdit }) {
             disabled={uploading || !currentUser || currentUser.role !== 'admin'}
             className="submit-button"
           >
-            {uploading ? 'Guardando...' : (isEditMode ? 'Actualizar Sitio' : 'Agregar Sitio')}
+            {uploading ? (
+              'Guardando datos...'
+            ) : isEditMode ? (
+              <>
+                <Check size={18} /> Actualizar Sitio
+              </>
+            ) : (
+              <>
+                <Check size={18} /> Publicar Sitio
+              </>
+            )}
           </button>
         </div>
       </form>
