@@ -62,7 +62,7 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  ReactDOM.preconnect('https://firebasestorage.googleapis.com', { crossOrigin: 'anonymous' });
+  ReactDOM.preconnect('https://firebasestorage.googleapis.com');
   ReactDOM.prefetchDNS('https://firebasestorage.googleapis.com');
   ReactDOM.preconnect('https://firestore.googleapis.com', { crossOrigin: 'anonymous' });
   ReactDOM.prefetchDNS('https://firestore.googleapis.com');

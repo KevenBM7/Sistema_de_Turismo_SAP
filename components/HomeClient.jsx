@@ -10,7 +10,6 @@ import {
   Hotel, Utensils, Mountain, Compass, Calendar, 
   Coffee, Ship, Landmark, MapPin
 } from 'lucide-react';
-import "slick-carousel/slick/slick.css";
 import '../legacy_pages/Home.css';
 import '../components/CategoryCard.css';
 import { createSlug } from '@/lib/slugUtils';
@@ -94,6 +93,11 @@ function Home({
     autoplay: upcomingEvents.length > 2,
     autoplaySpeed: 6000,
     arrows: upcomingEvents.length > 1,
+    customPaging: (i) => (
+      <button type="button" aria-label={`Ver evento número ${i + 1}`}>
+        {i + 1}
+      </button>
+    ),
     afterChange: () => {
       const hiddenLinks = document.querySelectorAll('.event-carousel-container .slick-slide[aria-hidden="true"] a');
       hiddenLinks.forEach(el => el.setAttribute('tabindex', '-1'));
@@ -165,7 +169,7 @@ function Home({
                 src={eventImg}
                 alt={event.title}
                 className="event-card-img"
-                loading={isPriority ? "eager" : "lazy"}
+                loading="lazy"
                 decoding="async"
                 width="600"
                 height="340"
@@ -589,7 +593,7 @@ function Home({
               </div>
             ) : (
               <div className="event-carousel-container">
-                {isClient && (
+                {isClient ? (
                   <Slider key={`event-slider-${isSingleCard ? '1-col' : '2-col'}`} {...eventSliderSettings}>
                     {upcomingEvents.map((event, idx) => (
                       <div key={event.id} className="event-slide-item">
@@ -597,6 +601,14 @@ function Home({
                       </div>
                     ))}
                   </Slider>
+                ) : (
+                  <div className="event-grid-container" style={{ opacity: 0.95 }}>
+                    {upcomingEvents.slice(0, 2).map((event, idx) => (
+                      <div key={event.id} className="event-grid-item">
+                        {renderEventCard(event, idx === 0)}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}

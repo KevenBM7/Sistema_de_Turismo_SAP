@@ -91,7 +91,14 @@
 
 /* Nueva clase para el logo (optimización de renderizado) */
 .foter-logo-optimized {
-  padding: 6px;
+  width: 59px;
+  height: 60px;
+  aspect-ratio: 59 / 60;
+  object-fit: contain;
+  padding: 4px;
+  box-sizing: border-box;
+  display: block;
+  flex-shrink: 0;
 }
 
 /* Footer Responsivo */

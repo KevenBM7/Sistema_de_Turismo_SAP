@@ -93,7 +93,7 @@ a {
   display: flex !important;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   padding: 0 !important;
   margin: 1rem 0 !important;
 }
@@ -103,24 +103,45 @@ a {
   margin: 0 !important;
   padding: 0 !important;
   display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
 }
 
 .slick-dots li button {
   font-size: 0 !important;
   line-height: 0 !important;
   color: transparent !important;
+  position: relative !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  width: 44px !important;
+  height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slick-dots li button::after {
+  content: '';
+  display: block;
   width: 10px;
   height: 10px;
   border-radius: 9999px;
   background: #cbd5e1;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 0 !important;
-  display: block;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.slick-dots li.slick-active button {
+.slick-dots li button:hover::after {
+  background: #94a3b8;
+}
+
+.slick-dots li.slick-active button::after {
   background: #0284c7;
   width: 24px;
 }

@@ -115,6 +115,8 @@ function Footer() {
             className="foter-logo-optimized"
             width="59"
             height="60"
+            loading="lazy"
+            decoding="async"
           />
           <span>Sistema de Gestión Turística Municipalidad de San Antonio Palopó<br />
             Última actualización: {lastUpdated}

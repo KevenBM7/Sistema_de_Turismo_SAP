@@ -75,6 +75,8 @@ function Navbar() {
               className="navbar-logo" 
               width="105"
               height="105"
+              loading="lazy"
+              decoding="async"
             />
           </Link>
         </div>
