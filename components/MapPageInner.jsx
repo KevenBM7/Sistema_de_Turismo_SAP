@@ -104,6 +104,78 @@ const calculateDistanceMeters = (lat1, lon1, lat2, lon2) => {
   return R * c;
 };
 
+// Cálculo de distancia de un punto a un segmento de línea en metros
+const distToPathSegment = (p, a, b) => {
+  const cosLat = Math.cos((p[0] * Math.PI) / 180);
+  const px = p[1] * 111000 * cosLat;
+  const py = p[0] * 111000;
+  const ax = a[1] * 111000 * cosLat;
+  const ay = a[0] * 111000;
+  const bx = b[1] * 111000 * cosLat;
+  const by = b[0] * 111000;
+
+  const dx = bx - ax;
+  const dy = by - ay;
+  const l2 = dx * dx + dy * dy;
+  if (l2 === 0) return Math.hypot(px - ax, py - ay);
+
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l2));
+  const projX = ax + t * dx;
+  const projY = ay + t * dy;
+  return Math.hypot(px - projX, py - projY);
+};
+
+// Distancia mínima desde un punto a cualquier tramo de la polilínea
+const minDistanceToPolyline = (point, polyline) => {
+  let minD = Infinity;
+  for (let i = 0; i < polyline.length - 1; i++) {
+    const d = distToPathSegment(point, polyline[i], polyline[i + 1]);
+    if (d < minD) minD = d;
+    if (minD < 5) break; // Si está a menos de 5m es coincidencia directa
+  }
+  return minD;
+};
+
+/**
+ * Extrae únicamente los tramos donde la segunda ruta se separa de la principal.
+ * En los tramos donde ambas van por la misma calle o sentido, NO se dibuja la segunda
+ * para no tapar ni ensuciar la ruta principal seleccionada en azul.
+ */
+const getDivergentSegments = (altCoords, mainCoords, thresholdMeters = 20) => {
+  if (!altCoords || altCoords.length < 2 || !mainCoords || mainCoords.length < 2) {
+    return [altCoords || []];
+  }
+
+  const isDivergent = altCoords.map(p => minDistanceToPolyline(p, mainCoords) > thresholdMeters);
+  const segments = [];
+  let current = [];
+
+  for (let i = 0; i < altCoords.length; i++) {
+    if (isDivergent[i]) {
+      // Al inicio de la bifurcación, agregamos el punto previo para conectar limpiamente con la principal
+      if (current.length === 0 && i > 0) {
+        current.push(altCoords[i - 1]);
+      }
+      current.push(altCoords[i]);
+    } else {
+      // Al reincorporarse a la ruta principal, agregamos el punto de empalme y cerramos el tramo
+      if (current.length > 0) {
+        current.push(altCoords[i]);
+        if (current.length >= 2) {
+          segments.push(current);
+        }
+        current = [];
+      }
+    }
+  }
+
+  if (current.length >= 2) {
+    segments.push(current);
+  }
+
+  return segments.length > 0 ? segments : [altCoords];
+};
+
 const getCardinalDirection = (deg) => {
   const directions = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
   const index = Math.round(((deg % 360) + 360) % 360 / 45) % 8;
@@ -1386,9 +1458,9 @@ function MapPage() {
                 ? `${(rt.distanceMeters / 1000).toFixed(1)} km` 
                 : `${Math.round(rt.distanceMeters)} m`;
 
-              const routeColor = idx === 0 
+              const routeColor = isSelected 
                 ? (routeTransportMode === 'walk' ? '#10b981' : '#2563eb')
-                : (routeTransportMode === 'walk' ? '#34d399' : '#38bdf8');
+                : '#94a3b8';
 
               return (
                 <button
@@ -1677,44 +1749,53 @@ function MapPage() {
           />
         )}
 
-        {/* Trazado de Rutas Alternativas (Segunda opción en celeste vibrante de alta visibilidad) */}
-        {availableRoutes && availableRoutes.length > 1 && availableRoutes.map((altRt, altIdx) => {
+        {/* Trazado de Rutas Alternativas (Únicamente en tramos donde se desvía de la principal, en gris pálido) */}
+        {availableRoutes && availableRoutes.length > 1 && geoapifyRoute && availableRoutes.map((altRt, altIdx) => {
           if (altIdx === selectedRouteIndex) return null;
-          const altColor = routeTransportMode === 'walk' ? '#34d399' : '#38bdf8';
-          const altBorderColor = routeTransportMode === 'walk' ? '#065f46' : '#0369a1';
+
+          // Extraer SOLO los tramos que divergen de la ruta principal seleccionada
+          // En los tramos compartidos (donde ambas rutas van por la misma calle o sentido), NO se dibuja para no tapar la ruta azul
+          const divergentSegments = getDivergentSegments(altRt.coordinates, geoapifyRoute.coordinates, 22);
+
+          const altColor = '#94a3b8'; // Gris pálido y suave
+          const altBorderColor = '#334155';
 
           return (
             <React.Fragment key={`alt-route-${altRt.id || altIdx}`}>
-              {/* Contorno protector de alto contraste para visibilidad sobre satélite y calles */}
-              <Polyline 
-                positions={altRt.coordinates} 
-                pathOptions={{
-                  color: altBorderColor,
-                  weight: 7,
-                  opacity: 0.5,
-                  lineCap: 'round',
-                  lineJoin: 'round'
-                }} 
-              />
-              {/* Trazo celeste visible y claro */}
-              <Polyline 
-                positions={altRt.coordinates} 
-                pathOptions={{
-                  color: altColor,
-                  weight: 5,
-                  opacity: 0.95,
-                  dashArray: '9, 6',
-                  lineCap: 'round',
-                  lineJoin: 'round'
-                }} 
-                eventHandlers={{
-                  click: (e) => {
-                    L.DomEvent.stopPropagation(e);
-                    setSelectedRouteIndex(altIdx);
-                    toast.success(`Cambiando a ${altRt.title}`, { id: 'route-switch-toast', duration: 2500 });
-                  }
-                }}
-              />
+              {divergentSegments.map((segCoords, segIdx) => (
+                <React.Fragment key={`alt-seg-${altRt.id || altIdx}-${segIdx}`}>
+                  {/* Contorno protector sutil */}
+                  <Polyline 
+                    positions={segCoords} 
+                    pathOptions={{
+                      color: altBorderColor,
+                      weight: 6.5,
+                      opacity: 0.25,
+                      lineCap: 'round',
+                      lineJoin: 'round'
+                    }} 
+                  />
+                  {/* Trazo gris pálido que muestra la vía alterna conectando con la principal */}
+                  <Polyline 
+                    positions={segCoords} 
+                    pathOptions={{
+                      color: altColor,
+                      weight: 4.5,
+                      opacity: 0.85,
+                      dashArray: '8, 6',
+                      lineCap: 'round',
+                      lineJoin: 'round'
+                    }} 
+                    eventHandlers={{
+                      click: (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        setSelectedRouteIndex(altIdx);
+                        toast.success(`Cambiando a ${altRt.title}`, { id: 'route-switch-toast', duration: 2500 });
+                      }
+                    }}
+                  />
+                </React.Fragment>
+              ))}
             </React.Fragment>
           );
         })}
