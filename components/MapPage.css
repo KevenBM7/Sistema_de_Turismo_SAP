@@ -1540,11 +1540,13 @@
 }
 
 .map-search-badge {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
   flex-shrink: 0;
+  white-space: nowrap;
+  line-height: 1.25;
 }
 
 .map-search-badge.local {
@@ -1557,24 +1559,25 @@
   color: #1d4ed8;
 }
 
-
-
 .map-search-item-badges {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
   flex-shrink: 0;
 }
 
 .map-search-dist-badge {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #2563eb;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
-  padding: 1.5px 6px;
+  padding: 1px 6px;
   border-radius: 9999px;
   white-space: nowrap;
+  line-height: 1.25;
 }
 
 /* --- Banner de Ruta Mejorado con Selector A pie / Auto --- */
