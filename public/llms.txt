@@ -1,0 +1,18 @@
+﻿# Turismo San Antonio Palopó
+
+> Portal oficial de información turística y cultural de San Antonio Palopó, Sololá, a orillas del Lago de Atitlán, Guatemala.
+
+## Descripción General
+San Antonio Palopó es un municipio guatemalteco de origen maya kaqchikel, reconocido internacionalmente por su artesanía en cerámica vidriada con tintes azules y verdes característicos, sus trajes típicos tradicionales tejidos en telar de cintura y sus miradores con vistas espectaculares al Lago de Atitlán.
+
+## Secciones Principales
+- [Inicio](https://turismosanantoniopalopo.com/): Portal de bienvenida, atractivos destacados y eventos actuales.
+- [Mapa Interactivo](https://turismosanantoniopalopo.com/mapa): Geolocalización de hoteles, restaurantes, cooperativas y miradores.
+- [Categorías de Turismo](https://turismosanantoniopalopo.com/categorias): Atracciones culturales, gastronomía, hospedaje, cerámica y actividades lacustres.
+- [Eventos](https://turismosanantoniopalopo.com/eventos): Calendario de ferias comunitarias, festividades y actividades culturales.
+- [Historia y Cultura](https://turismosanantoniopalopo.com/historia): Orígenes, tradiciones vivas y patrimonio del pueblo kaqchikel.
+
+## Contacto Oficial
+- Entidad: Oficina Municipal de Turismo de San Antonio Palopó
+- Correo electrónico: sapturismo24@gmail.com
+- Ubicación: Barrio Centro, San Antonio Palopó, Sololá, Guatemala

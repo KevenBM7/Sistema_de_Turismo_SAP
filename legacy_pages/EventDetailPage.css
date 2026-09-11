@@ -1,0 +1,204 @@
+/* src/pages/EventDetailPage.css */
+
+/* --- CONTENEDOR TIPO TARJETA --- */
+.site-detail-container {
+  max-width: 800px;        /* Ancho máximo para PC */
+  width: 95%;              /* En móvil ocupa el 95% */
+  margin: 30px auto;       /* Centrado vertical y horizontalmente */
+  padding: 2rem;
+  background-color: #fff;  /* Fondo blanco */
+  border-radius: 12px;     /* Bordes redondeados */
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08); /* Sombra suave */
+}
+
+/* --- BOTÓN VOLVER --- */
+.event-detail-back-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.event-detail-bottom-back {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.event-detail-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background-color: #f8fafc;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px;
+  padding: 0.5rem 1.15rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.event-detail-back-button:hover {
+  background-color: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+  transform: translateX(-3px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+}
+
+.event-detail-back-button:active {
+  transform: translateX(-1px) scale(0.98);
+}
+
+/* Título del evento */
+.site-detail-title {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+/* Fecha y metadatos */
+.site-detail-header-actions {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* --- CARRUSEL / IMAGEN PRINCIPAL --- */
+.carousel-container {
+  margin-bottom: 2rem;
+  border-radius: 8px;
+  overflow: hidden; 
+}
+
+/* Estilo de la imagen en la tarjeta (Desktop) */
+.site-detail-image {
+  width: 100%;
+  height: 500px;         /* <-- Altura aumentada para PC */
+  object-fit: cover;     /* Recorta para llenar sin deformar */
+  cursor: pointer;       /* Indica que es clicable */
+  transition: transform 0.3s ease;
+  display: block;        /* Elimina espacios extra abajo de imagenes inline */
+}
+
+.site-detail-image:hover {
+  transform: scale(1.02); /* Efecto zoom suave */
+}
+
+/* Descripción */
+.site-detail-description {
+  line-height: 1.6;
+  color: #444;
+  margin-bottom: 2rem;
+  white-space: pre-line; /* Respeta saltos de línea */
+}
+
+/* --- PROGRAMACIÓN DEL EVENTO --- */
+.event-schedule-section {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.schedule-day-container {
+  margin-bottom: 1.5rem;
+}
+
+.schedule-day-header h3 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.schedule-day-date {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+}
+
+.schedule-activity-item {
+  display: flex;
+  flex-direction: column; /* En móvil se ve mejor en columna, en PC ajustamos luego si quieres */
+  margin-bottom: 0.8rem;
+  padding: 0.8rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #3498db;
+}
+
+.activity-time {
+  font-weight: bold;
+  color: #e67e22;
+  margin-bottom: 0.3rem;
+}
+
+/* --- MODAL (OVERLAY) - CORREGIDO --- */
+.image-modal-overlay {
+  position: fixed;       /* Fijo a la ventana */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.95); /* Fondo oscuro */
+  z-index: 10000;        /* Encima de todo */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(5px);
+}
+
+/* Botón de cerrar (X) */
+.close-image-modal-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2.5rem;
+  cursor: pointer;
+  z-index: 10002;
+  padding: 10px;
+}
+
+/* Contenedor del Slider dentro del Modal */
+.image-modal-slider-container {
+  width: 90%;
+  max-width: 1000px; 
+}
+
+/* Imagen dentro del Modal (Pantalla completa) */
+.image-modal-content {
+  max-height: 85vh;      
+  max-width: 100%;
+  margin: 0 auto;
+  object-fit: contain;   /* Muestra la imagen entera */
+  display: block;
+}
+
+/* --- RESPONSIVE (MÓVIL) --- */
+@media (max-width: 768px) {
+  .site-detail-container {
+    width: 95%;          
+    margin: 15px auto;   
+    padding: 1.5rem;       
+  }
+
+  .site-detail-image {
+    height: auto;          /* Altura automática */
+    aspect-ratio: 1 / 1;   /* <-- Cuadrado perfecto en móvil */
+  }
+
+  .site-detail-title {
+    font-size: 1.5rem;
+  }
+  
+  .schedule-activity-item {
+      flex-direction: column;
+  }
+}

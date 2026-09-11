@@ -1,0 +1,1814 @@
+'use client';
+
+import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, Circle, Polyline, GeoJSON } from 'react-leaflet';
+import { collection, query, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useSearchParams, useRouter } from 'next/navigation';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet-rotate';
+import './MapPage.css';
+import { createSlug } from '@/lib/slugUtils';
+import { Search, X, Navigation, Footprints, Car, Clock, MapPin } from 'lucide-react';
+import { reverseGeocode, autocompletePlaces, getIsolineArea, calculateRoutes, calculateRoute } from '@/lib/geoapify';
+
+import L from 'leaflet';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { toast } from 'react-hot-toast';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon.src,
+  iconRetinaUrl: markerIcon2x.src,
+  shadowUrl: markerShadow.src,
+});
+
+const parentCategoryColors = { 
+  'Atracciones y Cultura': '#4CAF50',
+  'Servicios y Logística': '#FFC107',
+  'Movilidad y Transporte': '#2196F3', 
+  'default': '#9E9E9E'
+};
+
+const getIconForCategory = (parentCategory) => {
+  const color = parentCategoryColors[parentCategory] || parentCategoryColors.default;
+  const markerHtml = `
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="${color}" stroke="white" stroke-width="1" style="pointer-events: none;">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    </svg>`;
+
+  return new L.DivIcon({
+    html: markerHtml,
+    className: 'custom-leaflet-div-icon',
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor: [0, -28]
+  });
+};
+
+const highlightedIcon = new L.DivIcon({
+  className: 'highlighted-marker-icon',
+  html: `
+    <svg viewBox="0 0 24 24" width="36" height="36" fill="#17a2b8" stroke="white" stroke-width="1.5" style="pointer-events: none;">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    </svg>
+    <div class="highlight-pulse"></div>
+  `,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36]
+});
+
+const manualMarkerIcon = new L.DivIcon({
+  className: 'manual-marker-icon',
+  html: `
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="#dc3545" stroke="white" stroke-width="2" style="pointer-events: none;">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    </svg>
+  `,
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30]
+});
+
+const toRad = (deg) => (deg * Math.PI) / 180;
+const toDeg = (rad) => (rad * 180) / Math.PI;
+
+const calculateBearing = (lat1, lon1, lat2, lon2) => {
+  const dLon = toRad(lon2 - lon1);
+  const phi1 = toRad(lat1);
+  const phi2 = toRad(lat2);
+
+  const y = Math.sin(dLon) * Math.cos(phi2);
+  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLon);
+
+  const brng = toDeg(Math.atan2(y, x));
+  return (brng + 360) % 360;
+};
+
+const calculateDistanceMeters = (lat1, lon1, lat2, lon2) => {
+  const R = 6371e3;
+  const phi1 = toRad(lat1);
+  const phi2 = toRad(lat2);
+  const deltaPhi = toRad(lat2 - lat1);
+  const deltaLambda = toRad(lon2 - lon1);
+
+  const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+            Math.cos(phi1) * Math.cos(phi2) *
+            Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+};
+
+const getCardinalDirection = (deg) => {
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+  const index = Math.round(((deg % 360) + 360) % 360 / 45) % 8;
+  return directions[index];
+};
+
+const UserMarker = ({ position, isFollowing, isCompassMode, currentMapBearing = 0, deviceHeading = null }) => {
+  const map = useMap();
+  const markerRef = React.useRef(null);
+  const circleRef = React.useRef(null);
+
+  const currentCoordsRef = React.useRef([position.lat, position.lng]);
+  const startCoordsRef = React.useRef([position.lat, position.lng]);
+  const targetCoordsRef = React.useRef([position.lat, position.lng]);
+  const animStartTimeRef = React.useRef(0);
+  const animFrameIdRef = React.useRef(null);
+
+  // Interpolación ultra suave tipo Google Maps a 60fps con requestAnimationFrame
+  useEffect(() => {
+    if (!position?.lat || !position?.lng) return;
+
+    const prevLat = currentCoordsRef.current[0];
+    const prevLng = currentCoordsRef.current[1];
+    const newLat = position.lat;
+    const newLng = position.lng;
+
+    // Si la variación es prácticamente nula, no reiniciar animación
+    if (Math.abs(prevLat - newLat) < 0.000001 && Math.abs(prevLng - newLng) < 0.000001) {
+      return;
+    }
+
+    if (animFrameIdRef.current) {
+      cancelAnimationFrame(animFrameIdRef.current);
+    }
+
+    startCoordsRef.current = [prevLat, prevLng];
+    targetCoordsRef.current = [newLat, newLng];
+    animStartTimeRef.current = performance.now();
+
+    // 850ms cubre con fluidez el intervalo de refresco de GPS móvil
+    const duration = 850;
+
+    const animate = (time) => {
+      const elapsed = time - animStartTimeRef.current;
+      const progress = Math.min(1, elapsed / duration);
+      // Curva cúbica suave para desaceleración orgánica
+      const ease = 1 - Math.pow(1 - progress, 3);
+
+      const curLat = startCoordsRef.current[0] + (targetCoordsRef.current[0] - startCoordsRef.current[0]) * ease;
+      const curLng = startCoordsRef.current[1] + (targetCoordsRef.current[1] - startCoordsRef.current[1]) * ease;
+
+      currentCoordsRef.current = [curLat, curLng];
+
+      if (markerRef.current) {
+        markerRef.current.setLatLng([curLat, curLng]);
+      }
+      if (circleRef.current) {
+        circleRef.current.setLatLng([curLat, curLng]);
+      }
+
+      // Desplazamiento fluido de cámara sin tirones cuando se está siguiendo la ubicación
+      if (isFollowing && map) {
+        map.panTo([curLat, curLng], { animate: false });
+      }
+
+      if (progress < 1) {
+        animFrameIdRef.current = requestAnimationFrame(animate);
+      }
+    };
+
+    animFrameIdRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animFrameIdRef.current) {
+        cancelAnimationFrame(animFrameIdRef.current);
+      }
+    };
+  }, [position?.lat, position?.lng, isFollowing, map]);
+
+  // Movimiento activo: velocidad reportada superior a ~2.9 km/h (0.8 m/s)
+  const isMoving = typeof position.speed === 'number' && position.speed > 0.8;
+
+  // Rumbo efectivo:
+  // - Si está en modo brújula: toma la orientación del dispositivo o posición para rotar con el teléfono.
+  // - Si NO está en brújula: SOLO muestra la flecha direccional si nos desplazamos activamente (> 0.8 m/s).
+  // - Si estamos detenidos / estáticos: se muestra siempre el círculo azul limpio sin giros erráticos.
+  const effectiveHeading = isCompassMode
+    ? (typeof position.heading === 'number' && !isNaN(position.heading) ? position.heading : deviceHeading)
+    : (isMoving && typeof position.heading === 'number' && !isNaN(position.heading) ? position.heading : null);
+
+  const hasHeading = typeof effectiveHeading === 'number' && !isNaN(effectiveHeading);
+  // Ángulo de rotación del puntero en pantalla teniendo en cuenta la rotación activa del mapa
+  const screenHeading = hasHeading ? ((effectiveHeading - currentMapBearing + 360) % 360) : 0;
+
+  const markerIcon = React.useMemo(() => {
+    if (hasHeading) {
+      return new L.DivIcon({
+        className: 'user-nav-div-icon',
+        html: `
+          <div class="user-nav-marker-wrapper" style="transform: rotate(${screenHeading}deg);">
+            <div class="nav-vision-beam"></div>
+            <div class="nav-plane-icon">
+              <svg viewBox="0 0 44 44" width="38" height="38" class="nav-plane-svg">
+                <defs>
+                  <filter id="plane-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="rgba(0,0,0,0.45)"/>
+                  </filter>
+                  <linearGradient id="plane-grad-l" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#38bdf8" />
+                    <stop offset="100%" stop-color="#2563eb" />
+                  </linearGradient>
+                  <linearGradient id="plane-grad-r" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#2563eb" />
+                    <stop offset="100%" stop-color="#1d4ed8" />
+                  </linearGradient>
+                </defs>
+                <g filter="url(#plane-shadow)">
+                  <!-- Borde blanco protector de alto contraste -->
+                  <path d="M22 3.5 L37 38 L22 30 L7 38 Z" fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/>
+                  <!-- Ala izquierda en tono celeste vibrante -->
+                  <path d="M22 6 L7 36 L22 29 Z" fill="url(#plane-grad-l)"/>
+                  <!-- Ala derecha en tono azul real con sombra de volumen 3D -->
+                  <path d="M22 6 L37 36 L22 29 Z" fill="url(#plane-grad-r)"/>
+                  <!-- Cabina central -->
+                  <circle cx="22" cy="22" r="2.5" fill="#ffffff"/>
+                </g>
+              </svg>
+            </div>
+          </div>`,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
+        popupAnchor: [0, -22]
+      });
+    }
+
+    return new L.DivIcon({
+      className: 'user-location-container',
+      html: `
+        <div class="user-static-marker-wrapper">
+          <div class="user-static-marker-pulse"></div>
+          <div class="user-static-marker-dot"></div>
+        </div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+      popupAnchor: [0, -12]
+    });
+  }, [hasHeading, screenHeading]);
+
+  const speedKmh = position.speed ? Math.round(position.speed * 3.6) : 0;
+  const cardinal = hasHeading ? getCardinalDirection(effectiveHeading) : '';
+
+  return (
+    <>
+      <Circle
+        ref={circleRef}
+        center={currentCoordsRef.current}
+        radius={Math.min(position.accuracy || 20, 80)}
+        pathOptions={{
+          color: '#1a73e8',
+          fillColor: '#1a73e8',
+          fillOpacity: 0.12,
+          weight: 1.5,
+          interactive: false
+        }}
+      />
+
+      <Marker 
+        ref={markerRef}
+        position={currentCoordsRef.current} 
+        icon={markerIcon} 
+        zIndexOffset={1000}
+        eventHandlers={{
+          click: (e) => {
+            L.DomEvent.stopPropagation(e);
+          }
+        }}
+      >
+        <Popup>
+          <div className="custom-popup user-popup">
+            <strong>Tu ubicación actual</strong>
+            {speedKmh > 1 && (
+              <div style={{ marginTop: '3px', fontSize: '0.9em', color: '#16a34a', fontWeight: 'bold' }}>
+                🚗 {speedKmh} km/h
+              </div>
+            )}
+            {hasHeading && (
+              <div style={{ marginTop: '2px', fontSize: '0.85em', color: '#2563eb' }}>
+                🧭 Rumbo: {effectiveHeading}° ({cardinal})
+              </div>
+            )}
+            <div style={{ marginTop: '2px' }}>
+              <small style={{ color: '#64748b' }}>Precisión estimada: ±{Math.round(position.accuracy || 10)} m</small>
+            </div>
+          </div>
+        </Popup>
+      </Marker>
+    </>
+  );
+};
+
+const MapClickHandler = ({ onMapClick, markingMode }) => {  
+  useMapEvents({
+    // CORRECCIÓN DEL CLIC: Si el modo de marcado está activo, ejecutamos el handler.
+    click: (e) => {
+      if (!markingMode) {
+        return;
+      }
+      
+      // La clave es ejecutar el handler directamente y detener la propagación de eventos
+      // para evitar que otros elementos (como marcadores de sitios) capten el clic.
+      onMapClick(e);
+      L.DomEvent.stopPropagation(e); 
+    },
+    // CORRECCIÓN DEL ZOOM: Si está en modo de marcado, bloqueamos el doble clic (zoom).
+    dblclick: (e) => {
+        if (markingMode) {
+            L.DomEvent.stopPropagation(e);
+        }
+    }
+  });
+  
+  return null;
+};
+
+const MapController = React.forwardRef(({ center, isFollowing, initialSelectedSite, hasActiveRoute, defaultCenter, onManualPan, onRotate }, mapRef) => {
+  const map = useMap();
+  
+  React.useImperativeHandle(mapRef, () => ({
+      centerMapToDefault: () => {
+          map.setView(defaultCenter, 13);
+      },
+      flyToLocation: (coords, zoom = 16) => {
+          map.flyTo(coords, zoom, { duration: 1.2 });
+      },
+      fitBoundsToCoords: (coords) => {
+          if (coords && coords.length > 0) {
+              const bounds = L.latLngBounds(coords);
+              map.fitBounds(bounds, { padding: [40, 40] });
+          }
+      },
+      setBearing: (bearing) => {
+          if (map && typeof map.setBearing === 'function') {
+              map.setBearing(bearing);
+          }
+      },
+      getBearing: () => {
+          return (map && typeof map.getBearing === 'function') ? map.getBearing() : 0;
+      }
+  }), [map, defaultCenter]);
+
+  // Capturar rotación del mapa para actualizar brújula
+  useEffect(() => {
+    if (!map) return;
+    const handleRotate = () => {
+      if (onRotate && typeof map.getBearing === 'function') {
+        onRotate(Math.round(map.getBearing()));
+      }
+    };
+    map.on('rotate', handleRotate);
+    return () => {
+      map.off('rotate', handleRotate);
+    };
+  }, [map, onRotate]);
+
+  useEffect(() => {
+    if (!map) return;
+    const handleDragStart = () => {
+      if (onManualPan) {
+        onManualPan();
+      }
+    };
+    map.on('dragstart', handleDragStart);
+    return () => {
+      map.off('dragstart', handleDragStart);
+    };
+  }, [map, onManualPan]);
+
+  useEffect(() => {
+    if (hasActiveRoute) {
+      return;
+    }
+    
+    if (initialSelectedSite) {
+      const lat = initialSelectedSite.latitude || initialSelectedSite.lat;
+      const lng = initialSelectedSite.longitude || initialSelectedSite.lng;
+      
+      if (lat && lng) {
+        map.setView([lat, lng], 14);
+        return;
+      }
+    }
+  }, [initialSelectedSite, hasActiveRoute, map]);
+
+  return null;
+});
+
+function MapPage() {
+  const [sites, setSites] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  
+  const mapRef = React.useRef(null); 
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const [selectedSite, setSelectedSite] = useState(null);
+
+  useEffect(() => {
+    const latParam = searchParams.get('lat');
+    const lngParam = searchParams.get('lng');
+    const idParam = searchParams.get('id');
+
+    if (latParam && lngParam) {
+      setSelectedSite({ 
+        lat: parseFloat(latParam), 
+        lng: parseFloat(lngParam), 
+        id: idParam 
+      });
+    } else {
+      setSelectedSite(null);
+    }
+  }, [searchParams]);
+
+  const initialSelectedSite = selectedSite;
+  
+  const [userLocation, setUserLocation] = useState(null);
+  
+  const [routingDestination, setRoutingDestination] = useState(null);
+  const [manualDestination, setManualDestination] = useState(null);
+
+  const [isFollowing, setIsFollowing] = useState(false); 
+  const [markingMode, setMarkingMode] = useState(false);
+  const [mapLayer, setMapLayer] = useState('satellite'); // 'satellite' | 'streets' | 'pure-satellite'
+  const [showLayersMenu, setShowLayersMenu] = useState(false);
+  const layersMenuRef = React.useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (layersMenuRef.current && !layersMenuRef.current.contains(e.target)) {
+        setShowLayersMenu(false);
+      }
+    };
+    if (showLayersMenu) {
+      document.addEventListener('click', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, [showLayersMenu]);
+
+  // Modo Brújula y Orientación Dinámica
+  const [isCompassMode, setIsCompassMode] = useState(false);
+  const [mapBearing, setMapBearing] = useState(0);
+  const [deviceHeading, setDeviceHeading] = useState(null);
+
+  const prevLocationRef = React.useRef(null);
+  const lastCalculatedHeadingRef = React.useRef(null);
+  const routingDestinationRef = React.useRef(null);
+
+  // Control de saltos anómalos de GPS (Outlier Rejection)
+  const lastValidPosRef = React.useRef(null);
+  const lastValidTimeRef = React.useRef(0);
+  const consecutiveOutliersRef = React.useRef(0);
+
+
+
+  // Estado de conectividad a internet (Online / Offline)
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Geoapify: Modo de transporte ('walk' | 'drive'), rutas evaluadas y activa
+  const [routeTransportMode, setRouteTransportMode] = useState('walk');
+  const [availableRoutes, setAvailableRoutes] = useState([]);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const geoapifyRoute = availableRoutes[selectedRouteIndex] || null;
+
+  // Estado de llegada al destino
+  const [hasArrived, setHasArrived] = useState(false);
+
+  // Geoapify: Zona caminable a 10 min (Isócrona)
+  const [isolineActive, setIsolineActive] = useState(false);
+  const [isolinePolygon, setIsolinePolygon] = useState(null);
+  const [isolineLoading, setIsolineLoading] = useState(false);
+
+  // Geoapify: Búsqueda y autocompletado inteligente
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Registro transparente del Service Worker para caché automático de mapas
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.warn('[SW] Error al registrar service worker:', err);
+      });
+    }
+  }, []);
+
+  // Detector de conectividad en tiempo real (Online / Offline)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsOnline(navigator.onLine);
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success('Conexión a internet restablecida', { icon: '🟢', duration: 3000 });
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast('Modo Satelital activo', { icon: '🛰️', duration: 4000 });
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Sensor de orientación física del smartphone (brújula electrónica)
+  useEffect(() => {
+    const handleOrientation = (e) => {
+      let heading = null;
+      if (typeof e.webkitCompassHeading === 'number') {
+        // iOS Safari
+        heading = e.webkitCompassHeading;
+      } else if (typeof e.alpha === 'number') {
+        // Android y navegadores estándar
+        heading = (360 - e.alpha) % 360;
+        if (typeof window !== 'undefined' && window.screen?.orientation?.angle) {
+          heading = (heading + window.screen.orientation.angle) % 360;
+        }
+      }
+
+      if (heading !== null && !isNaN(heading)) {
+        setDeviceHeading(Math.round(heading));
+      }
+    };
+
+    if (typeof window !== 'undefined' && window.DeviceOrientationEvent) {
+      window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+      window.addEventListener('deviceorientation', handleOrientation, true);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
+        window.removeEventListener('deviceorientation', handleOrientation, true);
+      }
+    };
+  }, []);
+
+  // Suprimir errores arrojados por extensiones del navegador del usuario (como adblockers o scripts inyectados)
+  useEffect(() => {
+    const handleExtensionError = (event) => {
+      const src = event.filename || (event.error && event.error.stack) || '';
+      if (
+        src.includes('chrome-extension://') ||
+        src.includes('moz-extension://') ||
+        event.message?.includes('M_ID')
+      ) {
+        event.stopImmediatePropagation();
+        event.preventDefault();
+        return true;
+      }
+    };
+
+    window.addEventListener('error', handleExtensionError, true);
+    return () => {
+      window.removeEventListener('error', handleExtensionError, true);
+    };
+  }, []);
+
+  const lastPositionTime = React.useRef(0);
+  const badSignalCounterRef = React.useRef(0);
+  
+  const routeToastShownRef = React.useRef(false);
+  const arrivedToastShownRef = React.useRef(false);
+  
+  const geolocationWatchErrorToastRef = React.useRef(false);
+  
+  const SAN_ANTONIO_PALOPO = [14.6920, -91.1172]; 
+  const defaultInitialCenter = SAN_ANTONIO_PALOPO; 
+  
+  const initialCenter = initialSelectedSite ? 
+    [initialSelectedSite.lat, initialSelectedSite.lng] : defaultInitialCenter;
+  const mapZoom = initialSelectedSite ? 15 : 14;
+  
+  useEffect(() => {
+    const q = query(collection(db, 'sites'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const sitesData = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        // Soporta todas las variantes de coordenadas en Firestore (latitud/longitud directos, GeoPoints o anidados)
+        const rawLat = data.latitude ?? data.coordinates?.latitude ?? data.coordinates?._latitude ?? data.coordinates?.lat ?? data.lat;
+        const rawLng = data.longitude ?? data.coordinates?.longitude ?? data.coordinates?._longitude ?? data.coordinates?.lng ?? data.lng;
+
+        const lat = typeof rawLat === 'string' ? parseFloat(rawLat) : Number(rawLat);
+        const lng = typeof rawLng === 'string' ? parseFloat(rawLng) : Number(rawLng);
+
+        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+          sitesData.push({
+            id: doc.id,
+            ...data,
+            latitude: lat,
+            longitude: lng,
+          });
+        }
+      });
+      setSites(sitesData);
+      setLoading(false);
+    }, (err) => {
+      setError("No se pudieron cargar los datos para el mapa.");
+      setLoading(false);
+    });
+
+    window.scrollTo(0, 0);
+    return () => unsubscribe();
+  }, []);
+
+  const isInsideGuatemala = (lat, lng) => {
+    return lat >= 13.5 && lat <= 17.5 && lng >= -92.5 && lng <= -88.0;
+  };
+
+  useEffect(() => {
+    routingDestinationRef.current = routingDestination;
+    if (routingDestination) {
+      arrivedToastShownRef.current = false;
+      setHasArrived(false);
+    }
+  }, [routingDestination]);
+  
+  // Watch de geolocalización de alta frecuencia sin reinicios innecesarios
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      console.error('La geolocalización no es soportada por tu navegador.');
+      return;
+    }
+    
+    let userDeniedToastShown = false; 
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        geolocationWatchErrorToastRef.current = false;
+        badSignalCounterRef.current = 0;
+        userDeniedToastShown = false;
+
+        const now = Date.now();
+        // Throttling a 250ms: permite hasta 4 actualizaciones fluidas por segundo
+        if (now - lastPositionTime.current < 250) return; 
+        lastPositionTime.current = now;
+
+        const { latitude, longitude, accuracy, heading, speed } = position.coords;
+        const isNear = isInsideGuatemala(latitude, longitude);
+
+        // --- FILTRO ANTI-SALTOS CINEMÁTICO (OUTLIER REJECTION) ---
+        // 1. Descartar lecturas con margen de error inaceptable (> 65m) si ya teníamos una posición previa confiable
+        if (accuracy > 65 && lastValidPosRef.current && lastValidPosRef.current.accuracy <= 40) {
+          return;
+        }
+
+        // 2. Filtro de velocidad física máxima (detecta rebote de antena celular o pérdida de satélites)
+        if (lastValidPosRef.current) {
+          const dtSeconds = Math.max((now - lastValidTimeRef.current) / 1000, 0.25);
+          const jumpDistance = calculateDistanceMeters(
+            lastValidPosRef.current.lat,
+            lastValidPosRef.current.lng,
+            latitude,
+            longitude
+          );
+          const calculatedSpeedKmh = (jumpDistance / dtSeconds) * 3.6;
+
+          // En las carreteras y curvas de Atitlán, velocidades instantáneas superiores a 130 km/h
+          // indican un salto espurio (antena celular lejana o rebote de señal en montañas).
+          if (calculatedSpeedKmh > 130) {
+            consecutiveOutliersRef.current += 1;
+            // Si la anomalía se repite 4 veces seguidas con buena precisión, aceptamos el nuevo punto
+            if (consecutiveOutliersRef.current < 4) {
+              return;
+            }
+          }
+        }
+
+        consecutiveOutliersRef.current = 0;
+        lastValidPosRef.current = { lat: latitude, lng: longitude, accuracy };
+        lastValidTimeRef.current = now;
+
+        const currentSpeed = (typeof speed === 'number' && !isNaN(speed) && speed > 0) ? speed : 0;
+        let dist = 0;
+        if (prevLocationRef.current) {
+          dist = calculateDistanceMeters(
+            prevLocationRef.current.lat, 
+            prevLocationRef.current.lng, 
+            latitude, 
+            longitude
+          );
+        }
+
+        // Calibración anti-deriva y detección de movimiento real:
+        // Se considera desplazamiento activo si la velocidad GPS es > 0.8 m/s (~2.9 km/h)
+        // o si hay un avance neto de coordenadas >= 4.0 metros (evitando micro-deriva de GPS estático en interiores).
+        const isActivelyMoving = currentSpeed > 0.8 || (dist >= 4.0 && (!speed || currentSpeed > 0.3));
+
+        let activeHeading = null;
+
+        if (isActivelyMoving) {
+          // 1. Si el sensor GPS reporta rumbo nativo válido mientras nos movemos
+          if (typeof heading === 'number' && !isNaN(heading) && heading >= 0) {
+            activeHeading = Math.round(heading);
+            lastCalculatedHeadingRef.current = activeHeading;
+          } 
+          // 2. Si nos movemos y hay avance continuo, calculamos el vector de desplazamiento
+          else if (prevLocationRef.current && dist >= 3.0) {
+            activeHeading = Math.round(calculateBearing(
+              prevLocationRef.current.lat, 
+              prevLocationRef.current.lng, 
+              latitude, 
+              longitude
+            ));
+            lastCalculatedHeadingRef.current = activeHeading;
+          } else {
+            activeHeading = lastCalculatedHeadingRef.current;
+          }
+          prevLocationRef.current = { lat: latitude, lng: longitude };
+        } else {
+          // Usuario estacionario / quieto: reseteamos rumbo para mantener el círculo limpio y estático
+          lastCalculatedHeadingRef.current = null;
+          activeHeading = null;
+          if (dist >= 3.5) {
+            prevLocationRef.current = { lat: latitude, lng: longitude };
+          }
+        }
+
+        const newLocation = {
+          lat: latitude,
+          lng: longitude,
+          accuracy: accuracy || 25,
+          heading: activeHeading,
+          speed: currentSpeed,
+          isInsideGuatemala: isNear,
+        };
+
+        setUserLocation(newLocation);
+
+        const currentDest = routingDestinationRef.current;
+        if (currentDest && !arrivedToastShownRef.current) {
+          const destination = L.latLng(currentDest.lat, currentDest.lng);
+          const user = L.latLng(latitude, longitude);
+          const distance = user.distanceTo(destination);
+
+          // Umbral de precisión exacta: únicamente al estar en el punto exacto (<= 10 metros)
+          if (distance <= 10) {
+            const destName = currentDest.name || 'tu destino';
+            toast.success(`🎉 ¡Has llegado a tu destino: ${destName}!`, {
+              id: 'arrival-toast',
+              duration: 8000,
+            });
+
+            // Vibración háptica en teléfonos móviles
+            if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+              try { navigator.vibrate([250, 100, 250, 100, 400]); } catch (_) {}
+            }
+
+            // Anuncio por voz
+            if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+              try {
+                const utterance = new SpeechSynthesisUtterance(`Has llegado a tu destino, ${destName}`);
+                utterance.lang = 'es-ES';
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+              } catch (_) {}
+            }
+
+            arrivedToastShownRef.current = true;
+            setHasArrived(true);
+          }
+        }
+      },
+      (error) => {
+        const errorMessages = {
+          1: 'Permisos de ubicación denegados. No se puede usar la ubicación.',
+          2: 'Posición no disponible. Verifica el GPS.',
+          3: 'Tiempo de espera agotado.'
+        };
+        
+        if (error.code === 1 && !userDeniedToastShown) {
+            toast.error(errorMessages[error.code], { duration: 4000 });
+            userDeniedToastShown = true;
+        }
+        else if (error.code === 3) {
+            badSignalCounterRef.current += 1;
+            if (badSignalCounterRef.current === 3) {
+                toast('Buscando señal GPS... Puede tardar un momento.', { icon: '🛰️', duration: 4000 });
+            }
+        }
+        else if (!geolocationWatchErrorToastRef.current) { 
+            toast.error(errorMessages[error.code] || 'Error al obtener la ubicación.', { duration: 4000 });
+            geolocationWatchErrorToastRef.current = true;
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      }
+    );
+
+    return () => {
+      if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, []);
+
+  // Manejador del botón de brújula / orientación activa
+  const handleToggleCompass = async () => {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission !== 'granted') {
+          toast('Permiso de orientación no concedido', { icon: '🧭' });
+        }
+      } catch (err) {
+        console.warn('Permiso de orientación:', err);
+      }
+    }
+
+    if (isCompassMode) {
+      setIsCompassMode(false);
+      if (mapRef.current) {
+        mapRef.current.setBearing(0);
+      }
+      toast('Orientación restablecida al Norte (0°)', { icon: '🧭' });
+    } else {
+      // Si el mapa ya tenía rotación manual, al hacer clic se restablece al Norte
+      if (mapBearing !== 0) {
+        if (mapRef.current) {
+          mapRef.current.setBearing(0);
+        }
+        toast('Orientación restablecida al Norte (0°)', { icon: '🧭' });
+        return;
+      }
+
+      setIsCompassMode(true);
+      setIsFollowing(true);
+      const heading = (typeof userLocation?.heading === 'number' && userLocation.heading >= 0)
+        ? userLocation.heading
+        : (deviceHeading ?? 0);
+      if (mapRef.current) {
+        mapRef.current.setBearing(heading);
+      }
+      toast.success('Modo brújula activado: el mapa se orienta a tu dirección', { icon: '🧭' });
+    }
+  };
+
+  // Mantener el mapa rotado hacia la dirección del usuario si el modo brújula está activo
+  useEffect(() => {
+    if (!isCompassMode || !mapRef.current) return;
+    const effectiveHeading = (typeof userLocation?.heading === 'number' && (userLocation?.speed > 0.5 || deviceHeading === null))
+      ? userLocation.heading
+      : (deviceHeading ?? userLocation?.heading);
+
+    if (typeof effectiveHeading === 'number' && !isNaN(effectiveHeading)) {
+      mapRef.current.setBearing(effectiveHeading);
+    }
+  }, [isCompassMode, userLocation?.heading, userLocation?.speed, deviceHeading]);
+
+  const handleCenterMapToDefault = (e) => {
+      e.stopPropagation();
+      if (mapRef.current) {
+          mapRef.current.centerMapToDefault();
+          setIsFollowing(false);
+      }
+  };
+
+  const handleClearSelection = () => {
+    setRoutingDestination(null);
+    setManualDestination(null);
+    setAvailableRoutes([]);
+    setSelectedRouteIndex(0);
+    setHasArrived(false);
+    routeToastShownRef.current = false;
+    arrivedToastShownRef.current = false;
+    setSelectedSite(null);
+    window.history.replaceState(null, '', '/mapa');
+  };
+
+  const handleClearSiteView = () => {
+    setSelectedSite(null);
+    window.history.replaceState(null, '', '/mapa');
+  };
+
+  const isRealLocationAvailable = Boolean(userLocation && typeof userLocation.lat === 'number' && typeof userLocation.lng === 'number');
+  
+  const memoizedCenter = React.useMemo(() => {
+    return userLocation ? [userLocation.lat, userLocation.lng] : null;
+  }, [userLocation?.lat, userLocation?.lng]);
+
+  // Distancia exacta restante en metros al destino seleccionado
+  const distanceToDestMeters = React.useMemo(() => {
+    const dest = routingDestination || manualDestination;
+    if (!userLocation || !dest || typeof userLocation.lat !== 'number' || typeof dest.lat !== 'number') {
+      return null;
+    }
+    const user = L.latLng(userLocation.lat, userLocation.lng);
+    const destination = L.latLng(dest.lat, dest.lng);
+    return Math.round(user.distanceTo(destination));
+  }, [userLocation?.lat, userLocation?.lng, routingDestination?.lat, routingDestination?.lng, manualDestination?.lat, manualDestination?.lng]);
+
+  // 1. Geocodificación inversa al marcar un punto en el mapa
+  const handleMapClick = (e) => {
+    if (!isRealLocationAvailable) {
+        toast.error('Ubicación real no disponible. Activa la geolocalización y espera a que se fije.', { duration: 4000 });
+        return;
+    }
+    
+    const { lat, lng } = e.latlng;
+    const initialDestination = {
+      lat: lat,
+      lng: lng,
+      name: `Punto (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+      address: 'Identificando nombre de lugar...'
+    };
+    
+    setManualDestination(initialDestination);
+    setRoutingDestination(initialDestination);
+    setHasArrived(false);
+    routeToastShownRef.current = false;
+    arrivedToastShownRef.current = false;
+    setIsFollowing(false);
+    setMarkingMode(false);
+
+    // Consulta de geocodificación inversa a Geoapify
+    reverseGeocode(lat, lng).then(info => {
+      if (info) {
+        const friendlyName = info.name || info.street || info.formatted;
+        setManualDestination(prev => (prev && Math.abs(prev.lat - lat) < 0.0001 && Math.abs(prev.lng - lng) < 0.0001) ? {
+          ...prev,
+          name: friendlyName,
+          address: info.formatted || info.street || ''
+        } : prev);
+        setRoutingDestination(prev => (prev && Math.abs(prev.lat - lat) < 0.0001 && Math.abs(prev.lng - lng) < 0.0001) ? {
+          ...prev,
+          name: friendlyName,
+          address: info.formatted || info.street || ''
+        } : prev);
+      }
+    }).catch(err => {
+      console.warn('Error en reverse geocoding:', err);
+    });
+  };
+
+  const handleSetRouting = (site) => {
+    if (!isRealLocationAvailable) {
+      toast.error('Tu ubicación no está fijada. Activa la geolocalización para trazar la ruta.', { duration: 4000 });
+      return;
+    }
+    
+    setTimeout(() => {
+      const popups = document.querySelectorAll('.leaflet-popup');
+      popups.forEach(popup => popup.remove());
+    }, 0);
+    
+    setRoutingDestination({ lat: site.latitude, lng: site.longitude, name: site.name });
+    setHasArrived(false);
+    routeToastShownRef.current = false;
+    arrivedToastShownRef.current = false;
+    setIsFollowing(false);
+  };
+
+  // 2. Cálculo de ruta con Geoapify (Evalúa opciones y alternativas)
+  useEffect(() => {
+    if (!routingDestination || !isRealLocationAvailable) {
+      setAvailableRoutes([]);
+      setSelectedRouteIndex(0);
+      return;
+    }
+
+    let isMounted = true;
+    const start = [userLocation.lat, userLocation.lng];
+    const end = [routingDestination.lat, routingDestination.lng];
+
+    calculateRoutes(start, end, routeTransportMode).then(results => {
+      if (!isMounted) return;
+      if (results && results.length > 0) {
+        setAvailableRoutes(results);
+        setSelectedRouteIndex(0);
+        if (mapRef.current && results[0]?.coordinates?.length > 0) {
+          mapRef.current.fitBoundsToCoords(results[0].coordinates);
+        }
+      } else {
+        setAvailableRoutes([]);
+        setSelectedRouteIndex(0);
+      }
+    }).catch(err => {
+      console.warn('Error calculando ruta con Geoapify:', err);
+      setAvailableRoutes([]);
+      setSelectedRouteIndex(0);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [routingDestination, routeTransportMode, userLocation?.lat, userLocation?.lng, isRealLocationAvailable]);
+
+  // 3. Búsqueda y autocompletado inteligente (Sitios Firebase + Lugares Geoapify)
+  useEffect(() => {
+    if (!searchQuery || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      const q = searchQuery.toLowerCase().trim();
+
+      // Sitios turísticos registrados en Firebase
+      const localMatches = (sites || []).filter(site => 
+        (site.name && site.name.toLowerCase().includes(q)) ||
+        (site.category && site.category.toLowerCase().includes(q)) ||
+        (site.parentCategory && site.parentCategory.toLowerCase().includes(q))
+      ).slice(0, 5).map(s => ({
+        id: `site-${s.id}`,
+        type: 'local',
+        title: s.name,
+        subtitle: s.category || s.parentCategory || 'Sitio turístico',
+        lat: s.latitude,
+        lng: s.longitude,
+        siteData: s
+      }));
+
+      // Lugares, calles y comercios en Atitlán mediante Geoapify
+      let geoMatches = [];
+      try {
+        const places = await autocompletePlaces(searchQuery, { 
+          lat: SAN_ANTONIO_PALOPO[0], 
+          lon: SAN_ANTONIO_PALOPO[1] 
+        });
+        geoMatches = (places || []).slice(0, 5).map(p => ({
+          id: `geo-${p.id}`,
+          type: 'geoapify',
+          title: p.title,
+          subtitle: p.subtitle,
+          lat: p.lat,
+          lng: p.lng
+        }));
+      } catch (err) {
+        console.warn('Error en autocompletado:', err);
+      }
+
+      setSearchResults([...localMatches, ...geoMatches]);
+      setIsSearching(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, sites]);
+
+  const handleSelectSearchResult = (result) => {
+    if (!result || !result.lat || !result.lng) return;
+
+    if (mapRef.current) {
+      mapRef.current.flyToLocation([result.lat, result.lng], 16);
+    }
+
+    if (result.type === 'local' && result.siteData) {
+      setSelectedSite({
+        lat: result.lat,
+        lng: result.lng,
+        id: result.siteData.id
+      });
+      toast.success(`Ubicado: ${result.title}`);
+    } else {
+      const newDest = {
+        lat: result.lat,
+        lng: result.lng,
+        name: result.title,
+        address: result.subtitle || ''
+      };
+      setManualDestination(newDest);
+      if (isRealLocationAvailable) {
+        setHasArrived(false);
+        arrivedToastShownRef.current = false;
+        setRoutingDestination(newDest);
+        toast.success(`Destino fijado: ${result.title}`);
+      } else {
+        toast(`Ubicado en el mapa: ${result.title}`, { icon: '📍' });
+      }
+    }
+
+    setSearchQuery('');
+    setSearchResults([]);
+    setIsSearchOpen(false);
+  };
+
+  // 4. Zona caminable a 10 min (Isócrona de Geoapify)
+  const handleToggleIsoline = async () => {
+    if (!isRealLocationAvailable) {
+      toast.error("Activa tu ubicación GPS para calcular tu área caminable.", { duration: 4000 });
+      return;
+    }
+
+    if (isolineActive) {
+      setIsolineActive(false);
+      setIsolinePolygon(null);
+      toast("Zona caminable desactivada", { icon: '⏱️' });
+      return;
+    }
+
+    setIsolineLoading(true);
+    const toastId = toast.loading("Calculando zona caminable a 10 min...");
+
+    try {
+      const feature = await getIsolineArea(userLocation.lat, userLocation.lng, 10, 'walk');
+      toast.dismiss(toastId);
+      if (feature) {
+        setIsolinePolygon(feature);
+        setIsolineActive(true);
+        toast.success("Mostrando área accesible a 10 minutos a pie", { duration: 4000 });
+      } else {
+        toast.error("No se pudo calcular la zona caminable para esta ubicación.");
+      }
+    } catch (err) {
+      toast.dismiss(toastId);
+      console.warn('Error al obtener isoline:', err);
+      toast.error("Error al obtener la zona caminable.");
+    } finally {
+      setIsolineLoading(false);
+    }
+  };
+
+
+
+  const formatTime = (seconds) => {
+    const minutes = Math.round(seconds / 60);
+    return `${minutes} min`;
+  }
+
+  const truncateTitle = (title, wordLimit = 5) => {
+    const words = title.split(' ');
+    if (words.length > wordLimit) {
+      return words.slice(0, wordLimit).join(' ') + '...';
+    }
+    return title;
+  };
+
+  if (loading) return <p>Cargando mapa...</p>;
+  if (error) return <p className="error-message">{error}</p>;
+
+  return (
+    <div className="map-page-container">
+      {/* Barra de Búsqueda Inteligente (Firebase + Geoapify) */}
+      <div className="map-search-container">
+        <div className="map-search-input-wrapper">
+          <Search size={18} className="map-search-icon" />
+          <input
+            type="text"
+            className="map-search-input"
+            placeholder="Buscar sitios, hoteles, miradores..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setIsSearchOpen(true);
+            }}
+            onFocus={() => setIsSearchOpen(true)}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="map-search-clear"
+              onClick={() => {
+                setSearchQuery('');
+                setSearchResults([]);
+                setIsSearchOpen(false);
+              }}
+              title="Borrar búsqueda"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+
+        {/* Desplegable de Resultados */}
+        {isSearchOpen && searchQuery.trim().length >= 2 && (
+          <div className="map-search-dropdown">
+            {isSearching && (
+              <div className="map-search-loading">
+                <span>Buscando en San Antonio Palopó...</span>
+              </div>
+            )}
+            {!isSearching && searchResults.length === 0 && (
+              <div className="map-search-empty">
+                No se encontraron resultados para "{searchQuery}"
+              </div>
+            )}
+            {!isSearching && searchResults.length > 0 && (
+              <div className="map-search-results-list">
+                {searchResults.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="map-search-item"
+                    onClick={() => handleSelectSearchResult(item)}
+                  >
+                    <div className="map-search-item-icon">
+                      {item.type === 'local' ? (
+                        <MapPin size={18} color="#10b981" />
+                      ) : (
+                        <Navigation size={18} color="#2563eb" />
+                      )}
+                    </div>
+                    <div className="map-search-item-info">
+                      <div className="map-search-item-title">{item.title}</div>
+                      {item.subtitle && (
+                        <div className="map-search-item-subtitle">{item.subtitle}</div>
+                      )}
+                    </div>
+                    <span className={`map-search-badge ${item.type}`}>
+                      {item.type === 'local' ? 'Turismo' : 'Lugar'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <h1 className="map-page-title">Sitios Turísticos</h1>
+
+      {!isOnline && (
+        <div className="map-offline-status-banner">
+          <span className="offline-pulse-dot"></span>
+          <span>Modo Satelital</span>
+        </div>
+      )}
+
+      {initialSelectedSite && !routingDestination && !manualDestination && (
+        <div className="map-info-banner">
+          <p>Viendo sitio seleccionado</p>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClearSiteView();
+            }} 
+            className="map-info-banner-close"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {(routingDestination || manualDestination) && (
+        <div className={`map-info-banner route-banner-compact ${hasArrived ? 'arrived-banner' : ''}`}>
+          {/* Selector compacto de modo a pie / auto */}
+          {!hasArrived && (
+            <div className="route-mode-switcher-compact">
+              <button 
+                type="button" 
+                className={`mode-icon-btn ${routeTransportMode === 'walk' ? 'active' : ''}`}
+                onClick={() => setRouteTransportMode('walk')}
+                title="Ruta a pie (senderos y callejones)"
+                aria-label="A pie"
+              >
+                <Footprints size={15} />
+              </button>
+              <button 
+                type="button" 
+                className={`mode-icon-btn ${routeTransportMode === 'drive' ? 'active' : ''}`}
+                onClick={() => setRouteTransportMode('drive')}
+                title="Ruta en vehículo (calles y carreteras)"
+                aria-label="En vehículo"
+              >
+                <Car size={15} />
+              </button>
+            </div>
+          )}
+
+          {/* Nombre de Destino y Distancia en vivo */}
+          <div className="route-compact-main">
+            <span className="route-dest-name-compact" title={manualDestination ? manualDestination.name : routingDestination?.name}>
+              {hasArrived ? `🎉 ¡Has llegado!` : (manualDestination ? manualDestination.name : routingDestination?.name)}
+            </span>
+            {geoapifyRoute && !hasArrived && (
+              <span className="route-stats-badge-compact">
+                {distanceToDestMeters !== null && distanceToDestMeters <= 200 
+                  ? `A ${distanceToDestMeters} m` 
+                  : `${Math.round(geoapifyRoute.timeSeconds / 60)} min • ${geoapifyRoute.distanceMeters >= 1000 ? `${(geoapifyRoute.distanceMeters / 1000).toFixed(1)} km` : `${Math.round(geoapifyRoute.distanceMeters)} m`}`}
+              </span>
+            )}
+          </div>
+
+          {/* Botón Cerrar / Finalizar */}
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClearSelection();
+            }} 
+            className="route-banner-close-btn"
+            title={hasArrived ? "Finalizar ruta" : "Cerrar ruta"}
+          >
+            {hasArrived ? 'Finalizar' : '✕'}
+          </button>
+        </div>
+      )}
+
+      {/* Cuadro flotante separado e independiente para alternar rutas (Ruta 1 / Ruta 2) */}
+      {!hasArrived && availableRoutes.length > 1 && (
+        <div className="alternative-routes-floating-bar">
+          <div className="routes-floating-pill-group">
+            {availableRoutes.map((rt, idx) => {
+              const isSelected = idx === selectedRouteIndex;
+              const timeMin = Math.round(rt.timeSeconds / 60);
+              const distStr = rt.distanceMeters >= 1000 
+                ? `${(rt.distanceMeters / 1000).toFixed(1)} km` 
+                : `${Math.round(rt.distanceMeters)} m`;
+
+              return (
+                <button
+                  key={rt.id || idx}
+                  type="button"
+                  className={`route-pill-btn ${isSelected ? 'active' : ''}`}
+                  onClick={() => {
+                    setSelectedRouteIndex(idx);
+                    if (mapRef.current && rt.coordinates?.length > 0) {
+                      mapRef.current.fitBoundsToCoords(rt.coordinates);
+                    }
+                  }}
+                >
+                  <span className="route-pill-btn-label">{idx === 0 ? 'Ruta 1' : 'Ruta 2'}</span>
+                  <span className="route-pill-btn-stats">{timeMin} min ({distStr})</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <MapContainer 
+        center={initialCenter} 
+        zoom={mapZoom} 
+        maxZoom={21}
+        className="map-view" 
+        zoomControl={false}
+        rotate={true}
+        touchRotate={true}
+        rotateControl={false}
+        preferCanvas={true}
+      >
+        <MapController 
+          ref={mapRef}
+          center={memoizedCenter}
+          isFollowing={isFollowing} 
+          initialSelectedSite={initialSelectedSite}
+          hasActiveRoute={Boolean(geoapifyRoute)} 
+          defaultCenter={defaultInitialCenter}
+          onManualPan={() => setIsFollowing(false)}
+          onRotate={(bearing) => setMapBearing(bearing)}
+        />
+
+        <MapClickHandler onMapClick={handleMapClick} markingMode={markingMode} />
+
+        <div className="leaflet-top leaflet-right">
+          <div className="navigation-controls-unified">
+            {/* Botón y Menú de Capas Desplegable */}
+            <div className="map-layers-container" ref={layersMenuRef}>
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowLayersMenu(prev => !prev);
+                }} 
+                className={`control-button ${showLayersMenu ? 'active' : ''}`}
+                title="Capas del mapa"
+                aria-label="Seleccionar capa del mapa"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2,17 12,22 22,17"></polyline>
+                  <polyline points="2,12 12,17 22,12"></polyline>
+                </svg>
+              </button>
+
+              {showLayersMenu && (
+                <div className="map-layers-dropdown" onClick={(e) => e.stopPropagation()}>
+                  <div className="map-layers-header">
+                    <span>Capas del Mapa</span>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowLayersMenu(false)}
+                      className="layers-close-btn"
+                      aria-label="Cerrar menú de capas"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="map-layers-list">
+                    {/* Capa 1: Satélite Híbrido HD (Google) */}
+                    <button
+                      type="button"
+                      className={`map-layer-item ${mapLayer === 'satellite' ? 'selected' : ''}`}
+                      onClick={() => {
+                        setMapLayer('satellite');
+                        setShowLayersMenu(false);
+                      }}
+                    >
+                      <div className="map-layer-icon-badge">🛰️</div>
+                      <div className="map-layer-text">
+                        <span className="map-layer-name">Satélite Híbrido HD</span>
+                        <span className="map-layer-desc">Google Maps con calles y nombres</span>
+                      </div>
+                      {mapLayer === 'satellite' && <span className="map-layer-check">✓</span>}
+                    </button>
+
+                    {/* Capa 2: Calles Oficial (OpenStreetMap) - El original sin tocar */}
+                    <button
+                      type="button"
+                      className={`map-layer-item ${mapLayer === 'streets' ? 'selected' : ''}`}
+                      onClick={() => {
+                        setMapLayer('streets');
+                        setShowLayersMenu(false);
+                      }}
+                    >
+                      <div className="map-layer-icon-badge">🗺️</div>
+                      <div className="map-layer-text">
+                        <span className="map-layer-name">Calles (OpenStreetMap)</span>
+                        <span className="map-layer-desc">Mapa vectorial oficial libre y rápido</span>
+                      </div>
+                      {mapLayer === 'streets' && <span className="map-layer-check">✓</span>}
+                    </button>
+
+                    {/* Capa 3: Satélite Puro (Google) */}
+                    <button
+                      type="button"
+                      className={`map-layer-item ${mapLayer === 'pure-satellite' ? 'selected' : ''}`}
+                      onClick={() => {
+                        setMapLayer('pure-satellite');
+                        setShowLayersMenu(false);
+                      }}
+                    >
+                      <div className="map-layer-icon-badge">📷</div>
+                      <div className="map-layer-text">
+                        <span className="map-layer-name">Satélite Puro (Google)</span>
+                        <span className="map-layer-desc">Fotografía aérea limpia sin textos</span>
+                      </div>
+                      {mapLayer === 'pure-satellite' && <span className="map-layer-check">✓</span>}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isRealLocationAvailable) {
+                  const nextFollowing = !isFollowing;
+                  setIsFollowing(nextFollowing);
+                  if (nextFollowing && mapRef.current) {
+                    mapRef.current.flyToLocation([userLocation.lat, userLocation.lng], 16); 
+                  }
+                } else {
+                  toast.error("La ubicación aún no está disponible o el acceso fue denegado en tu navegador.", { duration: 4000 });
+                }
+              }} 
+              className={`control-button ${isFollowing && isRealLocationAvailable ? 'active' : ''}`}
+              title="Seguir mi ubicación"
+              disabled={!isRealLocationAvailable}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+              </svg>
+            </button>
+
+            {/* Botón de Brújula / Navegación */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleCompass();
+              }} 
+              className={`control-button compass-button ${isCompassMode ? 'active' : ''}`}
+              title={
+                isCompassMode 
+                  ? "Desactivar modo navegación (Restablecer Norte arriba)" 
+                  : (mapBearing !== 0 
+                      ? "Restablecer Norte arriba (0°)" 
+                      : "Activar modo brújula / orientación hacia adelante")
+              }
+            >
+              <svg 
+                width="22" 
+                height="22" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                style={{ 
+                  transform: `rotate(${-mapBearing}deg)`, 
+                  transition: 'transform 0.25s ease-out' 
+                }}
+              >
+                <circle cx="12" cy="12" r="9.5" stroke="currentColor" strokeWidth="1.5" opacity="0.35" />
+                <polygon points="12,3 15,12 12,10 9,12" fill="#ef4444" />
+                <polygon points="12,21 15,12 12,14 9,12" fill="#94a3b8" />
+                <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+              </svg>
+            </button>
+
+            <button
+                onClick={handleCenterMapToDefault}
+                className="control-button"
+                title="Centrar en San Antonio Palopó"
+                style={{ fontSize: '1.2em', fontWeight: 'bold' }}
+            >
+                SAP
+            </button>
+            
+            <div className="marking-mode-container">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMarkingMode(!markingMode);
+                }} 
+                className={`control-button ${markingMode ? 'active' : ''}`}
+                title={markingMode ? "Clic en el mapa para marcar destino" : "Activar marcado manual"}
+                disabled={!isRealLocationAvailable}
+              >
+                A→B
+              </button>
+            </div>
+
+            {/* Zona Caminable a 10 min (Isócrona Geoapify) */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleIsoline();
+              }} 
+              className={`control-button ${isolineActive ? 'active' : ''}`}
+              title={isolineActive ? "Ocultar zona caminable" : "Ver zona caminable a 10 min a pie (Isócrona)"}
+              disabled={!isRealLocationAvailable || isolineLoading}
+            >
+              {isolineLoading ? (
+                <span className="loading-spinner-char">⌛</span>
+              ) : (
+                <Clock size={18} />
+              )}
+            </button>
+
+            {/* --- BOTÓN Y TOOLTIP DE AYUDA --- */}
+            <div className="map-help-container">
+              <button type="button" className="control-button help-button" aria-label="Ayuda del mapa">?</button>
+              <div className="help-tooltip">
+                <h4>Guía del Mapa Turístico</h4>
+                <ul>
+                  <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2,17 12,22 22,17"></polyline><polyline points="2,12 12,17 22,12"></polyline></svg>
+                    <strong>Cambiar Vista:</strong> Alterna entre Satélite Híbrido HD, Calles y Satélite Puro.
+                  </li>
+                  <li>
+                    <strong>🎯 Seguir:</strong> Centra y sigue tu GPS en tiempo real.
+                  </li>
+                  <li>
+                    <span style={{ fontSize: 16, verticalAlign: 'middle', marginRight: 4 }}>🧭</span>
+                    <strong>Brújula:</strong> Gira el mapa a tu orientación o fija Norte.
+                  </li>
+                  <li>
+                    <strong>SAP:</strong> Vuelve al centro de San Antonio Palopó.
+                  </li>
+                  <li>
+                    <strong>A→B:</strong> Marca cualquier punto con nombre de calle.
+                  </li>
+                  <li>
+                    <Clock size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                    <strong>⏱️ Zona 10 min:</strong> Polígono verde de alcance a pie.
+                  </li>
+                  <li>
+                    <Footprints size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                    <strong>🚶 / 🚗 Modos:</strong> Alterna ruta peatonal o auto.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Polígono de Zona Caminable a 10 min (GeoJSON Geoapify) */}
+        {isolineActive && isolinePolygon && (
+          <GeoJSON 
+            key={`isoline-${isolinePolygon.id || JSON.stringify(isolinePolygon.geometry?.coordinates?.[0]?.[0] || 'iso')}`}
+            data={isolinePolygon}
+            style={{
+              color: '#10b981',
+              weight: 2.5,
+              opacity: 0.85,
+              fillColor: '#10b981',
+              fillOpacity: 0.18,
+              dashArray: '5, 5'
+            }}
+          />
+        )}
+
+        {/* Trazado de Rutas Alternativas (Si existen 2 opciones evaluadas) */}
+        {availableRoutes && availableRoutes.length > 1 && availableRoutes.map((altRt, altIdx) => {
+          if (altIdx === selectedRouteIndex) return null;
+          return (
+            <React.Fragment key={`alt-route-${altRt.id || altIdx}`}>
+              <Polyline 
+                positions={altRt.coordinates} 
+                pathOptions={{
+                  color: '#000000',
+                  weight: 6,
+                  opacity: 0.18,
+                  lineCap: 'round',
+                  lineJoin: 'round'
+                }} 
+              />
+              <Polyline 
+                positions={altRt.coordinates} 
+                pathOptions={{
+                  color: '#64748b',
+                  weight: 4.5,
+                  opacity: 0.75,
+                  dashArray: '6, 8',
+                  lineCap: 'round',
+                  lineJoin: 'round'
+                }} 
+                eventHandlers={{
+                  click: (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    setSelectedRouteIndex(altIdx);
+                    toast.success(`Cambiando a ${altRt.title}`, { id: 'route-switch-toast', duration: 2500 });
+                  }
+                }}
+              />
+            </React.Fragment>
+          );
+        })}
+
+        {/* Trazado de Ruta Inteligente Geoapify (Peatonal o Vehicular) */}
+        {geoapifyRoute && geoapifyRoute.coordinates && geoapifyRoute.coordinates.length > 0 && (
+          <>
+            <Polyline 
+              positions={geoapifyRoute.coordinates} 
+              pathOptions={{
+                color: '#000000',
+                weight: 7,
+                opacity: 0.22,
+                lineCap: 'round',
+                lineJoin: 'round'
+              }} 
+            />
+            <Polyline 
+              positions={geoapifyRoute.coordinates} 
+              pathOptions={{
+                color: routeTransportMode === 'walk' ? '#10b981' : '#2563eb',
+                weight: 5,
+                opacity: 0.95,
+                lineCap: 'round',
+                lineJoin: 'round'
+              }} 
+            />
+          </>
+        )}
+
+
+
+        {mapLayer === 'satellite' ? (
+          <TileLayer
+            key="google-hybrid-hd"
+            url="https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+            subdomains={['0', '1', '2', '3']}
+            attribution='&copy; Google Maps'
+            maxNativeZoom={20}
+            maxZoom={21}
+            keepBuffer={15}
+            updateWhenIdle={false}
+            updateWhenZooming={false}
+            updateInterval={80}
+            crossOrigin="anonymous"
+          />
+        ) : mapLayer === 'streets' ? (
+          <TileLayer
+            key="osm-streets"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            maxNativeZoom={19}
+            maxZoom={21}
+            keepBuffer={15}
+            updateWhenIdle={false}
+            updateWhenZooming={false}
+            updateInterval={80}
+            crossOrigin="anonymous"
+          />
+        ) : (
+          <TileLayer
+            key="google-satellite-pure"
+            url="https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+            subdomains={['0', '1', '2', '3']}
+            attribution='&copy; Google Maps'
+            maxNativeZoom={20}
+            maxZoom={21}
+            keepBuffer={15}
+            updateWhenIdle={false}
+            updateWhenZooming={false}
+            updateInterval={80}
+            crossOrigin="anonymous"
+          />
+        )}
+
+        {isRealLocationAvailable && (
+          <UserMarker 
+            position={userLocation} 
+            isFollowing={isFollowing}
+            isCompassMode={isCompassMode}
+            currentMapBearing={mapBearing}
+            deviceHeading={deviceHeading}
+          />
+        )}
+
+        {manualDestination && (
+          <Marker 
+            position={[manualDestination.lat, manualDestination.lng]} 
+            icon={manualMarkerIcon}
+            eventHandlers={{
+              click: (e) => {
+                L.DomEvent.stopPropagation(e);
+              }
+            }}
+          >
+            <Popup>
+              <div className="custom-popup">
+                <h4>📍 {manualDestination.name || 'Destino seleccionado'}</h4>
+                {manualDestination.address && (
+                  <p style={{ margin: '4px 0', fontSize: '0.85em', color: '#4b5563' }}>
+                    {manualDestination.address}
+                  </p>
+                )}
+                <p style={{ margin: '2px 0 8px 0', fontSize: '0.75em', color: '#9ca3af' }}>
+                  {manualDestination.lat.toFixed(5)}, {manualDestination.lng.toFixed(5)}
+                </p>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClearSelection();
+                  }} 
+                  className="popup-route-button"
+                  style={{ backgroundColor: '#dc3545' }}
+                >
+                  Eliminar punto
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {sites.map(site => {
+          const catSlug = createSlug(site.category || site.parentCategory || 'general');
+          const siteSlug = site.slug || site.id;
+
+          return (
+            <Marker 
+              key={site.id} 
+              position={[site.latitude, site.longitude]} 
+              icon={initialSelectedSite && (initialSelectedSite.id === site.id || 
+                    (initialSelectedSite.lat === site.latitude && initialSelectedSite.lng === site.longitude)) ?
+                highlightedIcon : getIconForCategory(site.parentCategory)}
+              eventHandlers={{
+                click: (e) => {
+                  L.DomEvent.stopPropagation(e);
+                }
+              }}
+            >
+              <Popup>
+                <div className="custom-popup">
+                  <h4 title={site.name}>{truncateTitle(site.name)}</h4>
+                  <p style={{ margin: '4px 0', fontSize: '0.9em', color: '#666' }}>{site.category}</p>
+                  
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSetRouting(site);
+                    }} 
+                    className="popup-route-button"
+                    disabled={!isRealLocationAvailable}
+                    title={!isRealLocationAvailable ? "Activa tu ubicación para usar esta función" : "Calcular ruta desde tu ubicación"}
+                  >
+                    Cómo llegar
+                  </button>
+                  <Link 
+                    href={`/categoria/${catSlug}/${siteSlug}`} 
+                    className="popup-link"
+                  >
+                    Ver detalles
+                  </Link>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+      </MapContainer>
+    </div>
+  );
+}
+export default MapPage;
