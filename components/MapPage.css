@@ -486,6 +486,12 @@
   color: #38bdf8 !important;
 }
 
+.control-button.loc-b-button {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.5px;
+}
+
 .control-button:hover {
   background-color: #f0f0f0 !important;
   transform: scale(1.05) !important;

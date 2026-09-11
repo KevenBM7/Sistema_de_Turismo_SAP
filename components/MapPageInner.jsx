@@ -74,6 +74,36 @@ const manualMarkerIcon = new L.DivIcon({
   popupAnchor: [0, -30]
 });
 
+const pointAIcon = new L.DivIcon({
+  className: 'custom-point-a-icon',
+  html: `
+    <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45));">
+      <svg viewBox="0 0 24 24" width="32" height="32" fill="#16a34a" stroke="white" stroke-width="1.8" style="pointer-events: none;">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+      </svg>
+      <span style="position: absolute; top: 3px; color: white; font-size: 11.5px; font-weight: 900; font-family: system-ui, sans-serif;">A</span>
+    </div>
+  `,
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32]
+});
+
+const pointBIcon = new L.DivIcon({
+  className: 'custom-point-b-icon',
+  html: `
+    <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.45));">
+      <svg viewBox="0 0 24 24" width="32" height="32" fill="#dc2626" stroke="white" stroke-width="1.8" style="pointer-events: none;">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+      </svg>
+      <span style="position: absolute; top: 3px; color: white; font-size: 11.5px; font-weight: 900; font-family: system-ui, sans-serif;">B</span>
+    </div>
+  `,
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32]
+});
+
 const toRad = (deg) => (deg * Math.PI) / 180;
 const toDeg = (rad) => (rad * 180) / Math.PI;
 
@@ -508,9 +538,15 @@ function MapPage() {
   
   const [routingDestination, setRoutingDestination] = useState(null);
   const [manualDestination, setManualDestination] = useState(null);
+  const [pointA, setPointA] = useState(null);
+  const [routeOrigin, setRouteOrigin] = useState(null);
+  const routeOriginRef = React.useRef(null);
+  useEffect(() => {
+    routeOriginRef.current = routeOrigin;
+  }, [routeOrigin]);
 
   const [isFollowing, setIsFollowing] = useState(false); 
-  const [markingMode, setMarkingMode] = useState(false);
+  const [markingMode, setMarkingMode] = useState(null); // null | 'ab' | 'my_location_to_b'
   const [mapLayer, setMapLayer] = useState('satellite'); // 'satellite' | 'streets' | 'pure-satellite'
   const [showLayersMenu, setShowLayersMenu] = useState(false);
   const layersMenuRef = React.useRef(null);
@@ -830,7 +866,7 @@ function MapPage() {
         setUserLocation(newLocation);
 
         const currentDest = routingDestinationRef.current;
-        if (currentDest && !arrivedToastShownRef.current) {
+        if (currentDest && !arrivedToastShownRef.current && !routeOriginRef.current) {
           const destination = L.latLng(currentDest.lat, currentDest.lng);
           const user = L.latLng(latitude, longitude);
           const distance = user.distanceTo(destination);
@@ -963,6 +999,9 @@ function MapPage() {
   const handleClearSelection = () => {
     setRoutingDestination(null);
     setManualDestination(null);
+    setPointA(null);
+    setRouteOrigin(null);
+    setMarkingMode(null);
     setAvailableRoutes([]);
     setSelectedRouteIndex(0);
     setHasArrived(false);
@@ -986,55 +1025,140 @@ function MapPage() {
   // Distancia exacta restante en metros al destino seleccionado
   const distanceToDestMeters = React.useMemo(() => {
     const dest = routingDestination || manualDestination;
-    if (!userLocation || !dest || typeof userLocation.lat !== 'number' || typeof dest.lat !== 'number') {
+    if (!dest || typeof dest.lat !== 'number') {
       return null;
     }
-    const user = L.latLng(userLocation.lat, userLocation.lng);
-    const destination = L.latLng(dest.lat, dest.lng);
-    return Math.round(user.distanceTo(destination));
-  }, [userLocation?.lat, userLocation?.lng, routingDestination?.lat, routingDestination?.lng, manualDestination?.lat, manualDestination?.lng]);
+    // Si hay un Punto A personalizado, medimos de A a B
+    if (routeOrigin && typeof routeOrigin.lat === 'number') {
+      const origin = L.latLng(routeOrigin.lat, routeOrigin.lng);
+      const destination = L.latLng(dest.lat, dest.lng);
+      return Math.round(origin.distanceTo(destination));
+    }
+    // Si es desde Mi Ubicación
+    if (userLocation && typeof userLocation.lat === 'number') {
+      const user = L.latLng(userLocation.lat, userLocation.lng);
+      const destination = L.latLng(dest.lat, dest.lng);
+      return Math.round(user.distanceTo(destination));
+    }
+    return null;
+  }, [userLocation?.lat, userLocation?.lng, routeOrigin?.lat, routeOrigin?.lng, routingDestination?.lat, routingDestination?.lng, manualDestination?.lat, manualDestination?.lng]);
 
-  // 1. Geocodificación inversa al marcar un punto en el mapa
+  // Manejo de clics en el mapa según el modo activo
   const handleMapClick = (e) => {
-    if (!isRealLocationAvailable) {
+    const { lat, lng } = e.latlng;
+
+    // --- MODO 1: Selección A → B (Dos puntos independientes en el mapa) ---
+    if (markingMode === 'ab') {
+      if (!pointA) {
+        // Primer clic: Fijar Punto A (Origen)
+        const initialPointA = {
+          lat: lat,
+          lng: lng,
+          name: `Punto A (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+          address: 'Identificando nombre de calle...'
+        };
+        setPointA(initialPointA);
+        setRouteOrigin(initialPointA);
+        toast.success('📍 Punto A fijado. Ahora haz clic en el mapa para marcar el Punto B (Destino).', { id: 'point-a-toast', duration: 4500 });
+
+        reverseGeocode(lat, lng).then(info => {
+          if (info) {
+            const friendlyName = info.name || info.street || info.formatted;
+            setPointA(prev => (prev && Math.abs(prev.lat - lat) < 0.0001 && Math.abs(prev.lng - lng) < 0.0001) ? {
+              ...prev,
+              name: friendlyName,
+              address: info.formatted || info.street || ''
+            } : prev);
+            setRouteOrigin(prev => (prev && Math.abs(prev.lat - lat) < 0.0001 && Math.abs(prev.lng - lng) < 0.0001) ? {
+              ...prev,
+              name: friendlyName,
+              address: info.formatted || info.street || ''
+            } : prev);
+          }
+        }).catch(err => console.warn('Error reverse geocode A:', err));
+        return;
+      } else {
+        // Segundo clic: Fijar Punto B (Destino) y calcular ruta A-B
+        const initialPointB = {
+          lat: lat,
+          lng: lng,
+          name: `Punto B (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+          address: 'Identificando nombre de calle...'
+        };
+        setManualDestination(initialPointB);
+        setRoutingDestination(initialPointB);
+        setMarkingMode(null);
+        setHasArrived(false);
+        hasFittedRouteRef.current = false;
+        routeToastShownRef.current = false;
+        arrivedToastShownRef.current = false;
+        setIsFollowing(false);
+        toast.loading('🗺️ Calculando ruta entre Punto A y Punto B...', { id: 'calc-route-toast', duration: 2500 });
+
+        reverseGeocode(lat, lng).then(info => {
+          if (info) {
+            const friendlyName = info.name || info.street || info.formatted;
+            setManualDestination(prev => (prev && Math.abs(prev.lat - lat) < 0.0001 && Math.abs(prev.lng - lng) < 0.0001) ? {
+              ...prev,
+              name: friendlyName,
+              address: info.formatted || info.street || ''
+            } : prev);
+            setRoutingDestination(prev => (prev && Math.abs(prev.lat - lat) < 0.0001 && Math.abs(prev.lng - lng) < 0.0001) ? {
+              ...prev,
+              name: friendlyName,
+              address: info.formatted || info.street || ''
+            } : prev);
+          }
+        }).catch(err => console.warn('Error reverse geocode B:', err));
+        return;
+      }
+    }
+
+    // --- MODO 2: Mi Ubicación → B (Desde GPS del usuario hacia un punto del mapa) ---
+    if (markingMode === 'my_location_to_b') {
+      if (!isRealLocationAvailable) {
         toast.error('Ubicación real no disponible. Activa la geolocalización y espera a que se fije.', { duration: 4000 });
         return;
-    }
-    
-    const { lat, lng } = e.latlng;
-    const initialDestination = {
-      lat: lat,
-      lng: lng,
-      name: `Punto (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
-      address: 'Identificando nombre de lugar...'
-    };
-    
-    setManualDestination(initialDestination);
-    setRoutingDestination(initialDestination);
-    setHasArrived(false);
-    routeToastShownRef.current = false;
-    arrivedToastShownRef.current = false;
-    setIsFollowing(false);
-    setMarkingMode(false);
-
-    // Consulta de geocodificación inversa a Geoapify
-    reverseGeocode(lat, lng).then(info => {
-      if (info) {
-        const friendlyName = info.name || info.street || info.formatted;
-        setManualDestination(prev => (prev && Math.abs(prev.lat - lat) < 0.0001 && Math.abs(prev.lng - lng) < 0.0001) ? {
-          ...prev,
-          name: friendlyName,
-          address: info.formatted || info.street || ''
-        } : prev);
-        setRoutingDestination(prev => (prev && Math.abs(prev.lat - lat) < 0.0001 && Math.abs(prev.lng - lng) < 0.0001) ? {
-          ...prev,
-          name: friendlyName,
-          address: info.formatted || info.street || ''
-        } : prev);
       }
-    }).catch(err => {
-      console.warn('Error en reverse geocoding:', err);
-    });
+
+      const initialDestination = {
+        lat: lat,
+        lng: lng,
+        name: `Punto (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+        address: 'Identificando nombre de lugar...'
+      };
+
+      setPointA(null);
+      setRouteOrigin(null); // Origen será userLocation
+      setManualDestination(initialDestination);
+      setRoutingDestination(initialDestination);
+      setHasArrived(false);
+      hasFittedRouteRef.current = false;
+      routeToastShownRef.current = false;
+      arrivedToastShownRef.current = false;
+      setIsFollowing(false);
+      setMarkingMode(null);
+      toast.loading('🗺️ Trazando ruta desde tu ubicación...', { id: 'calc-route-toast', duration: 2000 });
+
+      reverseGeocode(lat, lng).then(info => {
+        if (info) {
+          const friendlyName = info.name || info.street || info.formatted;
+          setManualDestination(prev => (prev && Math.abs(prev.lat - lat) < 0.0001 && Math.abs(prev.lng - lng) < 0.0001) ? {
+            ...prev,
+            name: friendlyName,
+            address: info.formatted || info.street || ''
+          } : prev);
+          setRoutingDestination(prev => (prev && Math.abs(prev.lat - lat) < 0.0001 && Math.abs(prev.lng - lng) < 0.0001) ? {
+            ...prev,
+            name: friendlyName,
+            address: info.formatted || info.street || ''
+          } : prev);
+        }
+      }).catch(err => {
+        console.warn('Error en reverse geocoding:', err);
+      });
+      return;
+    }
   };
 
   const handleSetRouting = (site) => {
@@ -1049,6 +1173,9 @@ function MapPage() {
     }, 0);
     
     hasFittedRouteRef.current = false;
+    setPointA(null);
+    setRouteOrigin(null);
+    setManualDestination(null);
     setRoutingDestination({ lat: site.latitude, lng: site.longitude, name: site.name });
     setHasArrived(false);
     routeToastShownRef.current = false;
@@ -1058,11 +1185,22 @@ function MapPage() {
 
   useEffect(() => {
     hasFittedRouteRef.current = false;
-  }, [routingDestination, routeTransportMode]);
+  }, [routingDestination, routeOrigin, routeTransportMode]);
 
   // 2. Cálculo de ruta con Geoapify (Evalúa opciones y alternativas)
   useEffect(() => {
-    if (!routingDestination || !isRealLocationAvailable) {
+    if (!routingDestination) {
+      setAvailableRoutes([]);
+      setSelectedRouteIndex(0);
+      hasFittedRouteRef.current = false;
+      return;
+    }
+
+    const originCoords = routeOrigin 
+      ? [routeOrigin.lat, routeOrigin.lng]
+      : (isRealLocationAvailable ? [userLocation.lat, userLocation.lng] : null);
+
+    if (!originCoords) {
       setAvailableRoutes([]);
       setSelectedRouteIndex(0);
       hasFittedRouteRef.current = false;
@@ -1070,7 +1208,7 @@ function MapPage() {
     }
 
     let isMounted = true;
-    const start = [userLocation.lat, userLocation.lng];
+    const start = originCoords;
     const end = [routingDestination.lat, routingDestination.lng];
 
     calculateRoutes(start, end, routeTransportMode).then(results => {
@@ -1086,6 +1224,7 @@ function MapPage() {
       } else {
         setAvailableRoutes([]);
         setSelectedRouteIndex(0);
+        toast.error('No se encontró una ruta vial para el trayecto seleccionado.', { id: 'no-route' });
       }
     }).catch(err => {
       console.warn('Error calculando ruta con Geoapify:', err);
@@ -1096,7 +1235,7 @@ function MapPage() {
     return () => {
       isMounted = false;
     };
-  }, [routingDestination, routeTransportMode]);
+  }, [routingDestination, routeOrigin, routeTransportMode, isRealLocationAvailable]);
 
   // 3. Búsqueda y autocompletado inteligente (Sitios Firebase + Lugares Geoapify)
   useEffect(() => {
@@ -1393,10 +1532,10 @@ function MapPage() {
         </div>
       )}
 
-      {(routingDestination || manualDestination) && (
+      {(routingDestination || manualDestination || pointA) && (
         <div className={`map-info-banner route-banner-compact ${hasArrived ? 'arrived-banner' : ''}`}>
           {/* Selector compacto de modo a pie / auto */}
-          {!hasArrived && (
+          {!hasArrived && routingDestination && (
             <div className="route-mode-switcher-compact">
               <button 
                 type="button" 
@@ -1419,14 +1558,21 @@ function MapPage() {
             </div>
           )}
 
-          {/* Nombre de Destino y Distancia en vivo */}
+          {/* Nombre de Destino / Información de ruta y Distancia en vivo */}
           <div className="route-compact-main">
-            <span className="route-dest-name-compact" title={manualDestination ? manualDestination.name : routingDestination?.name}>
-              {hasArrived ? `🎉 ¡Has llegado!` : (manualDestination ? manualDestination.name : routingDestination?.name)}
+            <span className="route-dest-name-compact" title={pointA && !routingDestination ? pointA.name : (pointA ? `${pointA.name} ➔ ${routingDestination?.name}` : (manualDestination ? manualDestination.name : routingDestination?.name))}>
+              {hasArrived ? `🎉 ¡Has llegado!` : (
+                pointA && !routingDestination 
+                  ? `📍 Punto A fijado: Haz clic para Punto B`
+                  : (pointA 
+                      ? `A: ${pointA.name} ➔ B: ${routingDestination?.name || 'Destino'}`
+                      : (manualDestination ? manualDestination.name : routingDestination?.name)
+                    )
+              )}
             </span>
             {geoapifyRoute && !hasArrived && (
               <span className="route-stats-badge-compact">
-                {distanceToDestMeters !== null && distanceToDestMeters <= 200 
+                {distanceToDestMeters !== null && !pointA && distanceToDestMeters <= 200 
                   ? `A ${distanceToDestMeters} m` 
                   : `${Math.round(geoapifyRoute.timeSeconds / 60)} min • ${geoapifyRoute.distanceMeters >= 1000 ? `${(geoapifyRoute.distanceMeters / 1000).toFixed(1)} km` : `${Math.round(geoapifyRoute.distanceMeters)} m`}`}
               </span>
@@ -1460,7 +1606,7 @@ function MapPage() {
 
               const routeColor = isSelected 
                 ? (routeTransportMode === 'walk' ? '#10b981' : '#2563eb')
-                : '#94a3b8';
+                : '#38bdf8';
 
               return (
                 <button
@@ -1665,17 +1811,54 @@ function MapPage() {
                 SAP
             </button>
             
+            {/* Botón A→B: Ruta entre dos puntos del mapa */}
             <div className="marking-mode-container">
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  setMarkingMode(!markingMode);
+                  if (markingMode === 'ab') {
+                    setMarkingMode(null);
+                    setPointA(null);
+                    toast('Modo A→B cancelado', { icon: 'ℹ️' });
+                  } else {
+                    setMarkingMode('ab');
+                    setPointA(null);
+                    setRouteOrigin(null);
+                    toast('📍 Haz clic en el mapa para marcar el Punto A (Origen)', { icon: '📍', duration: 4000 });
+                  }
                 }} 
-                className={`control-button ${markingMode ? 'active' : ''}`}
-                title={markingMode ? "Clic en el mapa para marcar destino" : "Activar marcado manual"}
-                disabled={!isRealLocationAvailable}
+                className={`control-button ${markingMode === 'ab' ? 'active' : ''}`}
+                title={markingMode === 'ab' ? "Modo A→B activo (Clic para cancelar)" : "Ruta A→B: Selecciona Punto A y Punto B en el mapa"}
               >
                 A→B
+              </button>
+            </div>
+
+            {/* Nuevo Botón: Mi Ubicación → B */}
+            <div className="marking-mode-container">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isRealLocationAvailable) {
+                    toast.error('Ubicación GPS no disponible. Activa la geolocalización en tu navegador.', { duration: 4000 });
+                    return;
+                  }
+                  if (markingMode === 'my_location_to_b') {
+                    setMarkingMode(null);
+                    toast('Modo Mi Ubicación→B cancelado', { icon: 'ℹ️' });
+                  } else {
+                    setMarkingMode('my_location_to_b');
+                    setPointA(null);
+                    setRouteOrigin(null);
+                    toast('🎯 Haz clic en el mapa para fijar el Destino B desde tu ubicación actual', { icon: '📍', duration: 4000 });
+                  }
+                }} 
+                className={`control-button loc-b-button ${markingMode === 'my_location_to_b' ? 'active' : ''}`}
+                title={markingMode === 'my_location_to_b' ? "Modo Mi Ubicación→B activo (Clic para cancelar)" : "Mi Ubicación → B: Ruta desde tu GPS a un punto del mapa"}
+                disabled={!isRealLocationAvailable}
+                style={{ fontSize: '10.5px', fontWeight: 'bold' }}
+              >
+                📍→B
               </button>
             </div>
 
@@ -1717,7 +1900,10 @@ function MapPage() {
                     <strong>SAP:</strong> Vuelve al centro de San Antonio Palopó.
                   </li>
                   <li>
-                    <strong>A→B:</strong> Marca cualquier punto con nombre de calle.
+                    <strong>A→B:</strong> Marca Punto A (inicio) y Punto B (fin) en el mapa para trazar ruta entre ellos.
+                  </li>
+                  <li>
+                    <strong>📍→B:</strong> Traza la ruta desde tu ubicación actual hasta cualquier punto del mapa.
                   </li>
                   <li>
                     <Clock size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />
@@ -1749,7 +1935,7 @@ function MapPage() {
           />
         )}
 
-        {/* Trazado de Rutas Alternativas (Únicamente en tramos donde se desvía de la principal, en gris pálido) */}
+        {/* Trazado de Rutas Alternativas (Únicamente en tramos donde se desvía de la principal, en celeste claro vibrante) */}
         {availableRoutes && availableRoutes.length > 1 && geoapifyRoute && availableRoutes.map((altRt, altIdx) => {
           if (altIdx === selectedRouteIndex) return null;
 
@@ -1757,31 +1943,31 @@ function MapPage() {
           // En los tramos compartidos (donde ambas rutas van por la misma calle o sentido), NO se dibuja para no tapar la ruta azul
           const divergentSegments = getDivergentSegments(altRt.coordinates, geoapifyRoute.coordinates, 22);
 
-          const altColor = '#94a3b8'; // Gris pálido y suave
-          const altBorderColor = '#334155';
+          const altColor = '#38bdf8'; // Celeste claro vibrante y visible
+          const altBorderColor = '#0369a1'; // Contorno azul profundo para contraste sobre satélite y calles
 
           return (
             <React.Fragment key={`alt-route-${altRt.id || altIdx}`}>
               {divergentSegments.map((segCoords, segIdx) => (
                 <React.Fragment key={`alt-seg-${altRt.id || altIdx}-${segIdx}`}>
-                  {/* Contorno protector sutil */}
+                  {/* Contorno protector sutil para contraste nítido */}
                   <Polyline 
                     positions={segCoords} 
                     pathOptions={{
                       color: altBorderColor,
                       weight: 6.5,
-                      opacity: 0.25,
+                      opacity: 0.45,
                       lineCap: 'round',
                       lineJoin: 'round'
                     }} 
                   />
-                  {/* Trazo gris pálido que muestra la vía alterna conectando con la principal */}
+                  {/* Trazo celeste claro que muestra la vía alterna conectando con la principal */}
                   <Polyline 
                     positions={segCoords} 
                     pathOptions={{
                       color: altColor,
                       weight: 4.5,
-                      opacity: 0.85,
+                      opacity: 0.95,
                       dashArray: '8, 6',
                       lineCap: 'round',
                       lineJoin: 'round'
@@ -1881,10 +2067,11 @@ function MapPage() {
           />
         )}
 
-        {manualDestination && (
+        {/* Marcador para Punto A (en modo A-B) */}
+        {pointA && (
           <Marker 
-            position={[manualDestination.lat, manualDestination.lng]} 
-            icon={manualMarkerIcon}
+            position={[pointA.lat, pointA.lng]} 
+            icon={pointAIcon}
             eventHandlers={{
               click: (e) => {
                 L.DomEvent.stopPropagation(e);
@@ -1893,7 +2080,44 @@ function MapPage() {
           >
             <Popup>
               <div className="custom-popup">
-                <h4>📍 {manualDestination.name || 'Destino seleccionado'}</h4>
+                <h4>📍 Punto A (Origen)</h4>
+                {pointA.address && (
+                  <p style={{ margin: '4px 0', fontSize: '0.85em', color: '#4b5563' }}>
+                    {pointA.address}
+                  </p>
+                )}
+                <p style={{ margin: '2px 0 8px 0', fontSize: '0.75em', color: '#9ca3af' }}>
+                  {pointA.lat.toFixed(5)}, {pointA.lng.toFixed(5)}
+                </p>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClearSelection();
+                  }} 
+                  className="popup-route-button"
+                  style={{ backgroundColor: '#dc3545' }}
+                >
+                  Eliminar punto
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Marcador para Punto B o destino seleccionado manualmente */}
+        {manualDestination && (
+          <Marker 
+            position={[manualDestination.lat, manualDestination.lng]} 
+            icon={pointA ? pointBIcon : manualMarkerIcon}
+            eventHandlers={{
+              click: (e) => {
+                L.DomEvent.stopPropagation(e);
+              }
+            }}
+          >
+            <Popup>
+              <div className="custom-popup">
+                <h4>{pointA ? '🎯 Punto B (Destino)' : '📍 Destino seleccionado'}</h4>
                 {manualDestination.address && (
                   <p style={{ margin: '4px 0', fontSize: '0.85em', color: '#4b5563' }}>
                     {manualDestination.address}
