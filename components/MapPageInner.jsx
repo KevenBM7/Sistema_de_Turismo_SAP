@@ -1323,7 +1323,7 @@ function MapPage() {
       if (isRealLocationAvailable && userLocation) {
         combined.sort((a, b) => (a.distMeters ?? Infinity) - (b.distMeters ?? Infinity));
       }
-      setSearchResults(combined.slice(0, 10));
+      setSearchResults(combined.slice(0, 15));
       setIsSearching(false);
     }, 300);
 
