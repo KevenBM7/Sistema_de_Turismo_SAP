@@ -370,14 +370,16 @@ const MapController = React.forwardRef(({ center, isFollowing, initialSelectedSi
 
   useEffect(() => {
     if (!map) return;
-    const handleDragStart = () => {
+    const handleUserInteraction = () => {
       if (onManualPan) {
         onManualPan();
       }
     };
-    map.on('dragstart', handleDragStart);
+    map.on('dragstart', handleUserInteraction);
+    map.on('zoomstart', handleUserInteraction);
     return () => {
-      map.off('dragstart', handleDragStart);
+      map.off('dragstart', handleUserInteraction);
+      map.off('zoomstart', handleUserInteraction);
     };
   }, [map, onManualPan]);
 
@@ -474,11 +476,12 @@ function MapPage() {
   // Estado de conectividad a internet (Online / Offline)
   const [isOnline, setIsOnline] = useState(true);
 
-  // Geoapify: Modo de transporte ('walk' | 'drive'), rutas evaluadas y activa
-  const [routeTransportMode, setRouteTransportMode] = useState('walk');
+  // Geoapify: Modo de transporte ('walk' | 'drive'), rutas evaluadas y activa - Predeterminado en vehículo (drive)
+  const [routeTransportMode, setRouteTransportMode] = useState('drive');
   const [availableRoutes, setAvailableRoutes] = useState([]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const geoapifyRoute = availableRoutes[selectedRouteIndex] || null;
+  const hasFittedRouteRef = React.useRef(false);
 
   // Estado de llegada al destino
   const [hasArrived, setHasArrived] = useState(false);
@@ -493,6 +496,7 @@ function MapPage() {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchContainerRef = React.useRef(null);
 
   // Registro transparente del Service Worker para caché automático de mapas
   useEffect(() => {
@@ -972,6 +976,7 @@ function MapPage() {
       popups.forEach(popup => popup.remove());
     }, 0);
     
+    hasFittedRouteRef.current = false;
     setRoutingDestination({ lat: site.latitude, lng: site.longitude, name: site.name });
     setHasArrived(false);
     routeToastShownRef.current = false;
@@ -979,11 +984,16 @@ function MapPage() {
     setIsFollowing(false);
   };
 
+  useEffect(() => {
+    hasFittedRouteRef.current = false;
+  }, [routingDestination, routeTransportMode]);
+
   // 2. Cálculo de ruta con Geoapify (Evalúa opciones y alternativas)
   useEffect(() => {
     if (!routingDestination || !isRealLocationAvailable) {
       setAvailableRoutes([]);
       setSelectedRouteIndex(0);
+      hasFittedRouteRef.current = false;
       return;
     }
 
@@ -996,8 +1006,10 @@ function MapPage() {
       if (results && results.length > 0) {
         setAvailableRoutes(results);
         setSelectedRouteIndex(0);
-        if (mapRef.current && results[0]?.coordinates?.length > 0) {
+        // Encuadrar la vista en la ruta SOLO la primera vez para permitir zoom manual libre sin regresos
+        if (!hasFittedRouteRef.current && mapRef.current && results[0]?.coordinates?.length > 0) {
           mapRef.current.fitBoundsToCoords(results[0].coordinates);
+          hasFittedRouteRef.current = true;
         }
       } else {
         setAvailableRoutes([]);
@@ -1012,7 +1024,7 @@ function MapPage() {
     return () => {
       isMounted = false;
     };
-  }, [routingDestination, routeTransportMode, userLocation?.lat, userLocation?.lng, isRealLocationAvailable]);
+  }, [routingDestination, routeTransportMode]);
 
   // 3. Búsqueda y autocompletado inteligente (Sitios Firebase + Lugares Geoapify)
   useEffect(() => {
@@ -1104,6 +1116,29 @@ function MapPage() {
     setIsSearchOpen(false);
   };
 
+  // Cerrar buscador flotante al hacer clic fuera o presionar Escape
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    const handleClickOutside = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setIsSearchOpen(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSearchOpen]);
+
   // 4. Zona caminable a 10 min (Isócrona de Geoapify)
   const handleToggleIsoline = async () => {
     if (!isRealLocationAvailable) {
@@ -1160,82 +1195,107 @@ function MapPage() {
 
   return (
     <div className="map-page-container">
-      {/* Barra de Búsqueda Inteligente (Firebase + Geoapify) */}
-      <div className="map-search-container">
-        <div className="map-search-input-wrapper">
-          <Search size={18} className="map-search-icon" />
-          <input
-            type="text"
-            className="map-search-input"
-            placeholder="Buscar sitios, hoteles, miradores..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setIsSearchOpen(true);
-            }}
-            onFocus={() => setIsSearchOpen(true)}
-          />
-          {searchQuery && (
+      {/* Buscador Flotante Desplegable (Firebase + Geoapify) */}
+      {!isSearchOpen ? (
+        <button
+          type="button"
+          className="map-search-fab-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsSearchOpen(true);
+          }}
+          title="Buscar sitios, hoteles o direcciones en el mapa"
+          aria-label="Abrir buscador en el mapa"
+        >
+          <Search size={19} />
+        </button>
+      ) : (
+        <div className="map-search-container expanded" ref={searchContainerRef}>
+          <div className="map-search-input-wrapper">
+            <Search size={17} className="map-search-icon" />
+            <input
+              type="text"
+              className="map-search-input"
+              placeholder="Buscar sitios, hoteles, miradores..."
+              value={searchQuery}
+              autoFocus
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+              }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="map-search-clear"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                }}
+                title="Borrar texto"
+              >
+                <X size={15} />
+              </button>
+            )}
             <button
               type="button"
-              className="map-search-clear"
+              className="map-search-close-btn"
               onClick={() => {
+                setIsSearchOpen(false);
                 setSearchQuery('');
                 setSearchResults([]);
-                setIsSearchOpen(false);
               }}
-              title="Borrar búsqueda"
+              title="Cerrar buscador"
             >
               <X size={16} />
             </button>
+          </div>
+
+          {/* Desplegable de Resultados */}
+          {searchQuery.trim().length >= 2 && (
+            <div className="map-search-dropdown">
+              {isSearching && (
+                <div className="map-search-loading">
+                  <span>Buscando en San Antonio Palopó...</span>
+                </div>
+              )}
+              {!isSearching && searchResults.length === 0 && (
+                <div className="map-search-empty">
+                  No se encontraron resultados para "{searchQuery}"
+                </div>
+              )}
+              {!isSearching && searchResults.length > 0 && (
+                <div className="map-search-results-list">
+                  {searchResults.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="map-search-item"
+                      onClick={() => handleSelectSearchResult(item)}
+                    >
+                      <div className="map-search-item-icon">
+                        {item.type === 'local' ? (
+                          <MapPin size={17} color="#10b981" />
+                        ) : (
+                          <Navigation size={17} color="#2563eb" />
+                        )}
+                      </div>
+                      <div className="map-search-item-info">
+                        <div className="map-search-item-title">{item.title}</div>
+                        {item.subtitle && (
+                          <div className="map-search-item-subtitle">{item.subtitle}</div>
+                        )}
+                      </div>
+                      <span className={`map-search-badge ${item.type}`}>
+                        {item.type === 'local' ? 'Turismo' : 'Lugar'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
-
-        {/* Desplegable de Resultados */}
-        {isSearchOpen && searchQuery.trim().length >= 2 && (
-          <div className="map-search-dropdown">
-            {isSearching && (
-              <div className="map-search-loading">
-                <span>Buscando en San Antonio Palopó...</span>
-              </div>
-            )}
-            {!isSearching && searchResults.length === 0 && (
-              <div className="map-search-empty">
-                No se encontraron resultados para "{searchQuery}"
-              </div>
-            )}
-            {!isSearching && searchResults.length > 0 && (
-              <div className="map-search-results-list">
-                {searchResults.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="map-search-item"
-                    onClick={() => handleSelectSearchResult(item)}
-                  >
-                    <div className="map-search-item-icon">
-                      {item.type === 'local' ? (
-                        <MapPin size={18} color="#10b981" />
-                      ) : (
-                        <Navigation size={18} color="#2563eb" />
-                      )}
-                    </div>
-                    <div className="map-search-item-info">
-                      <div className="map-search-item-title">{item.title}</div>
-                      {item.subtitle && (
-                        <div className="map-search-item-subtitle">{item.subtitle}</div>
-                      )}
-                    </div>
-                    <span className={`map-search-badge ${item.type}`}>
-                      {item.type === 'local' ? 'Turismo' : 'Lugar'}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      )}
 
       <h1 className="map-page-title">Sitios Turísticos</h1>
 
@@ -1781,27 +1841,30 @@ function MapPage() {
               }}
             >
               <Popup>
-                <div className="custom-popup">
-                  <h4 title={site.name}>{truncateTitle(site.name)}</h4>
-                  <p style={{ margin: '4px 0', fontSize: '0.9em', color: '#666' }}>{site.category}</p>
+                <div className="custom-popup compact-site-popup">
+                  <h4 title={site.name}>{site.name}</h4>
+                  <p className="popup-site-category">{site.category}</p>
                   
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSetRouting(site);
-                    }} 
-                    className="popup-route-button"
-                    disabled={!isRealLocationAvailable}
-                    title={!isRealLocationAvailable ? "Activa tu ubicación para usar esta función" : "Calcular ruta desde tu ubicación"}
-                  >
-                    Cómo llegar
-                  </button>
-                  <Link 
-                    href={`/categoria/${catSlug}/${siteSlug}`} 
-                    className="popup-link"
-                  >
-                    Ver detalles
-                  </Link>
+                  <div className="popup-buttons-row">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSetRouting(site);
+                      }} 
+                      className="popup-route-button"
+                      disabled={!isRealLocationAvailable}
+                      title={!isRealLocationAvailable ? "Activa tu ubicación para usar esta función" : "Calcular ruta en vehículo"}
+                    >
+                      <Navigation size={13} style={{ flexShrink: 0 }} />
+                      <span>Cómo llegar</span>
+                    </button>
+                    <Link 
+                      href={`/categoria/${catSlug}/${siteSlug}`} 
+                      className="popup-link"
+                    >
+                      <span>Ver detalles</span>
+                    </Link>
+                  </div>
                 </div>
               </Popup>
             </Marker>
