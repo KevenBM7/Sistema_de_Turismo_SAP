@@ -1470,32 +1470,27 @@ function MapPage() {
               placeholder="Buscar sitios, calles, tiendas, hoteles..."
               value={searchQuery}
               autoFocus
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
               onChange={(e) => {
                 setSearchQuery(e.target.value);
               }}
             />
-            {searchQuery && (
-              <button
-                type="button"
-                className="map-search-clear"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSearchResults([]);
-                }}
-                title="Borrar texto"
-              >
-                <X size={15} />
-              </button>
-            )}
             <button
               type="button"
               className="map-search-close-btn"
               onClick={() => {
-                setIsSearchOpen(false);
-                setSearchQuery('');
-                setSearchResults([]);
+                if (searchQuery) {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                  handleClearSelection();
+                } else {
+                  setIsSearchOpen(false);
+                }
               }}
-              title="Cerrar buscador"
+              title={searchQuery ? "Limpiar búsqueda y mapa" : "Cerrar buscador"}
+              aria-label={searchQuery ? "Limpiar búsqueda y mapa" : "Cerrar buscador"}
             >
               <X size={16} />
             </button>
