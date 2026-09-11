@@ -73,8 +73,8 @@ function Navbar() {
               src="/LogoTurismo.png" 
               alt="Logo Turismo" 
               className="navbar-logo" 
-              width="105"
-              height="105"
+              width="200"
+              height="110"
               loading="lazy"
               decoding="async"
             />

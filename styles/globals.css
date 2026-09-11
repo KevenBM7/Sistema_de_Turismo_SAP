@@ -37,10 +37,21 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Evitar que img { max-width: 100% } rompa las teselas (tiles) de 256x256 de Leaflet */
-img:not(.leaflet-tile) {
+img {
   max-width: 100%;
   height: auto;
+}
+
+/* Evitar que img { max-width: 100% } rompa las teselas (tiles) de 256x256 de Leaflet */
+.leaflet-container img.leaflet-tile {
+  max-width: none !important;
+  max-height: none !important;
+  width: 256px !important;
+  height: 256px !important;
+  box-sizing: content-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
 }
 
 a {
