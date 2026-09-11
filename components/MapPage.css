@@ -489,9 +489,10 @@
 }
 
 .control-button.loc-b-button {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.5px;
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.3px;
+  line-height: 1;
 }
 
 .control-button:hover {

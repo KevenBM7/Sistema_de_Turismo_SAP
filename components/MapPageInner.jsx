@@ -373,12 +373,12 @@ const UserMarker = ({ position, isFollowing, isCompassMode, currentMapBearing = 
             <strong>Tu ubicación actual</strong>
             {speedKmh > 1 && (
               <div style={{ marginTop: '3px', fontSize: '0.9em', color: '#16a34a', fontWeight: 'bold' }}>
-                🚗 {speedKmh} km/h
+                Velocidad: {speedKmh} km/h
               </div>
             )}
             {hasHeading && (
               <div style={{ marginTop: '2px', fontSize: '0.85em', color: '#2563eb' }}>
-                🧭 Rumbo: {effectiveHeading}° ({cardinal})
+                Rumbo: {effectiveHeading}° ({cardinal})
               </div>
             )}
             <div style={{ marginTop: '2px' }}>
@@ -620,12 +620,12 @@ function MapPage() {
 
     const handleOnline = () => {
       setIsOnline(true);
-      toast.success('Conexión a internet restablecida', { icon: '🟢', duration: 3000 });
+      toast.success('Conexión a internet restablecida', { duration: 3000 });
     };
 
     const handleOffline = () => {
       setIsOnline(false);
-      toast('Modo Satelital activo', { icon: '🛰️', duration: 4000 });
+      toast('Modo Satelital activo', { duration: 4000 });
     };
 
     window.addEventListener('online', handleOnline);
@@ -1559,9 +1559,9 @@ function MapPage() {
           {/* Nombre de Destino / Información de ruta y Distancia en vivo */}
           <div className="route-compact-main">
             <span className="route-dest-name-compact" title={pointA && !routingDestination ? pointA.name : (pointA ? `${pointA.name} ➔ ${routingDestination?.name}` : (manualDestination ? manualDestination.name : routingDestination?.name))}>
-              {hasArrived ? `🎉 ¡Has llegado!` : (
+              {hasArrived ? `¡Has llegado a tu destino!` : (
                 pointA && !routingDestination 
-                  ? `📍 Punto A fijado: Haz clic para Punto B`
+                  ? `Punto A fijado: Haz clic para Punto B`
                   : (pointA 
                       ? `A: ${pointA.name} ➔ B: ${routingDestination?.name || 'Destino'}`
                       : (manualDestination ? manualDestination.name : routingDestination?.name)
@@ -1845,7 +1845,7 @@ function MapPage() {
               </button>
             </div>
 
-            {/* Nuevo Botón: Mi Ubicación → B */}
+            {/* Nuevo Botón: GPS → B (Mi Ubicación a Punto B) */}
             <div className="marking-mode-container">
               <button 
                 type="button"
@@ -1857,7 +1857,7 @@ function MapPage() {
                   }
                   if (markingMode === 'my_location_to_b') {
                     setMarkingMode(null);
-                    toast('Modo Mi Ubicación→B cancelado');
+                    toast('Modo GPS→B cancelado');
                   } else {
                     setMarkingMode('my_location_to_b');
                     setPointA(null);
@@ -1866,11 +1866,10 @@ function MapPage() {
                   }
                 }} 
                 className={`control-button loc-b-button ${markingMode === 'my_location_to_b' ? 'active' : ''}`}
-                title={markingMode === 'my_location_to_b' ? "Modo Mi Ubicación→B activo (Clic para cancelar)" : "Mi Ubicación → B: Ruta desde tu GPS a un punto del mapa"}
+                title={markingMode === 'my_location_to_b' ? "Modo GPS→B activo (Clic para cancelar)" : "GPS → B: Ruta desde tu ubicación a un punto del mapa"}
                 disabled={!isRealLocationAvailable}
-                style={{ fontSize: '10.5px', fontWeight: 'bold' }}
               >
-                📍→B
+                GPS→B
               </button>
             </div>
 
@@ -1902,10 +1901,9 @@ function MapPage() {
                     <strong>Cambiar Vista:</strong> Alterna entre Satélite Híbrido HD, Calles y Satélite Puro.
                   </li>
                   <li>
-                    <strong>🎯 Seguir:</strong> Centra y sigue tu GPS en tiempo real.
+                    <strong>Seguir GPS:</strong> Centra y sigue tu GPS en tiempo real.
                   </li>
                   <li>
-                    <span style={{ fontSize: 16, verticalAlign: 'middle', marginRight: 4 }}>🧭</span>
                     <strong>Brújula:</strong> Gira el mapa a tu orientación o fija Norte.
                   </li>
                   <li>
@@ -1915,15 +1913,15 @@ function MapPage() {
                     <strong>A→B:</strong> Marca Punto A (inicio) y Punto B (fin) en el mapa para trazar ruta entre ellos.
                   </li>
                   <li>
-                    <strong>📍→B:</strong> Traza la ruta desde tu ubicación actual hasta cualquier punto del mapa.
+                    <strong>GPS→B:</strong> Traza la ruta desde tu ubicación actual hasta cualquier punto del mapa.
                   </li>
                   <li>
                     <Clock size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                    <strong>⏱️ Zona 10 min:</strong> Polígono verde de alcance a pie.
+                    <strong>Zona 10 min:</strong> Polígono de alcance a pie (isócrona).
                   </li>
                   <li>
                     <Footprints size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                    <strong>🚶 / 🚗 Modos:</strong> Alterna ruta peatonal o auto.
+                    <strong>Modos de Transporte:</strong> Alterna ruta peatonal o vehículo.
                   </li>
                 </ul>
               </div>
@@ -2092,7 +2090,7 @@ function MapPage() {
           >
             <Popup>
               <div className="custom-popup">
-                <h4>📍 Punto A (Origen)</h4>
+                <h4>Punto A (Origen)</h4>
                 {pointA.address && (
                   <p style={{ margin: '4px 0', fontSize: '0.85em', color: '#4b5563' }}>
                     {pointA.address}
@@ -2129,7 +2127,7 @@ function MapPage() {
           >
             <Popup>
               <div className="custom-popup">
-                <h4>{pointA ? '🎯 Punto B (Destino)' : '📍 Destino seleccionado'}</h4>
+                <h4>{pointA ? 'Punto B (Destino)' : 'Destino seleccionado'}</h4>
                 {manualDestination.address && (
                   <p style={{ margin: '4px 0', fontSize: '0.85em', color: '#4b5563' }}>
                     {manualDestination.address}
