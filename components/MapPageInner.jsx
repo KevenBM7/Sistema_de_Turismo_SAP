@@ -307,37 +307,22 @@ const UserMarker = ({ position, isFollowing, isCompassMode, currentMapBearing = 
         html: `
           <div class="user-nav-marker-wrapper" style="transform: rotate(${screenHeading}deg);">
             <div class="nav-vision-beam"></div>
-            <div class="nav-plane-icon">
-              <svg viewBox="0 0 44 44" width="38" height="38" class="nav-plane-svg">
-                <defs>
-                  <filter id="plane-shadow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="rgba(0,0,0,0.45)"/>
-                  </filter>
-                  <linearGradient id="plane-grad-l" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#38bdf8" />
-                    <stop offset="100%" stop-color="#2563eb" />
-                  </linearGradient>
-                  <linearGradient id="plane-grad-r" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#2563eb" />
-                    <stop offset="100%" stop-color="#1d4ed8" />
-                  </linearGradient>
-                </defs>
-                <g filter="url(#plane-shadow)">
-                  <!-- Borde blanco protector de alto contraste -->
-                  <path d="M22 3.5 L37 38 L22 30 L7 38 Z" fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/>
-                  <!-- Ala izquierda en tono celeste vibrante -->
-                  <path d="M22 6 L7 36 L22 29 Z" fill="url(#plane-grad-l)"/>
-                  <!-- Ala derecha en tono azul real con sombra de volumen 3D -->
-                  <path d="M22 6 L37 36 L22 29 Z" fill="url(#plane-grad-r)"/>
-                  <!-- Cabina central -->
-                  <circle cx="22" cy="22" r="2.5" fill="#ffffff"/>
-                </g>
+            <div class="user-nav-direction-dot">
+              <svg viewBox="0 0 32 32" width="32" height="32" style="overflow: visible; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
+                <!-- Anillo blanco protector exterior -->
+                <circle cx="16" cy="16" r="9.5" fill="#ffffff" />
+                <!-- Círculo azul oficial de ubicación -->
+                <circle cx="16" cy="16" r="7.5" fill="#2563eb" />
+                <!-- Puntero direccional formal integrado (estilo Google Maps) -->
+                <path d="M16 2.5 L21.5 13 L16 10 L10.5 13 Z" fill="#2563eb" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round" />
+                <!-- Núcleo central blanco -->
+                <circle cx="16" cy="16" r="2.8" fill="#ffffff" />
               </svg>
             </div>
           </div>`,
-        iconSize: [44, 44],
-        iconAnchor: [22, 22],
-        popupAnchor: [0, -22]
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
+        popupAnchor: [0, -18]
       });
     }
 
@@ -408,22 +393,28 @@ const UserMarker = ({ position, isFollowing, isCompassMode, currentMapBearing = 
 
 const MapClickHandler = ({ onMapClick, markingMode }) => {  
   useMapEvents({
-    // CORRECCIÓN DEL CLIC: Si el modo de marcado está activo, ejecutamos el handler.
     click: (e) => {
       if (!markingMode) {
         return;
       }
       
-      // La clave es ejecutar el handler directamente y detener la propagación de eventos
-      // para evitar que otros elementos (como marcadores de sitios) capten el clic.
+      // VERIFICACIÓN ESTRICTA: Si el clic provino de un botón, control, menú o banner flotante,
+      // NUNCA procesarlo como clic en el mapa (evita que desactivar un botón marque un punto debajo)
+      const target = e.originalEvent?.target;
+      if (target && target.closest('.control-button, .navigation-controls-unified, .marking-mode-container, .leaflet-control, .leaflet-top, .leaflet-bottom, .map-info-banner, .route-banner-compact, .alternative-routes-floating-bar, .map-search-fab-btn, .map-search-container, button')) {
+        return;
+      }
+      
       onMapClick(e);
-      L.DomEvent.stopPropagation(e); 
+      if (e.originalEvent) {
+        L.DomEvent.stopPropagation(e.originalEvent);
+      }
     },
-    // CORRECCIÓN DEL ZOOM: Si está en modo de marcado, bloqueamos el doble clic (zoom).
+    // Si está en modo de marcado, bloqueamos el doble clic (zoom).
     dblclick: (e) => {
-        if (markingMode) {
-            L.DomEvent.stopPropagation(e);
-        }
+      if (markingMode) {
+        L.DomEvent.stopPropagation(e);
+      }
     }
   });
   
@@ -579,7 +570,14 @@ function MapPage() {
   const lastValidTimeRef = React.useRef(0);
   const consecutiveOutliersRef = React.useRef(0);
 
-
+  // Referencia al contenedor de controles para desactivar propagación de clics al mapa
+  const controlsContainerRef = React.useRef(null);
+  useEffect(() => {
+    if (controlsContainerRef.current) {
+      L.DomEvent.disableClickPropagation(controlsContainerRef.current);
+      L.DomEvent.disableScrollPropagation(controlsContainerRef.current);
+    }
+  }, []);
 
   // Estado de conectividad a internet (Online / Offline)
   const [isOnline, setIsOnline] = useState(true);
@@ -874,9 +872,9 @@ function MapPage() {
           // Umbral de precisión exacta: únicamente al estar en el punto exacto (<= 10 metros)
           if (distance <= 10) {
             const destName = currentDest.name || 'tu destino';
-            toast.success(`🎉 ¡Has llegado a tu destino: ${destName}!`, {
+            toast.success(`Has llegado a tu destino: ${destName}`, {
               id: 'arrival-toast',
-              duration: 8000,
+              duration: 6000,
             });
 
             // Vibración háptica en teléfonos móviles
@@ -913,7 +911,7 @@ function MapPage() {
         else if (error.code === 3) {
             badSignalCounterRef.current += 1;
             if (badSignalCounterRef.current === 3) {
-                toast('Buscando señal GPS... Puede tardar un momento.', { icon: '🛰️', duration: 4000 });
+                toast('Buscando señal GPS... Puede tardar un momento.', { duration: 4000 });
             }
         }
         else if (!geolocationWatchErrorToastRef.current) { 
@@ -941,7 +939,7 @@ function MapPage() {
       try {
         const permission = await DeviceOrientationEvent.requestPermission();
         if (permission !== 'granted') {
-          toast('Permiso de orientación no concedido', { icon: '🧭' });
+          toast('Permiso de orientación no concedido');
         }
       } catch (err) {
         console.warn('Permiso de orientación:', err);
@@ -953,14 +951,14 @@ function MapPage() {
       if (mapRef.current) {
         mapRef.current.setBearing(0);
       }
-      toast('Orientación restablecida al Norte (0°)', { icon: '🧭' });
+      toast('Orientación restablecida al Norte (0°)');
     } else {
       // Si el mapa ya tenía rotación manual, al hacer clic se restablece al Norte
       if (mapBearing !== 0) {
         if (mapRef.current) {
           mapRef.current.setBearing(0);
         }
-        toast('Orientación restablecida al Norte (0°)', { icon: '🧭' });
+        toast('Orientación restablecida al Norte (0°)');
         return;
       }
 
@@ -972,7 +970,7 @@ function MapPage() {
       if (mapRef.current) {
         mapRef.current.setBearing(heading);
       }
-      toast.success('Modo brújula activado: el mapa se orienta a tu dirección', { icon: '🧭' });
+      toast.success('Modo brújula activado: el mapa se orienta a tu dirección');
     }
   };
 
@@ -1059,7 +1057,7 @@ function MapPage() {
         };
         setPointA(initialPointA);
         setRouteOrigin(initialPointA);
-        toast.success('📍 Punto A fijado. Ahora haz clic en el mapa para marcar el Punto B (Destino).', { id: 'point-a-toast', duration: 4500 });
+        toast.success('Punto A fijado. Ahora haz clic en el mapa para marcar el Punto B (Destino).', { id: 'point-a-toast', duration: 4500 });
 
         reverseGeocode(lat, lng).then(info => {
           if (info) {
@@ -1093,7 +1091,7 @@ function MapPage() {
         routeToastShownRef.current = false;
         arrivedToastShownRef.current = false;
         setIsFollowing(false);
-        toast.loading('🗺️ Calculando ruta entre Punto A y Punto B...', { id: 'calc-route-toast', duration: 2500 });
+        toast.loading('Calculando ruta entre Punto A y Punto B...', { id: 'calc-route-toast', duration: 2500 });
 
         reverseGeocode(lat, lng).then(info => {
           if (info) {
@@ -1138,7 +1136,7 @@ function MapPage() {
       arrivedToastShownRef.current = false;
       setIsFollowing(false);
       setMarkingMode(null);
-      toast.loading('🗺️ Trazando ruta desde tu ubicación...', { id: 'calc-route-toast', duration: 2000 });
+      toast.loading('Trazando ruta desde tu ubicación...', { id: 'calc-route-toast', duration: 2000 });
 
       reverseGeocode(lat, lng).then(info => {
         if (info) {
@@ -1318,7 +1316,7 @@ function MapPage() {
         setRoutingDestination(newDest);
         toast.success(`Destino fijado: ${result.title}`);
       } else {
-        toast(`Ubicado en el mapa: ${result.title}`, { icon: '📍' });
+        toast(`Ubicado en el mapa: ${result.title}`);
       }
     }
 
@@ -1658,13 +1656,13 @@ function MapPage() {
         <MapClickHandler onMapClick={handleMapClick} markingMode={markingMode} />
 
         <div className="leaflet-top leaflet-right">
-          <div className="navigation-controls-unified">
+          <div className="navigation-controls-unified" ref={controlsContainerRef}>
             {/* Botón y Menú de Capas Desplegable */}
             <div className="map-layers-container" ref={layersMenuRef}>
               <button 
                 type="button"
                 onClick={(e) => {
-                  e.stopPropagation();
+                  L.DomEvent.stopPropagation(e);
                   setShowLayersMenu(prev => !prev);
                 }} 
                 className={`control-button ${showLayersMenu ? 'active' : ''}`}
@@ -1679,7 +1677,7 @@ function MapPage() {
               </button>
 
               {showLayersMenu && (
-                <div className="map-layers-dropdown" onClick={(e) => e.stopPropagation()}>
+                <div className="map-layers-dropdown" onClick={(e) => L.DomEvent.stopPropagation(e)}>
                   <div className="map-layers-header">
                     <span>Capas del Mapa</span>
                     <button 
@@ -1748,9 +1746,11 @@ function MapPage() {
               )}
             </div>
             
+            {/* Botón Seguir mi Ubicación (Icono formal de mira/GPS) */}
             <button 
+              type="button"
               onClick={(e) => {
-                e.stopPropagation();
+                L.DomEvent.stopPropagation(e);
                 if (isRealLocationAvailable) {
                   const nextFollowing = !isFollowing;
                   setIsFollowing(nextFollowing);
@@ -1762,18 +1762,24 @@ function MapPage() {
                 }
               }} 
               className={`control-button ${isFollowing && isRealLocationAvailable ? 'active' : ''}`}
-              title="Seguir mi ubicación"
+              title="Centrar en mi ubicación GPS"
               disabled={!isRealLocationAvailable}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+              <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="7" />
+                <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+                <line x1="12" y1="1" x2="12" y2="4" />
+                <line x1="12" y1="20" x2="12" y2="23" />
+                <line x1="1" y1="12" x2="4" y2="12" />
+                <line x1="20" y1="12" x2="23" y2="12" />
               </svg>
             </button>
 
             {/* Botón de Brújula / Navegación */}
             <button 
+              type="button"
               onClick={(e) => {
-                e.stopPropagation();
+                L.DomEvent.stopPropagation(e);
                 handleToggleCompass();
               }} 
               className={`control-button compass-button ${isCompassMode ? 'active' : ''}`}
@@ -1803,7 +1809,11 @@ function MapPage() {
             </button>
 
             <button
-                onClick={handleCenterMapToDefault}
+                type="button"
+                onClick={(e) => {
+                  L.DomEvent.stopPropagation(e);
+                  handleCenterMapToDefault(e);
+                }}
                 className="control-button"
                 title="Centrar en San Antonio Palopó"
                 style={{ fontSize: '1.2em', fontWeight: 'bold' }}
@@ -1814,17 +1824,18 @@ function MapPage() {
             {/* Botón A→B: Ruta entre dos puntos del mapa */}
             <div className="marking-mode-container">
               <button 
+                type="button"
                 onClick={(e) => {
-                  e.stopPropagation();
+                  L.DomEvent.stopPropagation(e);
                   if (markingMode === 'ab') {
                     setMarkingMode(null);
                     setPointA(null);
-                    toast('Modo A→B cancelado', { icon: 'ℹ️' });
+                    toast('Modo A→B cancelado');
                   } else {
                     setMarkingMode('ab');
                     setPointA(null);
                     setRouteOrigin(null);
-                    toast('📍 Haz clic en el mapa para marcar el Punto A (Origen)', { icon: '📍', duration: 4000 });
+                    toast('Haz clic en el mapa para marcar el Punto A (Origen)', { duration: 4000 });
                   }
                 }} 
                 className={`control-button ${markingMode === 'ab' ? 'active' : ''}`}
@@ -1837,20 +1848,21 @@ function MapPage() {
             {/* Nuevo Botón: Mi Ubicación → B */}
             <div className="marking-mode-container">
               <button 
+                type="button"
                 onClick={(e) => {
-                  e.stopPropagation();
+                  L.DomEvent.stopPropagation(e);
                   if (!isRealLocationAvailable) {
                     toast.error('Ubicación GPS no disponible. Activa la geolocalización en tu navegador.', { duration: 4000 });
                     return;
                   }
                   if (markingMode === 'my_location_to_b') {
                     setMarkingMode(null);
-                    toast('Modo Mi Ubicación→B cancelado', { icon: 'ℹ️' });
+                    toast('Modo Mi Ubicación→B cancelado');
                   } else {
                     setMarkingMode('my_location_to_b');
                     setPointA(null);
                     setRouteOrigin(null);
-                    toast('🎯 Haz clic en el mapa para fijar el Destino B desde tu ubicación actual', { icon: '📍', duration: 4000 });
+                    toast('Haz clic en el mapa para fijar el Destino B desde tu ubicación actual', { duration: 4000 });
                   }
                 }} 
                 className={`control-button loc-b-button ${markingMode === 'my_location_to_b' ? 'active' : ''}`}

@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { Music2, Mail, Clock, Facebook, MapPin, Globe, Youtube, Linkedin, PlusCircle } from 'lucide-react';
 import './Footer.css';
 
@@ -8,6 +9,13 @@ import './Footer.css';
 const SUGGEST_SITE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdewv1slZPa1c0jhZLNioTZdbYwyPYgWp4Yq0JL5OznQSA4hg/viewform?usp=preview";
 
 function Footer() {
+  const pathname = usePathname();
+
+  // En la página del mapa no debe mostrarse el footer para vista limpia a pantalla completa
+  if (pathname === '/mapa' || pathname?.startsWith('/mapa')) {
+    return null;
+  }
+
   const currentYear = new Date().getFullYear();
   const lastUpdated = "Noviembre 2025";
 
