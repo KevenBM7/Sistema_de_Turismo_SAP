@@ -1845,7 +1845,7 @@ function MapPage() {
               </button>
             </div>
 
-            {/* Nuevo Botón: GPS → B (Mi Ubicación a Punto B) */}
+            {/* Nuevo Botón: Mi Ubicación → B */}
             <div className="marking-mode-container">
               <button 
                 type="button"
@@ -1857,7 +1857,7 @@ function MapPage() {
                   }
                   if (markingMode === 'my_location_to_b') {
                     setMarkingMode(null);
-                    toast('Modo GPS→B cancelado');
+                    toast('Modo Mi Ubicación→B cancelado');
                   } else {
                     setMarkingMode('my_location_to_b');
                     setPointA(null);
@@ -1866,10 +1866,29 @@ function MapPage() {
                   }
                 }} 
                 className={`control-button loc-b-button ${markingMode === 'my_location_to_b' ? 'active' : ''}`}
-                title={markingMode === 'my_location_to_b' ? "Modo GPS→B activo (Clic para cancelar)" : "GPS → B: Ruta desde tu ubicación a un punto del mapa"}
+                title={markingMode === 'my_location_to_b' ? "Modo Mi Ubicación→B activo (Clic para cancelar)" : "Mi Ubicación → B: Ruta desde tu GPS a un punto del mapa"}
                 disabled={!isRealLocationAvailable}
               >
-                GPS→B
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="13" 
+                  height="13" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  style={{ flexShrink: 0 }}
+                >
+                  <circle cx="12" cy="12" r="7" />
+                  <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+                  <line x1="12" y1="1" x2="12" y2="4" />
+                  <line x1="12" y1="20" x2="12" y2="23" />
+                  <line x1="1" y1="12" x2="4" y2="12" />
+                  <line x1="20" y1="12" x2="23" y2="12" />
+                </svg>
+                <span className="loc-b-label">→B</span>
               </button>
             </div>
 
@@ -1913,7 +1932,15 @@ function MapPage() {
                     <strong>A→B:</strong> Marca Punto A (inicio) y Punto B (fin) en el mapa para trazar ruta entre ellos.
                   </li>
                   <li>
-                    <strong>GPS→B:</strong> Traza la ruta desde tu ubicación actual hasta cualquier punto del mapa.
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: 4 }}>
+                      <circle cx="12" cy="12" r="7" />
+                      <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+                      <line x1="12" y1="1" x2="12" y2="4" />
+                      <line x1="12" y1="20" x2="12" y2="23" />
+                      <line x1="1" y1="12" x2="4" y2="12" />
+                      <line x1="20" y1="12" x2="23" y2="12" />
+                    </svg>
+                    <strong>→B:</strong> Traza la ruta desde tu ubicación actual hasta cualquier punto del mapa.
                   </li>
                   <li>
                     <Clock size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />

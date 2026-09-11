@@ -489,9 +489,17 @@
 }
 
 .control-button.loc-b-button {
-  font-size: 9.5px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1.5px !important;
+  padding: 0 !important;
+}
+
+.control-button.loc-b-button .loc-b-label {
+  font-size: 10.5px !important;
   font-weight: 800 !important;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.2px;
   line-height: 1;
 }
 
