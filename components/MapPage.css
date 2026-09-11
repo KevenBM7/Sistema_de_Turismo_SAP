@@ -681,10 +681,12 @@
 
 
 /* --- Estilos para el nuevo Tooltip de Ayuda --- */
+/* --- Estilos para el Tooltip y Guía de Ayuda del Mapa --- */
 .map-help-container {
   position: relative;
   display: flex;
   align-items: center;
+  z-index: 1001;
 }
 
 .help-button {
@@ -696,55 +698,121 @@
   visibility: hidden;
   opacity: 0;
   position: absolute;
-  
-  /* CORRECCIÓN DE POSICIONAMIENTO */
-  /* bottom: 110%; <--- ELIMINADO: Esta línea causaba el desborde superior. */
-  top: 40px; /* NUEVO: Posiciona el tope del tooltip 40px debajo del botón, forzando la expansión hacia abajo. */
-  
-  right: 0;
-  width: 280px;
-  background-color: #fff;
-  color: #333;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
-  z-index: 10000; /* MODIFICADO: Valor muy alto para asegurar la visibilidad sobre los controles del mapa. */
-  border: 1px solid #ddd;
+  bottom: 0; /* Alinea la base con el botón de ayuda, expandiéndose hacia arriba */
+  right: 44px; /* Abre a la izquierda de la botonera, sin tapar controles */
+  width: 310px;
+  max-width: calc(100vw - 75px);
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #1e293b;
+  padding: 12px 14px;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.25), 0 6px 14px -4px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(8px) scale(0.97);
+  z-index: 10002;
+  pointer-events: auto !important;
 }
 
-.map-help-container:hover .help-tooltip {
+.map-help-container:hover .help-tooltip,
+.map-help-container .help-tooltip.show {
   visibility: visible;
   opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.help-tooltip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .help-tooltip h4 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 1rem;
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
   color: #0056b3;
+}
+
+.help-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #64748b;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.help-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .help-tooltip ul {
   list-style: none;
   padding: 0;
   margin: 0;
-  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
 
 .help-tooltip li {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  align-items: start;
+  gap: 8px;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.help-tooltip li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.help-item-label {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 4px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
 }
 
-.help-tooltip svg {
-  flex-shrink: 0;
+.help-item-desc {
+  color: #475569;
 }
 
-.marking-mode-help:hover .help-tooltip {
-  opacity: 1;
+/* Scrollbar para tooltip de ayuda */
+.help-tooltip::-webkit-scrollbar {
+  width: 4px;
+}
+
+.help-tooltip::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.help-tooltip::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.help-tooltip::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .alternative-routes-panel {

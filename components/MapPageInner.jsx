@@ -556,6 +556,23 @@ function MapPage() {
     };
   }, [showLayersMenu]);
 
+  const [showHelp, setShowHelp] = useState(false);
+  const helpContainerRef = React.useRef(null);
+
+  useEffect(() => {
+    const handleOutsideHelpClick = (e) => {
+      if (helpContainerRef.current && !helpContainerRef.current.contains(e.target)) {
+        setShowHelp(false);
+      }
+    };
+    if (showHelp) {
+      document.addEventListener('click', handleOutsideHelpClick);
+    }
+    return () => {
+      document.removeEventListener('click', handleOutsideHelpClick);
+    };
+  }, [showHelp]);
+
   // Modo Brújula y Orientación Dinámica
   const [isCompassMode, setIsCompassMode] = useState(false);
   const [mapBearing, setMapBearing] = useState(0);
@@ -1909,46 +1926,102 @@ function MapPage() {
               )}
             </button>
 
-            {/* --- BOTÓN Y TOOLTIP DE AYUDA --- */}
-            <div className="map-help-container">
-              <button type="button" className="control-button help-button" aria-label="Ayuda del mapa">?</button>
-              <div className="help-tooltip">
-                <h4>Guía del Mapa Turístico</h4>
+            {/* --- BOTÓN Y MODAL/TOOLTIP DE AYUDA --- */}
+            <div className="map-help-container" ref={helpContainerRef}>
+              <button 
+                type="button" 
+                className={`control-button help-button ${showHelp ? 'active' : ''}`} 
+                aria-label="Ayuda del mapa"
+                title="Guía de funciones del mapa"
+                onClick={(e) => {
+                  L.DomEvent.stopPropagation(e);
+                  setShowHelp(prev => !prev);
+                }}
+              >
+                ?
+              </button>
+              <div className={`help-tooltip ${showHelp ? 'show' : ''}`}>
+                <div className="help-tooltip-header">
+                  <h4>Guía del Mapa Turístico</h4>
+                  <button 
+                    type="button" 
+                    className="help-close-btn"
+                    onClick={(e) => {
+                      L.DomEvent.stopPropagation(e);
+                      setShowHelp(false);
+                    }}
+                    aria-label="Cerrar guía"
+                  >
+                    ✕
+                  </button>
+                </div>
                 <ul>
                   <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2,17 12,22 22,17"></polyline><polyline points="2,12 12,17 22,12"></polyline></svg>
-                    <strong>Cambiar Vista:</strong> Alterna entre Satélite Híbrido HD, Calles y Satélite Puro.
+                    <div className="help-item-label">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2,17 12,22 22,17"></polyline><polyline points="2,12 12,17 22,12"></polyline></svg>
+                      <span>Vistas:</span>
+                    </div>
+                    <div className="help-item-desc">Alterna entre Satélite Híbrido HD, Calles y Satélite Puro.</div>
                   </li>
                   <li>
-                    <strong>Seguir GPS:</strong> Centra y sigue tu GPS en tiempo real.
+                    <div className="help-item-label">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <circle cx="12" cy="12" r="7" />
+                        <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+                        <line x1="12" y1="1" x2="12" y2="4" />
+                        <line x1="12" y1="20" x2="12" y2="23" />
+                        <line x1="1" y1="12" x2="4" y2="12" />
+                        <line x1="20" y1="12" x2="23" y2="12" />
+                      </svg>
+                      <span>Seguir:</span>
+                    </div>
+                    <div className="help-item-desc">Centra y sigue tu ubicación GPS en tiempo real.</div>
                   </li>
                   <li>
-                    <strong>Brújula:</strong> Gira el mapa a tu orientación o fija Norte.
+                    <div className="help-item-label">
+                      <span>Brújula:</span>
+                    </div>
+                    <div className="help-item-desc">Gira el mapa con tu orientación o fija Norte.</div>
                   </li>
                   <li>
-                    <strong>SAP:</strong> Vuelve al centro de San Antonio Palopó.
+                    <div className="help-item-label">
+                      <span>SAP:</span>
+                    </div>
+                    <div className="help-item-desc">Vuelve al centro de San Antonio Palopó.</div>
                   </li>
                   <li>
-                    <strong>A→B:</strong> Marca Punto A (inicio) y Punto B (fin) en el mapa para trazar ruta entre ellos.
+                    <div className="help-item-label">
+                      <span>A→B:</span>
+                    </div>
+                    <div className="help-item-desc">Marca Punto A (inicio) y Punto B (fin) en el mapa para trazar ruta.</div>
                   </li>
                   <li>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: 4 }}>
-                      <circle cx="12" cy="12" r="7" />
-                      <circle cx="12" cy="12" r="2.5" fill="currentColor" />
-                      <line x1="12" y1="1" x2="12" y2="4" />
-                      <line x1="12" y1="20" x2="12" y2="23" />
-                      <line x1="1" y1="12" x2="4" y2="12" />
-                      <line x1="20" y1="12" x2="23" y2="12" />
-                    </svg>
-                    <strong>→B:</strong> Traza la ruta desde tu ubicación actual hasta cualquier punto del mapa.
+                    <div className="help-item-label">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <circle cx="12" cy="12" r="7" />
+                        <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+                        <line x1="12" y1="1" x2="12" y2="4" />
+                        <line x1="12" y1="20" x2="12" y2="23" />
+                        <line x1="1" y1="12" x2="4" y2="12" />
+                        <line x1="20" y1="12" x2="23" y2="12" />
+                      </svg>
+                      <span>→B:</span>
+                    </div>
+                    <div className="help-item-desc">Traza ruta directa desde tu GPS actual a cualquier punto del mapa.</div>
                   </li>
                   <li>
-                    <Clock size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                    <strong>Zona 10 min:</strong> Polígono de alcance a pie (isócrona).
+                    <div className="help-item-label">
+                      <Clock size={13} style={{ flexShrink: 0 }} />
+                      <span>10 min:</span>
+                    </div>
+                    <div className="help-item-desc">Polígono de alcance a pie (isócrona caminable).</div>
                   </li>
                   <li>
-                    <Footprints size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                    <strong>Modos de Transporte:</strong> Alterna ruta peatonal o vehículo.
+                    <div className="help-item-label">
+                      <Footprints size={13} style={{ flexShrink: 0 }} />
+                      <span>Modos:</span>
+                    </div>
+                    <div className="help-item-desc">Alterna entre ruta peatonal y vehículo.</div>
                   </li>
                 </ul>
               </div>
