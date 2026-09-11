@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { Music2, Mail, Clock, Facebook, MapPin, Globe, Youtube, Linkedin, PlusCircle } from 'lucide-react';
+import { Music2, Mail, Clock, Facebook, MapPin, Globe, Youtube, LifeBuoy, PlusCircle } from 'lucide-react';
 import './Footer.css';
 
 
@@ -89,9 +89,9 @@ function Footer() {
           <p>Alcalde: Rufino Caníz Vicente</p>
         </div>
 
-        {/* --- Columna 4: Créditos Técnicos --- */}
+        {/* --- Columna 4: Soporte Técnico --- */}
         <div className="footer-section developer-credits">
-          <h4>Desarrollo Técnico</h4>
+          <h4>Soporte Técnico</h4>
           <p>Desarrollado por: Kevin Bixcul</p>
           <p>Técnico en Sistemas Informáticos</p>
           <p>
@@ -101,8 +101,8 @@ function Footer() {
             </a>
           </p>
           <p>
-            <a href="https://www.linkedin.com/in/kevin-bixcul-mart%C3%ADn-748255126/" target="_blank" rel="noopener noreferrer" className="footer-link">
-              <Linkedin size={16} className="footer-icon" /> Kevin Bixcul Martín
+            <a href="mailto:kevinbixcul@gmail.com?subject=Soporte%20T%C3%A9cnico%20-%20App%20Turismo" className="footer-link">
+              <LifeBuoy size={16} className="footer-icon" /> Soporte Técnico
             </a>
           </p>
         </div>

@@ -87,6 +87,7 @@ const EditorToolbar = ({ editor }) => {
 
 const RichTextEditor = ({ content, onChange, readOnly }) => {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         // Desactivar las extensiones que vamos a configurar manualmente

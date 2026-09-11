@@ -30,53 +30,68 @@ function TermsPage() {
         
         <section>
           <h2>1. Aceptación y Alcance</h2>
-          <p>Al acceder o utilizar la aplicación móvil y web "Turismo San Antonio Palopó" (la App), usted acepta estar legalmente obligado por los presentes Términos de Uso. Esta App es propiedad y está operada por la Municipalidad de San Antonio Palopó (la Municipalidad), con el fin exclusivo de promover el turismo en la región.</p>
-          <p>Si no está de acuerdo con estos términos, no debe utilizar la App.</p>
+          <p>
+            Al acceder o utilizar la aplicación móvil y web <strong>&ldquo;Turismo San Antonio Palopó&rdquo;</strong> (en adelante, &ldquo;la App&rdquo;), usted manifiesta su conformidad y acepta estar legalmente vinculado a los presentes Términos de Uso. Esta plataforma es propiedad de y se encuentra administrada por la <strong>Municipalidad de San Antonio Palopó</strong> (en adelante, &ldquo;la Municipalidad&rdquo;), con la finalidad exclusiva de promover, visibilizar y facilitar el turismo sostenible en el municipio y la cuenca del Lago de Atitlán.
+          </p>
+          <p>
+            Si usted no está de acuerdo con la totalidad de estos términos y condiciones, deberá abstenerse de utilizar la App.
+          </p>
         </section>
 
         <section>
           <h2>2. Naturaleza del Servicio y Limitación de Responsabilidad</h2>
           
           <h3>2.1. Exclusividad Informativa (No Transaccional)</h3>
-          <p>La App es una **guía informativa digital**. La Municipalidad no gestiona ni procesa **reservas, pagos o transacciones económicas** de ningún tipo. La App solo proporciona detalles de contacto (WhatsApp, redes sociales) para que el usuario contacte directamente al proveedor del servicio o negocio listado.</p>
+          <p>
+            La App opera estrictamente como una <strong>guía informativa digital e interactiva</strong>. La Municipalidad de San Antonio Palopó no administra, intermedia ni procesa <strong>reservas hoteleras, cobros, pasarelas de pago ni transacciones económicas</strong> de ninguna índole. La plataforma se limita a suministrar información de orientación y canales de comunicación directa (como enlaces telefónicos, WhatsApp y redes sociales oficiales) para que el visitante establezca contacto directo con el prestador del servicio turístico respectivo.
+          </p>
           
-          <h3>2.2. Información de Terceros (Descargo de Responsabilidad)</h3>
-          <p>La información de negocios privados (ej. horarios, precios, disponibilidad) se proporciona a título de intermediario informativo. Aunque la Municipalidad se esfuerza por mantenerla actualizada, no es legalmente responsable por:</p>
+          <h3>2.2. Información de Terceros y Descargo de Responsabilidad</h3>
+          <p>
+            Los datos relativos a establecimientos privados (tales como tarifas, horarios de atención, cartas gastronómicas y disponibilidad de servicios) son recopilados con fines puramente orientativos y de divulgación comunitaria. Si bien la Municipalidad realiza revisiones periódicas para procurar su veracidad, no asume responsabilidad legal directa ni derivada por:
+          </p>
           <ul>
-              <li>Inaccuracies, errors or outdated data published.</li>
-              <li>Sudden changes in prices, schedules, services or closures of the listed businesses.</li>
+            <li>Inexactitudes involuntarias, errores tipográficos o desfases temporales en los datos publicados.</li>
+            <li>Variaciones imprevistas en tarifas, horarios, disponibilidad o cierres eventuales de los negocios listados.</li>
           </ul>
-          <p>El usuario es responsable de verificar la información directamente con el negocio antes de realizar cualquier acción o viaje.</p>
+          <p>
+            Es responsabilidad del usuario confirmar previamente las condiciones particulares directamente con el establecimiento antes de efectuar su desplazamiento o incurrir en gastos.
+          </p>
         </section>
 
         <section>
           <h2>3. Conducta del Usuario y Contenido Generado</h2>
           
-          <h3>3.1. Uso Prohibido</h3>
-          <p>Queda estrictamente prohibido:</p>
+          <h3>3.1. Usos Prohibidos</h3>
+          <p>Queda expresamente prohibido:</p>
           <ul>
-              <li>El uso comercial no autorizado de los datos de la App (ej. **scraping** o copiar masivamente la información para fines externos).</li>
-              <li>Publicar información ilegal, difamatoria, amenazante, obscena o que viole derechos de terceros.</li>
-              <li>Cualquier intento de acceder a áreas restringidas o manipular el código de la App.</li>
+            <li>La extracción o explotación comercial no autorizada de la información contenida en la App (incluyendo técnicas de <strong>web scraping</strong>, clonación de bases de datos o minería automatizada para plataformas de terceros).</li>
+            <li>La publicación o transmisión de mensajes ilícitos, difamatorios, lesivos, ofensivos, obscenos o que vulneren derechos humanos o comunitarios.</li>
+            <li>Cualquier intento deliberado de vulnerar la seguridad informática, acceder a módulos de administración no autorizados o manipular el código fuente del sistema.</li>
           </ul>
 
-          <h3>3.2. Comentarios y Moderación</h3>
-          <p>Los usuarios pueden publicar **comentarios de texto y calificaciones** (1-5 estrellas). Al publicar:</p>
+          <h3>3.2. Reseñas, Calificaciones y Moderación Comunitaria</h3>
+          <p>
+            Los usuarios debidamente autenticados pueden emitir <strong>comentarios de texto y valoraciones mediante escala de estrellas</strong> (de 1 a 5). Al emitir una opinión:
+          </p>
           <ul>
-              <li>Usted es el único responsable del contenido de su comentario.</li>
-              <li>Su **nombre de usuario y foto de perfil serán visibles públicamente** junto a su reseña para todos los usuarios.</li>
-              <li>**Moderación y Sanciones:** Los administradores municipales, a través de un sistema de reportes, se reservan el derecho de:
-                  <ol>
-                      <li>Eliminar cualquier comentario que infrinja las normas de respeto o legalidad.</li>
-                      <li>Aplicar una **penalización de 15 días sin poder comentar** al usuario que reincida o emita comentarios gravemente ofensivos, a discreción del administrador.</li>
-                  </ol>
-              </li>
+            <li>Usted es el único responsable legal del contenido, veracidad y tono de sus publicaciones.</li>
+            <li>Su <strong>nombre de usuario y fotografía de perfil</strong> serán visibles de forma pública junto a la reseña para todos los usuarios de la comunidad.</li>
+            <li>
+              <strong>Criterios de Moderación y Sanción:</strong> A fin de resguardar una convivencia respetuosa y constructiva, el equipo de administración municipal se reserva la facultad de:
+              <ol>
+                <li>Remover de inmediato cualquier opinión que contenga lenguaje vulgar, agresivo, fraudulento o discriminatorio.</li>
+                <li>Imponer una <strong>suspensión temporal de 15 días continuos</strong> en la potestad de comentar a aquellos usuarios reincidentes o que incurran en faltas graves, a criterio fundado de la administración.</li>
+              </ol>
+            </li>
           </ul>
         </section>
 
         <section>
-          <h2>4. Propiedad Intelectual</h2>
-          <p>La Municipalidad de San Antonio Palopó posee los derechos sobre el código, diseño y contenidos originales de la App. Cualquier uso no autorizado está prohibido.</p>
+          <h2>4. Propiedad Intelectual y Derechos Reservados</h2>
+          <p>
+            La Municipalidad de San Antonio Palopó ostenta la titularidad de los derechos sobre la arquitectura de software, identidad visual, logotipos institucionales y material editorial original de la aplicación. Queda prohibida su reproducción o distribución con fines de lucro sin la debida autorización expresa y por escrito de la autoridad municipal competente.
+          </p>
         </section>
       </div>
     </>

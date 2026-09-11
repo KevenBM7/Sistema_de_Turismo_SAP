@@ -1,13 +1,17 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import SiteList from '../components/SiteList';
 import UserReviews from '../components/UserReviews';
 import toast, { Toaster } from 'react-hot-toast';
+import { 
+  Camera, Trash2, Edit3, Mail, Shield, User, Heart, 
+  MessageSquare, LogOut, Compass, Check, X, AlertTriangle 
+} from 'lucide-react';
 import './Profile.css';
-import '../components/Forms.css';
-import '../components/Buttons.css';
+
 function Profile() {
   const { currentUser, logout, updateProfilePicture, deleteProfilePicture, deleteUserAccount, updateDisplayName, toggleFavorite } = useAuth();
   const [error, setError] = useState('');
@@ -18,7 +22,7 @@ function Profile() {
   const [newName, setNewName] = useState(currentUser?.displayName || '');
   const [nameChangeLoading, setNameChangeLoading] = useState(false);
 
-  // --- SOLUCIÓN: Paginación de favoritos ---
+  // Paginación de favoritos
   const FAVORITES_PER_PAGE = 10;
   const [visibleCount, setVisibleCount] = useState(FAVORITES_PER_PAGE);
   const displayedFavorites = currentUser?.favorites?.slice(0, visibleCount) || [];
@@ -31,7 +35,7 @@ function Profile() {
     setError('');
     setMessage('');
     try {
-      await updateProfilePicture(file); // Esta función ahora es una promesa que se resuelve
+      await updateProfilePicture(file);
       toast.success('¡Foto de perfil actualizada con éxito!');
     } catch (err) {
       console.error(err);
@@ -51,7 +55,6 @@ function Profile() {
 
     try {
       await deleteUserAccount();
-      // La sesión se cerrará automáticamente al eliminar el usuario.
     } catch (err) {
       console.error("Error al eliminar la cuenta:", err);
       setError('Error al eliminar la cuenta. Es posible que necesites volver a iniciar sesión para completar esta acción.');
@@ -60,11 +63,15 @@ function Profile() {
 
   const handleNameChange = async (e) => {
     e.preventDefault();
+    if (!newName.trim()) {
+      toast.error('El nombre no puede estar vacío');
+      return;
+    }
     setNameChangeLoading(true);
     setError('');
     setMessage('');
     try {
-      await updateDisplayName(newName);
+      await updateDisplayName(newName.trim());
       toast.success('¡Nombre actualizado con éxito!');
       setIsEditingName(false);
     } catch (err) {
@@ -73,13 +80,11 @@ function Profile() {
     setNameChangeLoading(false);
   };
 
- const handleEditNameClick = () => {
+  const handleEditNameClick = () => {
     toast.custom((t) => (
-      <div
-        className={`toast-confirmation ${t.visible ? 'fade-in' : 'fade-out'}`}
-      >
+      <div className={`toast-confirmation ${t.visible ? 'fade-in' : 'fade-out'}`}>
         <div className="toast-content">
-          <p className="toast-title">Advertencia</p>
+          <p className="toast-title">Cambiar nombre</p>
           <p className="toast-message">
             Solo puedes cambiar tu nombre de usuario una vez cada 30 días.
           </p>
@@ -104,99 +109,279 @@ function Profile() {
         </div>
       </div>
     ), { duration: 6000 });
- };
+  };
 
- // --- SOLUCIÓN: Handler para cargar más favoritos ---
- const handleLoadMoreFavorites = () => {
+  const handleLoadMoreFavorites = () => {
     setVisibleCount(prevCount => prevCount + FAVORITES_PER_PAGE);
- };
+  };
 
   if (!currentUser) {
-    return <p>Cargando perfil...</p>;
+    return (
+      <div className="profile-loading-container">
+        <div className="profile-spinner"></div>
+        <p>Cargando tu perfil...</p>
+      </div>
+    );
   }
+
+  const favoritesCount = currentUser.favorites?.length || 0;
 
   return (
     <div className="profile-container">
-      <Toaster position="top-center" /> {/* Corregido: Toaster ahora está definido */}
-      <div className="profile-card">
-        <h2>Perfil de Usuario</h2>
-        {error && <p className="error-message">{error}</p>}
-        {message && <p className="success-message">{message}</p>}
-        <div className="profile-info">
-          <div className="profile-photo-container">
-            <img 
-              src={currentUser.photoURL || 'https://placehold.co/100x100/EFEFEF/31343C?text=U'} 
-              alt="Foto de perfil" 
-              className="profile-photo" 
+      <Toaster position="top-center" />
+      
+      {/* Tarjeta Principal de Perfil (Hero) */}
+      <div className="profile-hero-card">
+        <div className="profile-hero-cover">
+          <div className="profile-cover-pattern"></div>
+        </div>
+
+        <div className="profile-hero-body">
+          <div className="profile-avatar-wrapper">
+            <div className="profile-avatar-container">
+              <img 
+                src={currentUser.photoURL || 'https://placehold.co/120x120/0284c7/FFFFFF?text=' + encodeURIComponent((currentUser.displayName || 'U').charAt(0).toUpperCase())} 
+                alt={currentUser.displayName || 'Usuario'} 
+                className="profile-avatar-img" 
+              />
+              {uploading && (
+                <div className="profile-avatar-uploading">
+                  <div className="profile-spinner small"></div>
+                </div>
+              )}
+            </div>
+
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              style={{ display: 'none' }} 
+              accept="image/*" 
             />
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/*" />
-            <div className="profile-photo-actions">
-              <button onClick={() => fileInputRef.current.click()} disabled={uploading}>
-                {uploading ? 'Subiendo...' : 'Cambiar'}
+
+            <div className="profile-avatar-actions">
+              <button 
+                type="button"
+                className="profile-icon-btn camera"
+                onClick={() => fileInputRef.current?.click()} 
+                disabled={uploading}
+                title="Cambiar fotografía de perfil"
+                aria-label="Cambiar fotografía de perfil"
+              >
+                <Camera size={15} />
               </button>
-              {currentUser.photoURL && <button onClick={deleteProfilePicture} disabled={uploading}>Eliminar</button>}
+              {currentUser.photoURL && (
+                <button 
+                  type="button"
+                  className="profile-icon-btn delete"
+                  onClick={deleteProfilePicture} 
+                  disabled={uploading}
+                  title="Eliminar fotografía de perfil"
+                  aria-label="Eliminar fotografía de perfil"
+                >
+                  <Trash2 size={15} />
+                </button>
+              )}
             </div>
           </div>
-          <div>
-            {!isEditingName ? (
-              <div className="name-display-container">
-                <p><strong>Nombre:</strong> {currentUser.displayName || 'No especificado'}</p>
-                <button onClick={handleEditNameClick} className="edit-name-button">
-                  ✏️
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleNameChange} className="name-edit-form">
-                <div className="form-group">
-                  <label htmlFor="newName">Nuevo Nombre</label>
+
+          <div className="profile-hero-details">
+            <div className="profile-name-row">
+              {!isEditingName ? (
+                <div className="profile-name-display">
+                  <h1>{currentUser.displayName || 'Turista'}</h1>
+                  <button 
+                    type="button"
+                    onClick={handleEditNameClick} 
+                    className="profile-edit-name-btn"
+                    title="Editar nombre de usuario"
+                    aria-label="Editar nombre de usuario"
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleNameChange} className="profile-name-edit-form">
                   <input
-                    id="newName"
                     type="text"
+                    className="profile-name-input"
                     value={newName}
+                    autoFocus
+                    placeholder="Tu nombre completo"
                     onChange={(e) => setNewName(e.target.value)}
                   />
-                </div>
-                <button type="button" onClick={() => setIsEditingName(false)} disabled={nameChangeLoading}>Cancelar</button>
-                <button type="submit" disabled={nameChangeLoading}>{nameChangeLoading ? 'Guardando...' : 'Guardar'}</button>
-              </form>
-            )}
-            <p><strong>Correo:</strong> {currentUser.email}</p>
-            {currentUser.role === 'admin' && (
-              <p><strong>Rol:</strong> <span className={`role-badge role-${currentUser.role}`}>{currentUser.role}</span></p>
-            )}
+                  <button 
+                    type="submit" 
+                    className="profile-name-save-btn" 
+                    disabled={nameChangeLoading}
+                    title="Guardar"
+                  >
+                    <Check size={16} />
+                  </button>
+                  <button 
+                    type="button" 
+                    className="profile-name-cancel-btn" 
+                    onClick={() => setIsEditingName(false)} 
+                    disabled={nameChangeLoading}
+                    title="Cancelar"
+                  >
+                    <X size={16} />
+                  </button>
+                </form>
+              )}
+            </div>
+
+            <div className="profile-meta-row">
+              <div className="profile-meta-item">
+                <Mail size={15} className="profile-meta-icon" />
+                <span>{currentUser.email}</span>
+              </div>
+              
+              <div className="profile-role-badge-wrapper">
+                {currentUser.role === 'admin' ? (
+                  <span className="profile-role-pill admin">
+                    <Shield size={13} /> Administrador
+                  </span>
+                ) : (
+                  <span className="profile-role-pill tourist">
+                    <User size={13} /> Visitante
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {error && <p className="profile-alert error">{error}</p>}
+            {message && <p className="profile-alert success">{message}</p>}
+          </div>
+
+          <div className="profile-hero-actions">
+            <button 
+              type="button"
+              onClick={logout} 
+              className="profile-btn secondary"
+              title="Cerrar sesión en este dispositivo"
+            >
+              <LogOut size={16} /> Cerrar Sesión
+            </button>
+            <button 
+              type="button"
+              onClick={handleDeleteAccount} 
+              className="profile-btn danger-subtle"
+              title="Eliminar cuenta y datos permanentemente"
+            >
+              <AlertTriangle size={15} /> Eliminar Cuenta
+            </button>
           </div>
         </div>
-        <div className="profile-actions">
-          <button onClick={logout} className="logout-button">Cerrar Sesión</button>
-          <button onClick={handleDeleteAccount} className="delete-account-button">Eliminar Cuenta</button>
+
+        {/* Barra de Estadísticas Rápidas */}
+        <div className="profile-stats-bar">
+          <div className="profile-stat-box">
+            <div className="profile-stat-icon-wrapper heart">
+              <Heart size={18} />
+            </div>
+            <div className="profile-stat-info">
+              <span className="profile-stat-number">{favoritesCount}</span>
+              <span className="profile-stat-label">Favoritos</span>
+            </div>
+          </div>
+
+          <div className="profile-stat-divider"></div>
+
+          <div className="profile-stat-box">
+            <div className="profile-stat-icon-wrapper star">
+              <MessageSquare size={18} />
+            </div>
+            <div className="profile-stat-info">
+              <span className="profile-stat-number">Mis Reseñas</span>
+              <span className="profile-stat-label">Comentarios en sitios</span>
+            </div>
+          </div>
+
+          <div className="profile-stat-divider"></div>
+
+          <div className="profile-stat-box">
+            <div className="profile-stat-icon-wrapper compass">
+              <Compass size={18} />
+            </div>
+            <div className="profile-stat-info">
+              <span className="profile-stat-number">San Antonio Palopó</span>
+              <span className="profile-stat-label">Guía Oficial</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="favorites-section">
-        <h3>Mis Sitios Favoritos ❤️</h3>
-        {currentUser.favorites && currentUser.favorites.length > 0 ? (
-          <>
+      {/* Sección de Sitios Favoritos */}
+      <section className="profile-content-section">
+        <div className="profile-section-header">
+          <div className="profile-section-title-wrapper">
+            <div className="profile-section-icon heart">
+              <Heart size={20} />
+            </div>
+            <div>
+              <h2>Mis Sitios Favoritos</h2>
+              <p>Lugares turísticos, miradores y hoteles que has guardado para tu visita.</p>
+            </div>
+          </div>
+          {favoritesCount > 0 && (
+            <span className="profile-count-pill">{favoritesCount} guardados</span>
+          )}
+        </div>
+
+        {favoritesCount > 0 ? (
+          <div className="profile-favorites-container">
             <SiteList 
-              siteIds={displayedFavorites} // SOLUCIÓN: Pasar solo los favoritos visibles
+              siteIds={displayedFavorites} 
               showRemoveButton={true}
               onRemoveFavorite={toggleFavorite}
             />
-            {/* SOLUCIÓN: Mostrar el botón "Ver más" si hay más favoritos por cargar */}
-            {visibleCount < currentUser.favorites.length && (
-              <button onClick={handleLoadMoreFavorites} className="button-primary" style={{marginTop: '2rem', maxWidth: '300px', margin: '2rem auto 0'}}>
-                Ver más favoritos
-              </button>
+            {visibleCount < favoritesCount && (
+              <div className="profile-load-more-wrapper">
+                <button 
+                  type="button"
+                  onClick={handleLoadMoreFavorites} 
+                  className="profile-load-more-btn"
+                >
+                  Ver más favoritos ({favoritesCount - visibleCount} restantes)
+                </button>
+              </div>
             )}
-          </>
+          </div>
         ) : (
-          <p>Aún no has guardado ningún sitio como favorito. ¡Empieza a explorar y guarda los que más te gusten!</p>
+          <div className="profile-empty-state">
+            <div className="profile-empty-icon-circle">
+              <Compass size={36} color="#0284c7" />
+            </div>
+            <h3>Tu lista de favoritos está vacía</h3>
+            <p>
+              Explora los sitios turísticos, hoteles, talleres de cerámica y miradores de San Antonio Palopó y presiona el ícono de corazón para tenerlos a mano.
+            </p>
+            <Link href="/categorias" className="profile-empty-cta-btn">
+              <Compass size={16} /> Explorar Atractivos Turísticos
+            </Link>
+          </div>
         )}
-      </div>
+      </section>
 
-      <div className="user-reviews-section">
-        <h3>Mis Reseñas ✍️</h3>
-        <UserReviews userId={currentUser.uid} />
-      </div>
+      {/* Sección de Reseñas y Comentarios */}
+      <section className="profile-content-section">
+        <div className="profile-section-header">
+          <div className="profile-section-title-wrapper">
+            <div className="profile-section-icon review">
+              <MessageSquare size={20} />
+            </div>
+            <div>
+              <h2>Mis Reseñas y Calificaciones</h2>
+              <p>Opiniones y valoraciones que has compartido con la comunidad de viajeros.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="profile-reviews-container">
+          <UserReviews userId={currentUser.uid} />
+        </div>
+      </section>
     </div>
   );
 }
